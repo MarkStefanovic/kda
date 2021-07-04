@@ -1,0 +1,23 @@
+/.idea
+.DS_Store
+.idea/shelf
+/dist
+/local
+/gh-pages
+out/
+/tmp
+workspace.xml
+.gradle/
+build/
+*.iml
+local.properties
+/test.output
+/kotlin-native/dist
+
+# GRADLE
+.gradle
+# Ignore Gradle GUI config
+gradle-app.setting
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+.gradletasknamecache
