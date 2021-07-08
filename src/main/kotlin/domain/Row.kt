@@ -2,19 +2,25 @@ package domain
 
 @JvmInline
 value class Row(private val row: Map<String, Value<*>>) {
-//    private val fieldNames: List<String>
-//        get() = row.keys.sorted()
+    init {
+        require(row.count() > 0)
+        require(row.keys.all { fld -> fld.isNotEmpty() })
+    }
 
-    val values: List<Value<*>>
-        get() = row.keys.sorted().map { fldName -> row[fldName]!! }
+    fun value(fieldName: String): Value<*> =
+        row[fieldName] ?: error(
+            "A field named $fieldName was not found in the row.  " +
+                "Available fields include the following: ${row.keys.joinToString(", ")}"
+        )
 
-//    fun value(fieldName: String): Value<*> =
-//        row[fieldName] ?: error("A field named $fieldName was not found in the row.")
+    fun subset(vararg fieldNames: String): Row {
+        require(fieldNames.all { fldName -> row.containsKey(fldName) })
+        val subset = fieldNames.sorted().associateWith { fieldName -> row[fieldName]!! }
+        return Row(subset)
+    }
 
-//    fun subset(vararg fieldNames: String): Row {
-//        val subset = fieldNames.associate { fieldName ->
-//            fieldName to value(fieldName)
-//        }
-//        return Row(subset)
-//    }
+    companion object {
+        fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row =
+            Row(keyValuePairs.toMap())
+    }
 }

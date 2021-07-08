@@ -12,6 +12,10 @@ object BoolType: DataType<Boolean>() {
     override val zeroValue: Boolean = false
 }
 
+data class IntType(val autoincrement: Boolean): DataType<Int>() {
+    override val zeroValue: Int = 0
+}
+
 object LocalDateType: DataType<LocalDate>() {
     override val zeroValue: LocalDate = LocalDate.MIN
 }
@@ -20,7 +24,7 @@ object LocalDateTimeType: DataType<LocalDateTime>() {
     override val zeroValue: LocalDateTime = LocalDateTime.MIN
 }
 
-object FloatType: DataType<Float>() {
+data class FloatType(val maxDigits: Int): DataType<Float>() {
     override val zeroValue: Float = Float.MIN_VALUE
 }
 
@@ -36,6 +40,10 @@ object NullableBoolType: DataType<Boolean?>() {
     override val zeroValue: Boolean? = null
 }
 
+data class NullableIntType(val autoincrement: Boolean): DataType<Int?>() {
+    override val zeroValue: Int? = null
+}
+
 object NullableLocalDateType: DataType<LocalDate?>() {
     override val zeroValue: LocalDate? = LocalDate.MIN
 }
@@ -44,7 +52,7 @@ object NullableLocalDateTimeType: DataType<LocalDateTime?>() {
     override val zeroValue: LocalDateTime? = null
 }
 
-object NullableFloatType: DataType<Float?>() {
+data class NullableFloatType(val maxDigits: Int): DataType<Float?>() {
     override val zeroValue: Float? = null
 }
 

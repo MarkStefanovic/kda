@@ -1,5 +1,6 @@
 package domain
 
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -15,6 +16,9 @@ interface SQLExecutor {
     fun fetchNullableDateTime(sql: String): LocalDateTime?
     fun fetchDateTime(sql: String): LocalDateTime
 
+    fun fetchNullableDecimal(sql: String): BigDecimal?
+    fun fetchDecimal(sql: String): BigDecimal
+
     fun fetchNullableFloat(sql: String): Float?
     fun fetchFloat(sql: String): Float
 
@@ -24,7 +28,7 @@ interface SQLExecutor {
     fun fetchNullableString(sql: String): String?
     fun fetchString(sql: String): String
 
-    fun fetchRow(table: Table, sql: String): Row
+    fun fetchRow(sql: String, fields: Set<Field>): Row
 
-    fun fetchRows(table: Table, sql: String): Rows
+    fun fetchRows(sql: String, fields: Set<Field>): List<Row>
 }

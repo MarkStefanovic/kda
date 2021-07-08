@@ -5,9 +5,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.5.10"
     id("org.jetbrains.compose") version "0.4.0"
+    jacoco
 }
 
-group = "me.admin"
+group = "lime"
 version = "1.0"
 
 repositories {
@@ -19,14 +20,28 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     implementation(compose.desktop.currentOs)
+
+    testImplementation("com.h2database", "h2", "1.4.200")
+    implementation("org.postgresql", "postgresql", "42.2.16")
 }
 
 tasks.test {
     useJUnitPlatform()
+
+    finalizedBy(tasks.jacocoTestReport) // jacoco test coverage report is always generated after tests run
+
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "11"
+}
+
+jacoco {
+    toolVersion = "0.8.7"
 }
 
 compose.desktop {
