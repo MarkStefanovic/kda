@@ -16,7 +16,7 @@ class RowTest {
                     "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
                 )
             )
-        val subset = row.subset("first_name", "last_name")
+        val subset = row.subset(setOf("first_name", "last_name"))
         val expected =
             Row(
                 mapOf(

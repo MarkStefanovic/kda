@@ -162,7 +162,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableBool_not_a_bool() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotABool>("test") { executor.fetchNullableBool("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableBool("SELECT 'a'") }
         }
     }
 

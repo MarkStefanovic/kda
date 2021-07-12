@@ -22,3 +22,5 @@ data class NotAnInt(val value: Any) : KDAException("$value is not an Int.")
 data class NotAString(val value: Any) : KDAException("$value is not a String.")
 
 data class NotATimestamp(val value: Any) : KDAException("$value is not a Timestamp.")
+
+data class ValueError(val value: Any?, val expectedType: String) : KDAException("Expected a $expectedType, but got '$value', type ${value?.javaClass?.simpleName ?: "null"}.")
