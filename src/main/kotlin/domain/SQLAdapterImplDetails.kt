@@ -4,7 +4,6 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-
 interface SQLAdapterImplDetails {
     fun fieldDef(field: Field): String
 
@@ -26,5 +25,5 @@ interface SQLAdapterImplDetails {
 
     fun wrapStringValue(value: String?, maxLength: Int?): String
 
-    fun valuesExpression(fieldNames: List<String>, rows: Rows): String
+    fun valuesExpression(fieldNames: List<String>, rows: IndexedRows): String
 }

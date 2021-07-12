@@ -2,19 +2,20 @@ package adapter.pg
 
 import adapter.JdbcExecutor
 import domain.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgInspectorTest {
-    private fun connect(): Connection = DriverManager.getConnection(
-        "jdbc:postgresql://localhost:5432/testdb",
-        System.getenv("DB_USER"),
-        System.getenv("DB_PASS")
-    )
+    private fun connect(): Connection =
+        DriverManager.getConnection(
+            "jdbc:postgresql://localhost:5432/testdb",
+            System.getenv("DB_USER"),
+            System.getenv("DB_PASS")
+        )
 
     @Test
     fun test_inspectTable() {
@@ -27,18 +28,21 @@ class PgInspectorTest {
             )
 
             val inspector = PgInspector(sqlExecutor = executor)
-            val actual = inspector.inspectTable(schema = null, table = "tmp20210708", maxFloatDigits = 4)
-            val expected = Table(
-                schema = null,
-                name = "tmp20210708",
-                fields = setOf(
-                    Field(name = "age", dataType = IntType(autoincrement = false)),
-                    Field(name = "first_name", dataType = StringType(maxLength = null)),
-                    Field(name = "id", dataType = IntType(autoincrement = true)),
-                    Field(name = "last_name", dataType = StringType(maxLength = null)),
-                ),
-                primaryKeyFields = listOf("id"),
-            )
+            val actual =
+                inspector.inspectTable(schema = null, table = "tmp20210708", maxFloatDigits = 4)
+            val expected =
+                Table(
+                    schema = null,
+                    name = "tmp20210708",
+                    fields =
+                        setOf(
+                            Field(name = "age", dataType = IntType(autoincrement = false)),
+                            Field(name = "first_name", dataType = StringType(maxLength = null)),
+                            Field(name = "id", dataType = IntType(autoincrement = true)),
+                            Field(name = "last_name", dataType = StringType(maxLength = null)),
+                        ),
+                    primaryKeyFields = listOf("id"),
+                )
             assertEquals(expected = expected, actual = actual)
             executor.execute("DROP TABLE tmp20210708")
         }

@@ -1,8 +1,6 @@
 package adapter
 
 import domain.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.DriverManager
@@ -10,14 +8,17 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JdbcExecutorTest {
-    private fun connect(): Connection = DriverManager.getConnection(
-        "jdbc:postgresql://localhost:5432/testdb",
-        System.getenv("DB_USER"),
-        System.getenv("DB_PASS")
-    )
+    private fun connect(): Connection =
+        DriverManager.getConnection(
+            "jdbc:postgresql://localhost:5432/testdb",
+            System.getenv("DB_USER"),
+            System.getenv("DB_PASS")
+        )
 
     @Test
     fun test_execute() {
@@ -27,8 +28,10 @@ class JdbcExecutorTest {
             executor.execute("DROP TABLE IF EXISTS tmp20210707")
             executor.execute("CREATE TEMP TABLE tmp20210707 (id INT PRIMARY KEY)")
             executor.execute("INSERT INTO tmp20210707 (id) VALUES (1)")
+
             val result = executor.fetchInt("SELECT id FROM tmp20210707")
             assertEquals(expected = 1, actual = result)
+
             executor.execute("DROP TABLE tmp20210707")
         }
     }
@@ -39,34 +42,42 @@ class JdbcExecutorTest {
             val executor = JdbcExecutor(con)
 
             executor.execute("DROP TABLE IF EXISTS sales.tmp20210707")
-            executor.execute("CREATE TABLE sales.tmp20210707 (id INT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL)")
-            executor.execute("INSERT INTO sales.tmp20210707 (id, first_name, last_name) VALUES (1, 'Mark', 'Stefanovic')")
+            executor.execute(
+                "CREATE TABLE sales.tmp20210707 (id INT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL)"
+            )
+            executor.execute(
+                "INSERT INTO sales.tmp20210707 (id, first_name, last_name) VALUES (1, 'Mark', 'Stefanovic')"
+            )
 
-            val table = Table(
-                schema = "sales",
-                name = "tmp20210707",
-                fields = setOf(
-                    Field(
-                        name = "id",
-                        dataType = IntType(autoincrement = true),
-                    ),
-                    Field(
-                        name = "first_name",
-                        dataType = StringType(maxLength = 40),
-                    ),
-                    Field(
-                        name = "last_name",
-                        dataType = StringType(maxLength = 40),
-                    )
-                ),
-                primaryKeyFields = listOf("id"),
-            )
-            val actual = executor.fetchRow(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
-            val expected = Row.of(
-                "id" to IntValue(1),
-                "first_name" to StringValue("Mark", maxLength = 40),
-                "last_name" to StringValue("Stefanovic", maxLength = 40),
-            )
+            val table =
+                Table(
+                    schema = "sales",
+                    name = "tmp20210707",
+                    fields =
+                        setOf(
+                            Field(
+                                name = "id",
+                                dataType = IntType(autoincrement = true),
+                            ),
+                            Field(
+                                name = "first_name",
+                                dataType = StringType(maxLength = 40),
+                            ),
+                            Field(
+                                name = "last_name",
+                                dataType = StringType(maxLength = 40),
+                            )
+                        ),
+                    primaryKeyFields = listOf("id"),
+                )
+            val actual =
+                executor.fetchRow(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
+            val expected =
+                Row.of(
+                    "id" to IntValue(1),
+                    "first_name" to StringValue("Mark", maxLength = 40),
+                    "last_name" to StringValue("Stefanovic", maxLength = 40),
+                )
             assertEquals(expected = expected, actual = actual)
             executor.execute("DROP TABLE sales.tmp20210707")
         }
@@ -78,7 +89,9 @@ class JdbcExecutorTest {
             val executor = JdbcExecutor(con)
 
             executor.execute("DROP TABLE IF EXISTS sales.tmp20210707")
-            executor.execute("CREATE TABLE sales.tmp20210707 (id INT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL)")
+            executor.execute(
+                "CREATE TABLE sales.tmp20210707 (id INT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL)"
+            )
             executor.execute(
                 """
                 INSERT INTO sales.tmp20210707 (id, first_name, last_name) 
@@ -86,43 +99,47 @@ class JdbcExecutorTest {
             """
             )
 
-            val table = domain.Table(
-                schema = "sales",
-                name = "tmp20210707",
-                fields = setOf(
-                    Field(
-                        name = "id",
-                        dataType = IntType(autoincrement = true),
+            val table =
+                domain.Table(
+                    schema = "sales",
+                    name = "tmp20210707",
+                    fields =
+                        setOf(
+                            Field(
+                                name = "id",
+                                dataType = IntType(autoincrement = true),
+                            ),
+                            Field(
+                                name = "first_name",
+                                dataType = StringType(maxLength = 40),
+                            ),
+                            Field(
+                                name = "last_name",
+                                dataType = StringType(maxLength = 40),
+                            )
+                        ),
+                    primaryKeyFields = listOf("id"),
+                )
+            val actual =
+                executor.fetchRows(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
+            val expected =
+                listOf(
+                    Row.of(
+                        "id" to IntValue(1),
+                        "first_name" to StringValue("Mark", maxLength = 40),
+                        "last_name" to StringValue("Stefanovic", maxLength = 40),
                     ),
-                    Field(
-                        name = "first_name",
-                        dataType = StringType(maxLength = 40),
+                    Row.of(
+                        "id" to IntValue(2),
+                        "first_name" to StringValue("Bob", maxLength = 40),
+                        "last_name" to StringValue("Smith", maxLength = 40),
                     ),
-                    Field(
-                        name = "last_name",
-                        dataType = StringType(maxLength = 40),
-                    )
-                ),
-                primaryKeyFields = listOf("id"),
-            )
-            val actual = executor.fetchRows(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
-            val expected = listOf(
-                Row.of(
-                    "id" to IntValue(1),
-                    "first_name" to StringValue("Mark", maxLength = 40),
-                    "last_name" to StringValue("Stefanovic", maxLength = 40),
-                ),
-                Row.of(
-                    "id" to IntValue(2),
-                    "first_name" to StringValue("Bob", maxLength = 40),
-                    "last_name" to StringValue("Smith", maxLength = 40),
-                ),
-                Row.of(
-                    "id" to IntValue(3),
-                    "first_name" to StringValue("Olive", maxLength = 40),
-                    "last_name" to StringValue("Oil", maxLength = 40),
-                ),
-            )
+                    Row.of(
+                        "id" to IntValue(3),
+                        "first_name" to StringValue("Olive", maxLength = 40),
+                        "last_name" to StringValue("Oil", maxLength = 40),
+                    ),
+                )
             assertEquals(expected = expected, actual = actual)
             executor.execute("DROP TABLE sales.tmp20210707")
         }
@@ -256,7 +273,10 @@ class JdbcExecutorTest {
 
             assertEquals(null as BigDecimal?, executor.fetchNullableDecimal("SELECT NULL"))
 
-            assertEquals(BigDecimal.valueOf(1.234), executor.fetchNullableDecimal("SELECT 1.234::DECIMAL(4, 3)"))
+            assertEquals(
+                BigDecimal.valueOf(1.234),
+                executor.fetchNullableDecimal("SELECT 1.234::DECIMAL(4, 3)")
+            )
         }
     }
 
@@ -281,7 +301,10 @@ class JdbcExecutorTest {
         connect().use { con ->
             val executor = JdbcExecutor(con)
 
-            assertEquals(BigDecimal.valueOf(1.234), executor.fetchDecimal("SELECT 1.234::DECIMAL(4, 3)"))
+            assertEquals(
+                BigDecimal.valueOf(1.234),
+                executor.fetchDecimal("SELECT 1.234::DECIMAL(4, 3)")
+            )
         }
     }
 
@@ -311,7 +334,6 @@ class JdbcExecutorTest {
             assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableInt("SELECT") }
         }
     }
-
 
     @Test
     fun test_fetchInt() {

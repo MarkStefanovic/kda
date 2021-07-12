@@ -7,20 +7,27 @@ value class Row(private val row: Map<String, Value<*>>) {
         require(row.keys.all { fld -> fld.isNotEmpty() })
     }
 
-    fun value(fieldName: String): Value<*> =
-        row[fieldName] ?: error(
-            "A field named $fieldName was not found in the row.  " +
-                "Available fields include the following: ${row.keys.joinToString(", ")}"
-        )
+    val fieldNames: Set<String>
+        get() = row.keys
 
-    fun subset(vararg fieldNames: String): Row {
-        require(fieldNames.all { fldName -> row.containsKey(fldName) })
-        val subset = fieldNames.sorted().associateWith { fieldName -> row[fieldName]!! }
-        return Row(subset)
+    fun value(fieldName: String): Value<*> =
+        row[fieldName]
+            ?: error(
+                "A field named $fieldName was not found in the row.  " +
+                    "Available fields include the following: ${row.keys.joinToString(", ")}"
+            )
+
+    fun subset(fieldNames: Set<String>): Row {
+        return if (fieldNames.toSet() == row.keys) {
+            this
+        } else {
+            require(fieldNames.all { fldName -> row.containsKey(fldName) })
+            val subset = fieldNames.associateWith { fieldName -> row[fieldName]!! }
+            Row(subset)
+        }
     }
 
     companion object {
-        fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row =
-            Row(keyValuePairs.toMap())
+        fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())
     }
 }
