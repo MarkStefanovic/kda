@@ -30,9 +30,9 @@ class IndexedRows(private val rows: Map<Row, Row>) : Map<Row, Row> by rows {
     }
 }
 
-fun List<Row>.index(keyFields: Set<Field>): IndexedRows =
+fun List<Row>.index(keyFields: Set<String>): IndexedRows =
     IndexedRows(
         associateBy { row ->
-            Row(keyFields.associate { fld -> fld.name to row.value(fld.name) })
+            Row(keyFields.associate { fldName -> fldName to row.value(fldName) })
         }
     )

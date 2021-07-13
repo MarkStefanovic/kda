@@ -5,11 +5,13 @@ interface SQLAdapter {
 
     fun dropTable(schema: String?, table: String): String
 
-    fun add(table: Table, rows: IndexedRows): String
+    fun add(table: Table, rows: Set<Row>): String
 
-    fun delete(table: Table, primaryKeyValues: IndexedRows): String
+    fun delete(table: Table, primaryKeyValues: Set<Row>): String
 
-    fun update(table: Table, rows: IndexedRows): String
+    fun update(table: Table, rows: Set<Row>): String
 
-    fun select(table: Table, primaryKeyValues: IndexedRows): String
+    fun select(table: Table): String
+
+    fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String
 }

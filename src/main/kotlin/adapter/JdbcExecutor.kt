@@ -44,23 +44,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
         return value
     }
 
-    override fun fetchNullableFloat(sql: String): Float? = con.createStatement().use { stmt ->
-        stmt.executeQuery(sql).use { rs ->
-            rs.next()
-
-            val value = try {
-                rs.getObject(1)
-            } catch (e: Exception) {
-                if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql) else throw e
-            }
-
-            try {
-                (value as Double?)?.toFloat()
-            } catch (e: ClassCastException) {
-                throw NotAFloat(value)
-            }
-        }
-    }
+    override fun fetchNullableFloat(sql: String): Float? = fetchScalar(sql) { v -> (v as Double?)?.toFloat() }
 
     override fun fetchFloat(sql: String): Float {
         val value = fetchNullableFloat(sql)
@@ -68,23 +52,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
         return value
     }
 
-    override fun fetchNullableInt(sql: String): Int? = con.createStatement().use { stmt ->
-        stmt.executeQuery(sql).use { rs ->
-            rs.next()
-
-            val value = try {
-                rs.getObject(1)
-            } catch (e: Exception) {
-                if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql) else throw e
-            }
-
-            try {
-                if (value is Long) value.toInt() else value as Int?
-            } catch (e: ClassCastException) {
-                throw NotAnInt(value)
-            }
-        }
-    }
+    override fun fetchNullableInt(sql: String): Int? = fetchScalar(sql) { v -> if (v is Long) v.toInt() else v as Int? }
 
     override fun fetchInt(sql: String): Int {
         val value = fetchNullableInt(sql)
@@ -92,23 +60,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
         return value
     }
 
-    override fun fetchNullableString(sql: String): String? = con.createStatement().use { stmt ->
-        stmt.executeQuery(sql).use { rs ->
-            rs.next()
-
-            val value = try {
-                rs.getObject(1)
-            } catch (e: Exception) {
-                if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql) else throw e
-            }
-
-            try {
-                value as String?
-            } catch (e: ClassCastException) {
-                throw NotAString(value)
-            }
-        }
-    }
+    override fun fetchNullableString(sql: String): String? = fetchScalar(sql) { v -> v as String? }
 
     override fun fetchString(sql: String): String {
         val value = fetchNullableString(sql)
@@ -133,7 +85,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
         return rows
     }
 
-    private inline fun <reified T : Any?> fetchScalar(sql: String, cast: (v: Any?) -> T?) =
+    private inline fun <reified T : Any> fetchScalar(sql: String, cast: (v: Any?) -> T?) =
         con.createStatement().use { stmt ->
             stmt.executeQuery(sql).use { rs ->
                 rs.next()
@@ -144,7 +96,11 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
                 }
 
                 try {
-                    if (value is T) cast(value) else value as T?
+                    when (value) {
+                        null -> null
+                        is T -> value
+                        else -> cast(value)
+                    }
                 } catch (e: ClassCastException) {
                     throw ValueError(value = value, expectedType = T::class.simpleName ?: "Unknown")
                 }

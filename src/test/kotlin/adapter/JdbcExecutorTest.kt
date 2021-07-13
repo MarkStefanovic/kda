@@ -203,7 +203,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableDate_not_a_date() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotADate>("test") { executor.fetchNullableDate("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableDate("SELECT 'a'") }
         }
     }
 
@@ -242,7 +242,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableDateTime_not_a_timestamp() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotATimestamp>("test") { executor.fetchNullableDateTime("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableDateTime("SELECT 'a'") }
         }
     }
 
@@ -284,7 +284,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableDecimal_not_a_decimal() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotADecimal>("test") { executor.fetchNullableDecimal("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableDecimal("SELECT 'a'") }
         }
     }
 
@@ -323,7 +323,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableInt_not_a_decimal() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotAnInt>("test") { executor.fetchNullableInt("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableInt("SELECT 'a'") }
         }
     }
 
@@ -359,7 +359,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableFloat_not_a_decimal() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotAFloat>("test") { executor.fetchNullableFloat("SELECT 'a'") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'") }
         }
     }
 
@@ -395,7 +395,7 @@ class JdbcExecutorTest {
     fun test_fetchNullableString_not_a_string() {
         connect().use { con ->
             val executor = JdbcExecutor(con)
-            assertFailsWith<NotAString>("test") { executor.fetchNullableString("SELECT 1") }
+            assertFailsWith<ValueError>("test") { executor.fetchNullableString("SELECT 1") }
         }
     }
 

@@ -278,7 +278,7 @@ class StdSQLAdapterTest {
                         "last_name" to StringValue("Oil", maxLength = 40),
                     ),
             )
-        val sql = pgSQLAdapter.select(table = table, primaryKeyValues = rows)
+        val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
         val expected =
             "SELECT customer_id, first_name, last_name FROM sales.customer WHERE customer_id IN (1, 2, 3)"
         assertEquals(expected = expected, actual = sql)
@@ -328,7 +328,7 @@ class StdSQLAdapterTest {
                         "last_name" to StringValue("Oil", maxLength = 40),
                     ),
             )
-        val sql = pgSQLAdapter.select(table = table, primaryKeyValues = rows)
+        val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
         val expected =
             "WITH v (first_name, last_name) AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith'), ('Olive', 'Oil')) " +
                 "SELECT age, first_name, last_name " +

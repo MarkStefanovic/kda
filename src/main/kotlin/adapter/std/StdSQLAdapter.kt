@@ -6,7 +6,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     override fun createTable(table: Table): String {
         val colDefCSV = table.fields.joinToString(", ") { fld -> impl.fieldDef(fld) }
         val pkCSV =
-            table.sortedPrimaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
+            table.primaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
         val tableName = fullTableName(schema = table.schema, table = table.name)
         return "CREATE TABLE $tableName ($colDefCSV, PRIMARY KEY ($pkCSV))"
     }
@@ -15,7 +15,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         return "DROP TABLE ${fullTableName(schema = schema, table = table)}"
     }
 
-    override fun add(table: Table, rows: IndexedRows): String {
+    override fun add(table: Table, rows: Set<Row>): String {
         val fieldNames = table.sortedFieldNames
         val fieldNameCSV = fieldNames.joinToString(", ") { fldName -> impl.wrapName(fldName) }
         val valuesCSV = impl.valuesExpression(fieldNames = fieldNames, rows = rows)
@@ -23,19 +23,19 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         return "INSERT INTO $tableName ($fieldNameCSV) VALUES $valuesCSV"
     }
 
-    override fun delete(table: Table, primaryKeyValues: IndexedRows): String {
+    override fun delete(table: Table, primaryKeyValues: Set<Row>): String {
         val tableName = fullTableName(schema = table.schema, table = table.name)
 
-        return if (table.sortedPrimaryKeyFieldNames.count() > 1) {
+        return if (table.primaryKeyFieldNames.count() > 1) {
             val whereClause =
-                table.sortedPrimaryKeyFieldNames //
+                table.primaryKeyFieldNames //
                     .map { fld -> impl.wrapName(fld) }
                     .joinToString(" AND ") { fld -> "t.$fld = d.$fld" }
             val pkColNames = pkColNameCSV(table)
             val valuesCSV =
                 primaryKeyValues.values.joinToString(", ") { row ->
                     val pkValCSV =
-                        table.sortedPrimaryKeyFieldNames.joinToString(", ") { fld ->
+                        table.primaryKeyFieldNames.joinToString(", ") { fld ->
                             impl.wrapValue(row.value(fld))
                         }
                     "($pkValCSV)"
@@ -43,12 +43,12 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
             "WITH d ($pkColNames) AS (VALUES $valuesCSV) " +
                 "DELETE FROM $tableName t USING d WHERE $whereClause"
         } else {
-            val pkCol = impl.wrapName(table.sortedPrimaryKeyFieldNames.first())
+            val pkCol = impl.wrapName(table.primaryKeyFieldNames.first())
             val valuesCSV =
                 primaryKeyValues
                     .values
                     .flatMap { row ->
-                        table.sortedPrimaryKeyFieldNames.map { fld ->
+                        table.primaryKeyFieldNames.map { fld ->
                             impl.wrapValue(row.value(fld))
                         }
                     }
@@ -57,14 +57,14 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         }
     }
 
-    override fun update(table: Table, rows: IndexedRows): String {
+    override fun update(table: Table, rows: Set<Row>): String {
         val fieldNames = table.sortedFieldNames
         val colNameCSV = fieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
         val whereClause =
-            table.sortedPrimaryKeyFieldNames //
+            table.primaryKeyFieldNames //
                 .map { fld -> impl.wrapName(fld) }
                 .joinToString("AND ") { fld -> "t.$fld = u.$fld" }
-        val nonPKCols = fieldNames.toSet() - table.sortedPrimaryKeyFieldNames.toSet()
+        val nonPKCols = fieldNames.toSet() - table.primaryKeyFieldNames.toSet()
         val setClause =
             nonPKCols //
                 .sorted()
@@ -77,10 +77,16 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
             "UPDATE $tableName AS t SET $setClause FROM u ON $whereClause"
     }
 
-    override fun select(table: Table, primaryKeyValues: IndexedRows): String {
+    override fun select(table: Table): String {
         val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
         val tableName = fullTableName(schema = table.schema, table = table.name)
-        val pkCols = table.sortedPrimaryKeyFieldNames
+        return "SELECT $colNameCSV FROM $tableName"
+    }
+
+    override fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String {
+        val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
+        val tableName = fullTableName(schema = table.schema, table = table.name)
+        val pkCols = table.primaryKeyFieldNames
         return if (pkCols.count() > 1) {
             val pkColNameCSV = pkCols.joinToString(", ") { fld -> impl.wrapName(fld) }
             val pkValues = impl.valuesExpression(fieldNames = pkCols, rows = primaryKeyValues)
@@ -106,5 +112,5 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         else "${impl.wrapName(schema)}.${impl.wrapName(table)}"
 
     private fun pkColNameCSV(table: Table): String =
-        table.sortedPrimaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
+        table.primaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
 }

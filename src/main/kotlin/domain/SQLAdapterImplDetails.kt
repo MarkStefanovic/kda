@@ -25,5 +25,5 @@ interface SQLAdapterImplDetails {
 
     fun wrapStringValue(value: String?, maxLength: Int?): String
 
-    fun valuesExpression(fieldNames: List<String>, rows: IndexedRows): String
+    fun valuesExpression(fieldNames: List<String>, rows: Set<Row>): String
 }
