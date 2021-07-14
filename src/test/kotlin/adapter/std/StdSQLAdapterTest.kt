@@ -29,7 +29,7 @@ class StdSQLAdapterTest {
                             dataType = StringType(maxLength = 40),
                         ),
                     ),
-                primaryKeyFields = listOf("customer_id"),
+                primaryKeyFieldNames = listOf("customer_id"),
             )
         val sql = pgSQLAdapter.createTable(table)
         val expected =
@@ -66,28 +66,25 @@ class StdSQLAdapterTest {
                             dataType = StringType(maxLength = 40),
                         ),
                     ),
-                primaryKeyFields = listOf("customer_id"),
+                primaryKeyFieldNames = listOf("customer_id"),
             )
         val rows =
-            IndexedRows.of(
-                Row.of("customer_id" to IntValue(1)) to
-                    Row.of(
-                        "customer_id" to IntValue(1),
-                        "first_name" to StringValue("Mark", maxLength = 40),
-                        "last_name" to StringValue("Stefanovic", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(2)) to
-                    Row.of(
-                        "customer_id" to IntValue(2),
-                        "first_name" to StringValue("Bob", maxLength = 40),
-                        "last_name" to StringValue("Smith", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(3)) to
-                    Row.of(
-                        "customer_id" to IntValue(3),
-                        "first_name" to StringValue("Olive", maxLength = 40),
-                        "last_name" to StringValue("Oil", maxLength = 40),
-                    ),
+            setOf(
+                Row.of(
+                    "customer_id" to IntValue(1),
+                    "first_name" to StringValue("Mark", maxLength = 40),
+                    "last_name" to StringValue("Stefanovic", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(2),
+                    "first_name" to StringValue("Bob", maxLength = 40),
+                    "last_name" to StringValue("Smith", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(3),
+                    "first_name" to StringValue("Olive", maxLength = 40),
+                    "last_name" to StringValue("Oil", maxLength = 40),
+                ),
             )
         val sql = pgSQLAdapter.add(table = table, rows = rows)
         val expected =
@@ -108,28 +105,25 @@ class StdSQLAdapterTest {
                         Field(name = "first_name", dataType = StringType(maxLength = 40)),
                         Field(name = "last_name", dataType = StringType(maxLength = 40)),
                     ),
-                primaryKeyFields = listOf("customer_id"),
+                primaryKeyFieldNames = listOf("customer_id"),
             )
         val rows =
-            IndexedRows.of(
-                Row.of("customer_id" to IntValue(1)) to
-                    Row.of(
-                        "customer_id" to IntValue(1),
-                        "first_name" to StringValue(value = "Mark", maxLength = 40),
-                        "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(2)) to
-                    Row.of(
-                        "customer_id" to IntValue(2),
-                        "first_name" to StringValue(value = "Bob", maxLength = 40),
-                        "last_name" to StringValue(value = "Smith", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(3)) to
-                    Row.of(
-                        "customer_id" to IntValue(3),
-                        "first_name" to StringValue(value = "Olive", maxLength = 40),
-                        "last_name" to StringValue(value = "Oil", maxLength = 40),
-                    ),
+            setOf(
+                Row.of(
+                    "customer_id" to IntValue(1),
+                    "first_name" to StringValue(value = "Mark", maxLength = 40),
+                    "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(2),
+                    "first_name" to StringValue(value = "Bob", maxLength = 40),
+                    "last_name" to StringValue(value = "Smith", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(3),
+                    "first_name" to StringValue(value = "Olive", maxLength = 40),
+                    "last_name" to StringValue(value = "Oil", maxLength = 40),
+                ),
             )
         val sql = pgSQLAdapter.delete(table = table, primaryKeyValues = rows)
         val expected = "DELETE FROM sales.customer WHERE customer_id IN (1, 2, 3)"
@@ -148,30 +142,22 @@ class StdSQLAdapterTest {
                         Field(name = "last_name", dataType = StringType(maxLength = 40)),
                         Field(name = "age", dataType = IntType(autoincrement = true)),
                     ),
-                primaryKeyFields = listOf("first_name", "last_name"),
+                primaryKeyFieldNames = listOf("first_name", "last_name"),
             )
-        assertEquals(table.sortedPrimaryKeyFieldNames, listOf("first_name", "last_name"))
+        assertEquals(table.primaryKeyFieldNames, listOf("first_name", "last_name"))
 
         val rows =
-            IndexedRows.of(
+            setOf(
                 Row.of(
                     "first_name" to StringValue("Mark", 40),
                     "last_name" to StringValue("Stefanovic", 40),
-                ) to
-                    Row.of(
-                        "first_name" to StringValue("Mark", 40),
-                        "last_name" to StringValue("Stefanovic", 40),
-                        "age" to IntValue(99)
-                    ),
+                    "age" to IntValue(99)
+                ),
                 Row.of(
                     "first_name" to StringValue("Bob", 40),
                     "last_name" to StringValue("Smith", 40),
-                ) to
-                    Row.of(
-                        "first_name" to StringValue("Bob", 40),
-                        "last_name" to StringValue("Smith", 40),
-                        "age" to IntValue(74)
-                    ),
+                    "age" to IntValue(74)
+                ),
             )
         val sql = pgSQLAdapter.delete(table = table, primaryKeyValues = rows)
         val expected =
@@ -202,28 +188,25 @@ class StdSQLAdapterTest {
                             dataType = StringType(maxLength = 40),
                         ),
                     ),
-                primaryKeyFields = listOf("customer_id"),
+                primaryKeyFieldNames = listOf("customer_id"),
             )
         val rows =
-            IndexedRows.of(
-                Row.of("id" to IntValue(1)) to
-                    Row.of(
-                        "customer_id" to IntValue(1),
-                        "first_name" to StringValue("Mark", maxLength = 40),
-                        "last_name" to StringValue("Stefanovic", maxLength = 40),
-                    ),
-                Row.of("id" to IntValue(2)) to
-                    Row.of(
-                        "customer_id" to IntValue(2),
-                        "first_name" to StringValue("Bob", maxLength = 40),
-                        "last_name" to StringValue("Smith", maxLength = 40),
-                    ),
-                Row.of("id" to IntValue(3)) to
-                    Row.of(
-                        "customer_id" to IntValue(3),
-                        "first_name" to StringValue("Olive", maxLength = 40),
-                        "last_name" to StringValue("Oil", maxLength = 40),
-                    ),
+            setOf(
+                Row.of(
+                    "customer_id" to IntValue(1),
+                    "first_name" to StringValue("Mark", maxLength = 40),
+                    "last_name" to StringValue("Stefanovic", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(2),
+                    "first_name" to StringValue("Bob", maxLength = 40),
+                    "last_name" to StringValue("Smith", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(3),
+                    "first_name" to StringValue("Olive", maxLength = 40),
+                    "last_name" to StringValue("Oil", maxLength = 40),
+                ),
             )
         val sql = pgSQLAdapter.update(table = table, rows = rows)
         val expected =
@@ -255,28 +238,25 @@ class StdSQLAdapterTest {
                             dataType = StringType(maxLength = 40),
                         ),
                     ),
-                primaryKeyFields = listOf("customer_id"),
+                primaryKeyFieldNames = listOf("customer_id"),
             )
         val rows =
-            IndexedRows.of(
-                Row.of("customer_id" to IntValue(1)) to
-                    Row.of(
-                        "customer_id" to IntValue(1),
-                        "first_name" to StringValue("Mark", maxLength = 40),
-                        "last_name" to StringValue("Stefanovic", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(2)) to
-                    Row.of(
-                        "customer_id" to IntValue(2),
-                        "first_name" to StringValue("Bob", maxLength = 40),
-                        "last_name" to StringValue("Smith", maxLength = 40),
-                    ),
-                Row.of("customer_id" to IntValue(3)) to
-                    Row.of(
-                        "customer_id" to IntValue(3),
-                        "first_name" to StringValue("Olive", maxLength = 40),
-                        "last_name" to StringValue("Oil", maxLength = 40),
-                    ),
+            setOf(
+                Row.of(
+                    "customer_id" to IntValue(1),
+                    "first_name" to StringValue("Mark", maxLength = 40),
+                    "last_name" to StringValue("Stefanovic", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(2),
+                    "first_name" to StringValue("Bob", maxLength = 40),
+                    "last_name" to StringValue("Smith", maxLength = 40),
+                ),
+                Row.of(
+                    "customer_id" to IntValue(3),
+                    "first_name" to StringValue("Olive", maxLength = 40),
+                    "last_name" to StringValue("Oil", maxLength = 40),
+                ),
             )
         val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
         val expected =
@@ -305,28 +285,25 @@ class StdSQLAdapterTest {
                             dataType = StringType(maxLength = 40),
                         ),
                     ),
-                primaryKeyFields = listOf("first_name", "last_name"),
+                primaryKeyFieldNames = listOf("first_name", "last_name"),
             )
         val rows =
-            IndexedRows.of(
-                Row.of("id" to IntValue(1)) to
-                    Row.of(
-                        "age" to IntValue(52),
-                        "first_name" to StringValue("Mark", maxLength = 40),
-                        "last_name" to StringValue("Stefanovic", maxLength = 40),
-                    ),
-                Row.of("id" to IntValue(2)) to
-                    Row.of(
-                        "age" to IntValue(76),
-                        "first_name" to StringValue("Bob", maxLength = 40),
-                        "last_name" to StringValue("Smith", maxLength = 40),
-                    ),
-                Row.of("id" to IntValue(3)) to
-                    Row.of(
-                        "age" to IntValue(94),
-                        "first_name" to StringValue("Olive", maxLength = 40),
-                        "last_name" to StringValue("Oil", maxLength = 40),
-                    ),
+            setOf(
+                Row.of(
+                    "age" to IntValue(52),
+                    "first_name" to StringValue("Mark", maxLength = 40),
+                    "last_name" to StringValue("Stefanovic", maxLength = 40),
+                ),
+                Row.of(
+                    "age" to IntValue(76),
+                    "first_name" to StringValue("Bob", maxLength = 40),
+                    "last_name" to StringValue("Smith", maxLength = 40),
+                ),
+                Row.of(
+                    "age" to IntValue(94),
+                    "first_name" to StringValue("Olive", maxLength = 40),
+                    "last_name" to StringValue("Oil", maxLength = 40),
+                ),
             )
         val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
         val expected =

@@ -68,7 +68,7 @@ class JdbcExecutorTest {
                                 dataType = StringType(maxLength = 40),
                             )
                         ),
-                    primaryKeyFields = listOf("id"),
+                    primaryKeyFieldNames = listOf("id"),
                 )
             val actual =
                 executor.fetchRow(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
@@ -118,12 +118,12 @@ class JdbcExecutorTest {
                                 dataType = StringType(maxLength = 40),
                             )
                         ),
-                    primaryKeyFields = listOf("id"),
+                    primaryKeyFieldNames = listOf("id"),
                 )
             val actual =
                 executor.fetchRows(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
             val expected =
-                listOf(
+                setOf(
                     Row.of(
                         "id" to IntValue(1),
                         "first_name" to StringValue("Mark", maxLength = 40),

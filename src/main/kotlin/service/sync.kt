@@ -14,134 +14,157 @@ fun sync(
     destSchema: String?,
     destTable: String,
     compareFields: Set<String>? = null,
-    pkFields: List<String>? = null,
+    primaryKeyFieldNames: List<String>? = null,
     includeFields: Set<String>? = null,
     maxFloatDigits: Int = 5,
 ): SyncResult {
-    if (compareFields != null) require(compareFields.count() > 0) {
-        "If compareFields is provided, then it must contain at least one field name."
-    }
-
-    if (pkFields != null) require(pkFields.count() > 0) {
-        "If pkFields is provided, then it must contain at least one field name."
-    }
-
-    if (includeFields != null) require(includeFields.count() > 0) {
-        "If includeFields is provided, then it must contain at least one field name."
-    }
-
-    val src = when (srcDialect) {
-        Dialect.HortonworksHive -> TODO()
-        Dialect.PostgreSQL      -> pgDatasource(con = srcCon)
-    }
-
-    val dest = when (destDialect) {
-        Dialect.HortonworksHive -> TODO()
-        Dialect.PostgreSQL      -> pgDatasource(con = destCon)
-    }
-
-    var srcTableDef = src.inspector.inspectTable(schema = srcSchema, table = srcTable, maxFloatDigits = maxFloatDigits)
-
-    val pkFieldsFinal: List<String> = if (pkFields == null) {
-        srcTableDef.primaryKeyFieldNames
-    } else {
-        require(pkFields.all { fldName -> srcTableDef.sortedFieldNames.contains(fldName) }) {
-            val missingFields: Set<String> = srcTableDef.sortedFieldNames.toSet().minus(pkFields.toSet())
-            "The following primary key field(s) were specified: ${pkFields.joinToString(", ")}.  " + "However, the table does not include the following fields: ${
-                missingFields.joinToString(", ")
-            }.  " + "The table includes the following fields: ${srcTableDef.sortedFieldNames.joinToString(", ")}"
+    if (compareFields != null)
+        require(compareFields.count() > 0) {
+            "If compareFields is provided, then it must contain at least one field name."
         }
-        pkFields
-    }
 
-    val fieldsFinal: Set<Field> = if (includeFields == null) {
-        srcTableDef.fields
-    } else {
-        require(includeFields.all { fldName -> srcTableDef.sortedFieldNames.contains(fldName) }) {
-            val missingFields: Set<String> = includeFields.minus(pkFieldsFinal.toSet())
-            "The includeFields specified, ${includeFields.joinToString(", ")}, does not include the " + "following primary-key fields: ${
-                missingFields.joinToString(", ")
-            }."
+    if (primaryKeyFieldNames != null)
+        require(primaryKeyFieldNames.count() > 0) {
+            "If pkFields is provided, then it must contain at least one field name."
         }
-        srcTableDef.fields.filter { fld -> fld.name in includeFields }.toSet()
-    }
 
-    val srcTableDefFinal = srcTableDef.copy(
-        fields = fieldsFinal,
-        primaryKeyFieldNames = pkFieldsFinal,
-    )
+    if (includeFields != null)
+        require(includeFields.count() > 0) {
+            "If includeFields is provided, then it must contain at least one field name."
+        }
 
-    val destTableDefFinal = srcTableDefFinal.copy(
-        schema = destSchema,
-        name = destTable,
-    )
+    val src: Datasource =
+        when (srcDialect) {
+            Dialect.HortonworksHive -> TODO()
+            Dialect.PostgreSQL -> pgDatasource(con = srcCon)
+        }
 
-    val compareFieldNamesFinal: Set<String> = if (compareFields == null) {
-        srcTableDefFinal.sortedFieldNames.toSet().minus(srcTableDefFinal.primaryKeyFieldNames)
-    } else {
-        srcTableDefFinal.sortedFieldNames.filter { fldName -> fldName in compareFields }.toSet()
-    }
+    val dest: Datasource =
+        when (destDialect) {
+            Dialect.HortonworksHive -> TODO()
+            Dialect.PostgreSQL -> pgDatasource(con = destCon)
+        }
 
-    val lkpTableFieldNames = pkFieldsFinal.union(compareFieldNamesFinal)
+    val srcTableDef: Table =
+        src.inspector.inspectTable(
+            schema = srcSchema,
+            table = srcTable,
+            maxFloatDigits = maxFloatDigits
+        )
 
-    val srcLkpTable = srcTableDefFinal.subset(fieldNames = lkpTableFieldNames)
-    val srcKeysSQL: String =
-        src.adapter.select(table = srcLkpTable)
-    val srcKeys: IndexedRows = src.executor.fetchRows(sql = srcKeysSQL, fields = srcTableDefFinal.fields)
-        .index(pkFieldsFinal.toSet())
+    val pkFieldsFinal: List<String> =
+        if (primaryKeyFieldNames == null) {
+            srcTableDef.primaryKeyFieldNames
+        } else {
+            require(primaryKeyFieldNames.all { fldName -> srcTableDef.sortedFieldNames.contains(fldName) }) {
+                val missingFields: Set<String> =
+                    srcTableDef.sortedFieldNames.toSet().minus(primaryKeyFieldNames.toSet())
+                "The following primary key field(s) were specified: ${primaryKeyFieldNames.joinToString(", ")}.  " +
+                    "However, the table does not include the following fields: ${
+                        missingFields.joinToString(", ")
+                    }.  " +
+                    "The table includes the following fields: ${srcTableDef.sortedFieldNames.joinToString(", ")}"
+            }
+            primaryKeyFieldNames
+        }
 
-    val destLkpTable = destTableDefFinal.subset(fieldNames = lkpTableFieldNames)
-    val destKeysSQL: String =
-        dest.adapter.select(table = destLkpTable)
-    val destKeys: IndexedRows = dest.executor.fetchRows(sql = destKeysSQL, fields = srcTableDefFinal.fields)
-        .index(pkFieldsFinal.toSet())
+    val fieldsFinal: Set<Field> =
+        if (includeFields == null) {
+            srcTableDef.fields
+        } else {
+            require(
+                includeFields.all { fldName -> srcTableDef.sortedFieldNames.contains(fldName) }
+            ) {
+                val missingFields: Set<String> = includeFields.minus(pkFieldsFinal.toSet())
+                "The includeFields specified, ${includeFields.joinToString(", ")}, does not include the " +
+                    "following primary-key fields: ${
+                        missingFields.joinToString(", ")
+                    }."
+            }
+            srcTableDef.fields.filter { fld -> fld.name in includeFields }.toSet()
+        }
 
-    val rowDiff: RowDiff = compareRows(
-        old = destKeys,
-        new = srcKeys,
-        includeFields = lkpTableFieldNames,
-        compareFields = compareFieldNamesFinal,
-    )
+    val fieldNamesFinal = fieldsFinal.map { fld -> fld.name }.toSet()
 
-    if (rowDiff.added.keys.count() > 0) {
-        val addedRowsSQL: String = src.adapter.selectKeys(table = srcTableDefFinal, primaryKeyValues = rowDiff.added)
-        val addedRows: List<Row> = src.executor.fetchRows(sql = addedRowsSQL)
-        val insertSQL: String = src.adapter.add(table = destTableDefFinal, rows = addedRows)
-        src.executor.execute(sql = insertSQL)
-    }
-
-//    if (pkFields != null) {
-//        require(pkFields.all { fldName -> srcTableDef.sortedFieldNames.contains(fldName) }) {
-//            val missingFields: Set<String> = srcTableDef.sortedFieldNames.toSet().minus(pkFields)
-//            "The primary key field(s) were specified, ${pkFields.joinToString(", ")}.  " +
-//                "However, the table does not include the following fields: ${missingFields.joinToString(", ")}.  " +
-//                "Available fields include the following: ${srcTableDef.sortedFieldNames.joinToString(", ")}"
-//        }
-//        srcTableDef = srcTableDef.copy(primaryKeyFields = pkFields.toList())
-//    }
-
-    if (includeFields != null) {
-        srcTableDef = srcTableDef.copy(fields = srcTableDef.fields.filter { fld -> fld.name in includeFields }.toSet())
-    }
-
-    val defaultResult = SyncResult.success(
+    val (destTableDefFinal, _) = copyTable(
+        srcCon = srcCon,
+        destCon = destCon,
+        srcDialect = srcDialect,
+        destDialect = destDialect,
         srcSchema = srcSchema,
         srcTable = srcTable,
         destSchema = destSchema,
         destTable = destTable,
-        added = 0,
-        deleted = 0,
-        updated = 0,
+        includeFields = fieldNamesFinal,
+        primaryKeyFields = pkFieldsFinal,
     )
 
-    if (includeFields != null) srcTableDef = srcTableDef.subset(fieldNames = includeFields)
+    val srcTableDefFinal: Table =
+        srcTableDef.copy(
+            fields = fieldsFinal,
+            primaryKeyFieldNames = pkFieldsFinal,
+        )
 
-    val destTableDef = srcTableDef.copy(schema = destSchema, name = destTable)
+    val compareFieldNamesFinal: Set<String> =
+        if (compareFields == null) {
+            fieldNamesFinal.minus(srcTableDefFinal.primaryKeyFieldNames)
+        } else {
+            fieldNamesFinal.filter { fldName -> fldName in compareFields }.toSet()
+        }
 
-    if (!dest.inspector.tableExists(schema = destSchema, table = destTable)) {
-        val createTableSQL = dest.adapter.createTable(destTableDef)
-        dest.executor.execute(createTableSQL)
+    val lkpTableFieldNames = pkFieldsFinal.union(compareFieldNamesFinal)
+
+    val srcLkpTable = srcTableDefFinal.subset(fieldNames = lkpTableFieldNames)
+    val srcKeysSQL: String = src.adapter.select(table = srcLkpTable)
+    val srcLkpRows: Set<Row> =
+        src.executor.fetchRows(sql = srcKeysSQL, fields = srcTableDefFinal.fields)
+
+    val destLkpTable = destTableDefFinal.subset(fieldNames = lkpTableFieldNames)
+    val destKeysSQL: String = dest.adapter.select(table = destLkpTable)
+    val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = srcTableDefFinal.fields)
+
+    val rowDiff: RowDiff =
+        compareRows(
+            old = destLkpRows,
+            new = srcLkpRows,
+            primaryKeyFields = pkFieldsFinal.toSet(),
+            includeFields = lkpTableFieldNames,
+            compareFields = compareFieldNamesFinal,
+        )
+
+    if (rowDiff.added.keys.count() > 0) {
+        val selectSQL: String =
+            src.adapter.selectKeys(table = srcTableDefFinal, primaryKeyValues = rowDiff.added.keys)
+        val addedRows: Set<Row> =
+            src.executor.fetchRows(sql = selectSQL, fields = srcTableDefFinal.fields)
+        val insertSQL: String = src.adapter.add(table = destTableDefFinal, rows = addedRows)
+        src.executor.execute(sql = insertSQL)
     }
 
-    return result
+    if (rowDiff.deleted.keys.count() > 0) {
+        val deleteSQL: String =
+            src.adapter.delete(table = srcTableDefFinal, primaryKeyValues = rowDiff.deleted.keys)
+        src.executor.execute(sql = deleteSQL)
+    }
+
+    if (rowDiff.updated.count() > 0) {
+        val selectSQL: String =
+            src.adapter.selectKeys(
+                table = srcTableDefFinal,
+                primaryKeyValues = rowDiff.updated.keys
+            )
+        val fullRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = fieldsFinal)
+        val updateSQL: String = dest.adapter.update(table = destTableDefFinal, rows = fullRows)
+        dest.executor.execute(sql = updateSQL)
+    }
+
+    return SyncResult.success(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        added = rowDiff.added.count(),
+        deleted = rowDiff.deleted.count(),
+        updated = rowDiff.updated.count(),
+    )
 }

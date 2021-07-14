@@ -2,25 +2,30 @@ package domain
 
 abstract class KDAException(message: String) : Exception(message)
 
-data class NoRowsReturned(val sql: String) : KDAException("The following query returned no results: $sql")
+data class NoRowsReturned(val sql: String) :
+    KDAException("The following query returned no results: $sql")
 
-//data class NotABool(val value: Any) : KDAException("$value is not a Bool.")
+// data class NotABool(val value: Any) : KDAException("$value is not a Bool.")
 //
-//data class NotADate(val value: Any) : KDAException("$value is not a Date.")
+// data class NotADate(val value: Any) : KDAException("$value is not a Date.")
 //
-//data class NotADecimal(val value: Any) : KDAException("$value is not a Decimal.")
+// data class NotADecimal(val value: Any) : KDAException("$value is not a Decimal.")
 //
-//data class NotAFloat(val value: Any) : KDAException("$value is not a Float.")
+// data class NotAFloat(val value: Any) : KDAException("$value is not a Float.")
 //
-//data class NotAnInt(val value: Any) : KDAException("$value is not an Int.")
+// data class NotAnInt(val value: Any) : KDAException("$value is not an Int.")
 
 // data class NotAScalar(val sql: String) :
 //    KDAException("Expecting a scalar result, but the following query returned multiple columns:
 // $sql")
 
-//data class NotAString(val value: Any) : KDAException("$value is not a String.")
+// data class NotAString(val value: Any) : KDAException("$value is not a String.")
 //
-//data class NotATimestamp(val value: Any) : KDAException("$value is not a Timestamp.")
+// data class NotATimestamp(val value: Any) : KDAException("$value is not a Timestamp.")
+
+data class NullValueError(val expectedType: String) :
+    KDAException("Expected a $expectedType value, but the value was null.")
 
 data class ValueError(val value: Any?, val expectedType: String) :
-    KDAException("Expected a $expectedType, but got '$value', type ${value?.javaClass?.simpleName ?: "null"}.")
+    KDAException(
+        "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}.")

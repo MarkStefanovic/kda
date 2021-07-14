@@ -98,7 +98,7 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
             schema = schema,
             name = table,
             fields = fields.toSet(),
-            primaryKeyFields = pkFieldNames,
+            primaryKeyFieldNames = pkFieldNames,
         )
     }
 

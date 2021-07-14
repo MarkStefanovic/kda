@@ -41,7 +41,7 @@ class PgInspectorTest {
                             Field(name = "id", dataType = IntType(autoincrement = true)),
                             Field(name = "last_name", dataType = StringType(maxLength = null)),
                         ),
-                    primaryKeyFields = listOf("id"),
+                    primaryKeyFieldNames = listOf("id"),
                 )
             assertEquals(expected = expected, actual = actual)
             executor.execute("DROP TABLE tmp20210708")

@@ -94,9 +94,9 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
         return "$wrappedFieldName $dataType"
     }
 
-    override fun valuesExpression(fieldNames: List<String>, rows: IndexedRows): String {
+    override fun valuesExpression(fieldNames: List<String>, rows: Set<Row>): String {
         val sortedFieldNames = fieldNames.sorted()
-        return rows.values.joinToString(", ") { row ->
+        return rows.joinToString(", ") { row ->
             rowValuesExpression(sortedFieldNames = sortedFieldNames, row = row)
         }
     }

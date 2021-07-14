@@ -10,8 +10,8 @@ class IndexedRows(private val rows: Map<Row, Row>) : Map<Row, Row> by rows {
     //    val keys: Set<Row>
     //        get() = rows.keys
     //
-    //    val values: List<Row>
-    //        get() = rows.values.toList()
+//        val values: Set<Row>
+//            get() = rows.values.toSet()
     //
     //    fun count(): Int = rows.values.count()
     //
@@ -26,13 +26,16 @@ class IndexedRows(private val rows: Map<Row, Row>) : Map<Row, Row> by rows {
         get() = rows.values.firstOrNull()?.fieldNames ?: setOf()
 
     companion object {
+        fun empty() = IndexedRows(emptyMap())
+
         fun of(vararg keyValuePairs: Pair<Row, Row>) = IndexedRows(keyValuePairs.toMap())
     }
 }
 
-fun List<Row>.index(keyFields: Set<String>): IndexedRows =
+fun Collection<Row>.index(keyFields: Set<String>, includeFields: Set<String>): IndexedRows =
     IndexedRows(
         associateBy { row ->
-            Row(keyFields.associate { fldName -> fldName to row.value(fldName) })
+            val subset = row.subset(fieldNames = includeFields)
+            Row(keyFields.associateWith { fldName -> subset.value(fldName) })
         }
     )

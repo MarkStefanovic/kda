@@ -4,45 +4,47 @@ data class RowDiff(
     val added: IndexedRows,
     val deleted: IndexedRows,
     val updated: IndexedRows,
+    val primaryKeyFields: Set<String>,
     val includeFields: Set<String>,
     val compareFields: Set<String>,
 )
 
+
 fun compareRows(
-    old: IndexedRows,
-    new: IndexedRows,
+    old: Set<Row>,
+    new: Set<Row>,
+    primaryKeyFields: Set<String>,
     includeFields: Set<String>,
     compareFields: Set<String>,
 ): RowDiff {
+
     if (old.count() == 0)
         return RowDiff(
-            added = new,
-            deleted = IndexedRows(emptyMap()),
-            updated = IndexedRows(emptyMap()),
+            added = new.index(keyFields = primaryKeyFields, includeFields = includeFields),
+            deleted = IndexedRows.empty(),
+            updated = IndexedRows.empty(),
+            primaryKeyFields = primaryKeyFields,
             includeFields = includeFields,
             compareFields = compareFields,
         )
 
     if (new.count() == 0)
         return RowDiff(
-            added = IndexedRows(emptyMap()),
-            deleted = old,
-            updated = IndexedRows(emptyMap()),
+            added = IndexedRows.empty(),
+            deleted = old.index(keyFields = primaryKeyFields, includeFields = includeFields),
+            updated = IndexedRows.empty(),
+            primaryKeyFields = primaryKeyFields,
             includeFields = includeFields,
             compareFields = compareFields,
         )
 
-    val oldRows =
-        if (old.fieldNames == includeFields) old
-        else old.mapValues { (_, value) -> value.subset(fieldNames = includeFields) }
+    val oldRows: IndexedRows = old.index(keyFields = primaryKeyFields, includeFields = includeFields)
 
-    val newRows =
-        if (new.fieldNames == includeFields) new
-        else new.mapValues { (_, value) -> value.subset(fieldNames = includeFields) }
+    val newRows: IndexedRows = new.index(keyFields = primaryKeyFields, includeFields = includeFields)
 
-    val addedRows = new.filterKeys { key -> old[key] == null }
+    val addedRows = newRows.filterKeys { key -> oldRows[key] == null }
 
-    val deletedRows = old.filterKeys { key -> new[key] == null }
+    val deletedRows = oldRows.filterKeys { key -> newRows[key] == null }
 
     val updatedRows =
         newRows.filter { (key, value) ->
@@ -55,7 +57,9 @@ fun compareRows(
         added = IndexedRows(addedRows),
         deleted = IndexedRows(deletedRows),
         updated = IndexedRows(updatedRows),
+        primaryKeyFields = primaryKeyFields,
         includeFields = includeFields,
         compareFields = compareFields,
     )
 }
+

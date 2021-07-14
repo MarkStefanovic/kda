@@ -33,7 +33,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
                     .joinToString(" AND ") { fld -> "t.$fld = d.$fld" }
             val pkColNames = pkColNameCSV(table)
             val valuesCSV =
-                primaryKeyValues.values.joinToString(", ") { row ->
+                primaryKeyValues.joinToString(", ") { row ->
                     val pkValCSV =
                         table.primaryKeyFieldNames.joinToString(", ") { fld ->
                             impl.wrapValue(row.value(fld))
@@ -46,7 +46,6 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
             val pkCol = impl.wrapName(table.primaryKeyFieldNames.first())
             val valuesCSV =
                 primaryKeyValues
-                    .values
                     .flatMap { row ->
                         table.primaryKeyFieldNames.map { fld ->
                             impl.wrapValue(row.value(fld))
@@ -100,7 +99,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         } else {
             val pkCol = impl.wrapName(pkCols.first())
             val valuesCSV =
-                primaryKeyValues.values.joinToString(", ") { row ->
+                primaryKeyValues.joinToString(", ") { row ->
                     impl.wrapValue(row.value(pkCol))
                 }
             "SELECT $colNameCSV FROM $tableName WHERE $pkCol IN ($valuesCSV)"
