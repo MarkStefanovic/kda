@@ -7,7 +7,7 @@ import org.junit.jupiter.api.TestInstance
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RowTest {
     @Test
-    fun subset() {
+    fun subset_happy_path() {
         val row =
             Row(
                 mapOf(
