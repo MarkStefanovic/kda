@@ -1,58 +1,31 @@
 package service
 
+import domain.CopyTableResult
 import domain.Dialect
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import kotlin.test.assertIs
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CopyTableTest {
-  private fun connect(): Connection =
-    DriverManager.getConnection(
-      "jdbc:postgresql://localhost:5432/testdb",
-      System.getenv("DB_USER"),
-      System.getenv("DB_PASS")
-    )
-
-  private fun tableExists(con: Connection, schema: String, table: String): Boolean =
-    con.createStatement().use { stmt ->
-      val sql =
-        """
-        SELECT COUNT(*)
-        FROM information_schema.tables 
-        WHERE table_schema = '$schema'
-        AND table_name = '$table'
-        """
-      stmt.executeQuery(sql).use { rs ->
-        rs.next()
-        rs.getInt(1) > 0
-      }
-    }
-
   @Test
-  fun copyTable_happy_path() {
+  fun when_dest_does_not_exist_then_it_should_be_created() {
     connect().use { srcCon: Connection ->
       connect().use { destCon: Connection ->
         destCon.createStatement().use { stmt ->
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
-        }
-        destCon.createStatement().use { stmt ->
-          val sql =
-            """
+          stmt.execute("DROP TABLE IF EXISTS sales.customer2")
+          stmt.execute("""
             CREATE TABLE sales.customer (
                 customer_id SERIAL PRIMARY KEY
             ,   first_name TEXT
             ,   last_name TEXT
             ,   dob DATE
             )
-            """
-          stmt.execute(sql)
-        }
-
-        destCon.createStatement().use { stmt ->
-          stmt.execute("DROP TABLE IF EXISTS sales.customer2")
+            """)
         }
         assert(!tableExists(destCon, "sales", "customer2"))
 
@@ -69,10 +42,10 @@ class CopyTableTest {
             includeFields = setOf("customer_id", "first_name", "last_name", "dob"),
             primaryKeyFields = listOf("customer_id"),
           )
-        assert(result.created)
+        assertIs<CopyTableResult.Success>(result)
         assertEquals(
           expected = setOf("customer_id", "first_name", "last_name", "dob"),
-          actual = result.table.fields.map { fld -> fld.name }.toSet()
+          actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()
         )
         assert(tableExists(destCon, "sales", "customer2"))
       }

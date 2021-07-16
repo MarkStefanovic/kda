@@ -1,31 +1,58 @@
 package domain
 
-abstract class KDAException(message: String) : Exception(message)
+abstract class KDAException(
+  message: String,
+  originalError: Exception?,
+) : Exception(message)
+
+data class CopyTableError(
+  val errorMessage: String,
+  val originalError: Exception? = null,
+) :
+  KDAException(
+    message = errorMessage,
+    originalError = originalError,
+  )
 
 data class NoRowsReturned(val sql: String) :
-    KDAException("The following query returned no results: $sql")
-
-// data class NotABool(val value: Any) : KDAException("$value is not a Bool.")
-//
-// data class NotADate(val value: Any) : KDAException("$value is not a Date.")
-//
-// data class NotADecimal(val value: Any) : KDAException("$value is not a Decimal.")
-//
-// data class NotAFloat(val value: Any) : KDAException("$value is not a Float.")
-//
-// data class NotAnInt(val value: Any) : KDAException("$value is not an Int.")
-
-// data class NotAScalar(val sql: String) :
-//    KDAException("Expecting a scalar result, but the following query returned multiple columns:
-// $sql")
-
-// data class NotAString(val value: Any) : KDAException("$value is not a String.")
-//
-// data class NotATimestamp(val value: Any) : KDAException("$value is not a Timestamp.")
+  KDAException(
+    message = "The following query returned no results: $sql",
+    originalError = null,
+  )
 
 data class NullValueError(val expectedType: String) :
-    KDAException("Expected a $expectedType value, but the value was null.")
+  KDAException(
+    message = "Expected a $expectedType value, but the value was null.",
+    originalError = null,
+  )
 
-data class ValueError(val value: Any?, val expectedType: String) :
-    KDAException(
-        "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}.")
+//sealed class SyncError(
+//  open val errorMessage: String,
+//  open val originalError: Exception? = null,
+//) :
+//  KDAException(
+//    message = errorMessage,
+//    originalError = originalError,
+//  ) {
+//    data class InvalidArgument (
+//      override val errorMessage: String,
+//      override val originalError: Exception? = null,
+//      val argumentName: String,
+//      val argumentValue: Any?,
+//    ): SyncError(errorMessage = errorMessage, originalError = originalError)
+//
+//    data class UnexpectedError (
+//      override val errorMessage: String,
+//      override val originalError: Exception? = null,
+//    ): SyncError(errorMessage = errorMessage, originalError = originalError)
+//  }
+
+data class ValueError(
+  val value: Any?,
+  val expectedType: String,
+) :
+  KDAException(
+    message =
+      "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}.",
+    originalError = null,
+  )

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.TestInstance
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StdSQLAdapterTest {
     @Test
-    fun test_createTable() {
+    fun createTable_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -39,14 +39,14 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_dropTable() {
+    fun dropTable_happy_path() {
         val sql = pgSQLAdapter.dropTable(schema = "sales", table = "customer")
         val expected = "DROP TABLE sales.customer"
         assertEquals(expected = expected, actual = sql)
     }
 
     @Test
-    fun test_add() {
+    fun add_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -94,7 +94,7 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_delete_w_single_pk_col() {
+    fun delete_w_single_pk_col_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -131,7 +131,7 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_delete_w_multi_pk_cols() {
+    fun delete_w_multi_pk_cols_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -168,7 +168,7 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_update() {
+    fun update_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -218,7 +218,7 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_select_w_single_pk_col() {
+    fun select_w_single_pk_col_happy_path() {
         val table =
             Table(
                 schema = "sales",
@@ -265,7 +265,7 @@ class StdSQLAdapterTest {
     }
 
     @Test
-    fun test_select_w_multi_pk_cols() {
+    fun select_w_multi_pk_cols_happy_path() {
         val table =
             Table(
                 schema = "sales",

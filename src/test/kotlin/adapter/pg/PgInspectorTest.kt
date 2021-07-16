@@ -2,21 +2,13 @@ package adapter.pg
 
 import adapter.JdbcExecutor
 import domain.*
-import java.sql.Connection
-import java.sql.DriverManager
-import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import service.connect
+import kotlin.test.assertEquals
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgInspectorTest {
-  private fun connect(): Connection =
-    DriverManager.getConnection(
-      "jdbc:postgresql://localhost:5432/testdb",
-      System.getenv("DB_USER"),
-      System.getenv("DB_PASS")
-    )
-
   @Test
   fun inspectTable_happy_path() {
     connect().use { con ->
