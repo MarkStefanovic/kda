@@ -67,12 +67,22 @@ fun sync(
         Dialect.PostgreSQL -> pgDatasource(con = destCon)
       }
 
-    val actualSrcTableDef: Table =
+    val actualSrcTableDef: Table = try {
       src.inspector.inspectTable(
         schema = srcSchema,
         table = srcTable,
         maxFloatDigits = maxFloatDigits
       )
+    } catch (e: Exception) {
+      return SyncResult.Error.InspectTableFailed(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        errorMessage = "inspectTable(schema = $srcSchema, table = $srcTable, maxFloatingDigits = $maxFloatDigits) failed with the following error: ${e.message}",
+        originalError = e,
+      )
+    }
 
     val pkFieldsFinal: List<String> =
       if (primaryKeyFieldNames == null) {
@@ -153,7 +163,7 @@ fun sync(
             destSchema = destSchema,
             destTable = destTable,
             errorMessage = "If a value is provided, then it must contain at least one field name.",
-            originalError = null,
+            originalError = copyTableResult.originalError,
             srcTableDef = actualSrcTableDef,
           )
         is CopyTableResult.Success -> copyTableResult.destTableDef

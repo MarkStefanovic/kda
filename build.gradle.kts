@@ -1,11 +1,12 @@
-import org.jetbrains.compose.compose
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm") version "1.5.10"
-    id("org.jetbrains.compose") version "0.4.0"
     jacoco
+//    `maven-publish`
+//    id("com.jfrog.bintray") version "1.8.4"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 group = "lime"
@@ -14,14 +15,11 @@ version = "1.0"
 repositories {
     jcenter()
     mavenCentral()
-    maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
 }
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation(compose.desktop.currentOs)
-
-    testImplementation("com.h2database", "h2", "1.4.200")
+//    testImplementation("com.h2database", "h2", "1.4.200")
     implementation("org.postgresql", "postgresql", "42.2.16")
 }
 
@@ -44,13 +42,6 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
-compose.desktop {
-    application {
-        mainClass = "MainKt"
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "kda"
-            packageVersion = "1.0.0"
-        }
-    }
-}
+val artifactID = "kda"
+
+val shadowJar: ShadowJar by tasks

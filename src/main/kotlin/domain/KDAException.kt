@@ -2,12 +2,12 @@ package domain
 
 abstract class KDAException(
   message: String,
-  originalError: Exception?,
+  open val originalError: Exception?,
 ) : Exception(message)
 
 data class CopyTableError(
   val errorMessage: String,
-  val originalError: Exception? = null,
+  override val originalError: Exception? = null,
 ) :
   KDAException(
     message = errorMessage,
@@ -25,27 +25,6 @@ data class NullValueError(val expectedType: String) :
     message = "Expected a $expectedType value, but the value was null.",
     originalError = null,
   )
-
-//sealed class SyncError(
-//  open val errorMessage: String,
-//  open val originalError: Exception? = null,
-//) :
-//  KDAException(
-//    message = errorMessage,
-//    originalError = originalError,
-//  ) {
-//    data class InvalidArgument (
-//      override val errorMessage: String,
-//      override val originalError: Exception? = null,
-//      val argumentName: String,
-//      val argumentValue: Any?,
-//    ): SyncError(errorMessage = errorMessage, originalError = originalError)
-//
-//    data class UnexpectedError (
-//      override val errorMessage: String,
-//      override val originalError: Exception? = null,
-//    ): SyncError(errorMessage = errorMessage, originalError = originalError)
-//  }
 
 data class ValueError(
   val value: Any?,

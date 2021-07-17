@@ -30,11 +30,26 @@ fun copyTable(
       }
 
     val srcTableDef =
-      src.inspector.inspectTable(
-        schema = srcSchema,
-        table = srcTable,
-        maxFloatDigits = 5,
-      )
+      try {
+        src.inspector.inspectTable(
+          schema = srcSchema,
+          table = srcTable,
+          maxFloatDigits = 5,
+        )
+      } catch (e: Exception) {
+        return CopyTableResult.Error.InspectTableFailed(
+          srcDialect = srcDialect,
+          destDialect = destDialect,
+          srcSchema = srcSchema,
+          srcTable = srcTable,
+          destSchema = destSchema,
+          destTable = destTable,
+          includeFields = includeFields,
+          primaryKeyFields = primaryKeyFields,
+          errorMessage = "An unexpected error occurred while executing inspectTable on src: ${e.message}",
+          originalError = e,
+        )
+      }
 
     val includeFieldsDef = srcTableDef.fields.filter { fld -> fld.name in includeFields }.toSet()
 
@@ -50,9 +65,24 @@ fun copyTable(
       if (dest.inspector.tableExists(schema = destSchema, table = destTable)) {
         false
       } else {
-        val createTableSQL = dest.adapter.createTable(table = destTableDef)
-        dest.executor.execute(sql = createTableSQL)
-        true
+        try {
+          val createTableSQL = dest.adapter.createTable(table = destTableDef)
+          dest.executor.execute(sql = createTableSQL)
+          true
+        } catch (e: Exception) {
+          return CopyTableResult.Error.CreateTableFailed(
+            srcDialect = srcDialect,
+            destDialect = destDialect,
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+            includeFields = includeFields,
+            primaryKeyFields = primaryKeyFields,
+            errorMessage = "An unexpected error occurred while creating the dest table: ${e.message}",
+            originalError = e,
+          )
+        }
       }
 
     return CopyTableResult.Success(
@@ -69,7 +99,7 @@ fun copyTable(
       created = created,
     )
   } catch (e: Exception) {
-    return CopyTableResult.Error(
+    return CopyTableResult.Error.Unexpected(
       srcDialect = srcDialect,
       destDialect = destDialect,
       srcSchema = srcSchema,
@@ -78,7 +108,8 @@ fun copyTable(
       destTable = destTable,
       includeFields = includeFields,
       primaryKeyFields = primaryKeyFields,
-      error = CopyTableError(errorMessage = e.message ?: "No error message was provided.", originalError = e),
+      errorMessage = "An unexpected error occurred while executing copyTable: ${e.message}",
+      originalError = e,
     )
   }
 }
