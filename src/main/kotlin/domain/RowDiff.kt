@@ -17,7 +17,7 @@ fun compareRows(
   compareFields: Set<String>,
 ): RowDiff {
 
-  if (old.count() == 0)
+  if (old.isEmpty())
     return RowDiff(
       added = new.index(keyFields = primaryKeyFields, includeFields = includeFields),
       deleted = IndexedRows.empty(),
@@ -27,7 +27,7 @@ fun compareRows(
       compareFields = compareFields,
     )
 
-  if (new.count() == 0)
+  if (new.isEmpty())
     return RowDiff(
       added = IndexedRows.empty(),
       deleted = old.index(keyFields = primaryKeyFields, includeFields = includeFields),

@@ -4,6 +4,8 @@ import domain.CopyTableResult
 import domain.Dialect
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import shared.connect
+import shared.tableExists
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

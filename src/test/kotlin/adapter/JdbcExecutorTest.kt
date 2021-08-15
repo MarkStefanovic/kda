@@ -11,9 +11,8 @@ import domain.Table
 import domain.ValueError
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import shared.connect
 import java.math.BigDecimal
-import java.sql.Connection
-import java.sql.DriverManager
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
@@ -21,13 +20,6 @@ import kotlin.test.assertFailsWith
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JdbcExecutorTest {
-  private fun connect(): Connection =
-    DriverManager.getConnection(
-      "jdbc:postgresql://localhost:5432/testdb",
-      System.getenv("DB_USER"),
-      System.getenv("DB_PASS")
-    )
-
   @Test
   fun execute_happy_path() {
     connect().use { con ->

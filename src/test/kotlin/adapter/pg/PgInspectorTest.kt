@@ -7,7 +7,7 @@ import domain.StringType
 import domain.Table
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import service.connect
+import shared.connect
 import kotlin.test.assertEquals
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
