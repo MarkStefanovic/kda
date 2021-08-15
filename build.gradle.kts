@@ -7,6 +7,7 @@ plugins {
 //    `maven-publish`
 //    id("com.jfrog.bintray") version "1.8.4"
     id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("org.jmailen.kotlinter") version "3.4.5"
 }
 
 group = "lime"
@@ -45,3 +46,19 @@ jacoco {
 val artifactID = "kda"
 
 val shadowJar: ShadowJar by tasks
+
+kotlinter {
+    indentSize = 2
+}
+
+tasks.check {
+    dependsOn("installKotlinterPrePushHook")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+}

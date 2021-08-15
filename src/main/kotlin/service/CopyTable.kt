@@ -1,7 +1,9 @@
 package service
 
 import adapter.pg.pgDatasource
-import domain.*
+import domain.CopyTableResult
+import domain.Datasource
+import domain.Dialect
 import java.sql.Connection
 
 fun copyTable(

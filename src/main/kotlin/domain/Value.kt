@@ -5,13 +5,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 sealed interface Value<V : Any?> {
-    val value: V
+  val value: V
 }
 
 @JvmInline value class BoolValue(override val value: Boolean) : Value<Boolean>
 
 data class DecimalValue(override val value: BigDecimal, val precision: Int, val scale: Int) :
-    Value<BigDecimal>
+  Value<BigDecimal>
 
 data class FloatValue(override val value: Float, val maxDigits: Int) : Value<Float>
 
@@ -26,9 +26,9 @@ data class StringValue(override val value: String, val maxLength: Int?) : Value<
 @JvmInline value class NullableBoolValue(override val value: Boolean?) : Value<Boolean?>
 
 data class NullableDecimalValue(
-    override val value: BigDecimal?,
-    val precision: Int,
-    val scale: Int
+  override val value: BigDecimal?,
+  val precision: Int,
+  val scale: Int
 ) : Value<BigDecimal?>
 
 data class NullableFloatValue(override val value: Float?, val maxDigits: Int) : Value<Float?>

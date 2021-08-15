@@ -32,6 +32,6 @@ data class ValueError(
 ) :
   KDAException(
     message =
-      "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}.",
+    "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}.",
     originalError = null,
   )

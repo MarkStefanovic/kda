@@ -1,7 +1,15 @@
 package service
 
 import adapter.pg.pgDatasource
-import domain.*
+import domain.CopyTableResult
+import domain.Datasource
+import domain.Dialect
+import domain.Field
+import domain.Row
+import domain.RowDiff
+import domain.SyncResult
+import domain.Table
+import domain.compareRows
 import java.sql.Connection
 
 fun sync(
@@ -19,7 +27,7 @@ fun sync(
   maxFloatDigits: Int = 5,
 ): SyncResult {
   try {
-    if (compareFields != null && compareFields.count() == 0)
+    if (compareFields != null && compareFields.isEmpty())
       return SyncResult.Error.InvalidArgument(
         srcSchema = srcSchema,
         srcTable = srcTable,
@@ -31,7 +39,7 @@ fun sync(
         argumentValue = compareFields,
       )
 
-    if (primaryKeyFieldNames != null && primaryKeyFieldNames.count() == 0)
+    if (primaryKeyFieldNames != null && primaryKeyFieldNames.isEmpty())
       return SyncResult.Error.InvalidArgument(
         srcSchema = srcSchema,
         srcTable = srcTable,
@@ -43,7 +51,7 @@ fun sync(
         argumentValue = primaryKeyFieldNames,
       )
 
-    if (includeFields != null && includeFields.count() == 0)
+    if (includeFields != null && includeFields.isEmpty())
       return SyncResult.Error.InvalidArgument(
         srcSchema = srcSchema,
         srcTable = srcTable,
@@ -219,7 +227,7 @@ fun sync(
       }
 
     try {
-      if (rowDiff.added.keys.count() > 0) {
+      if (rowDiff.added.keys.isNotEmpty()) {
         val selectSQL: String =
           src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = rowDiff.added.keys)
         val addedRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
@@ -239,7 +247,7 @@ fun sync(
     }
 
     try {
-      if (rowDiff.deleted.keys.count() > 0) {
+      if (rowDiff.deleted.keys.isNotEmpty()) {
         val deleteSQL: String =
           src.adapter.delete(table = srcTableDef, primaryKeyValues = rowDiff.deleted.keys)
         src.executor.execute(sql = deleteSQL)
@@ -257,7 +265,7 @@ fun sync(
     }
 
     try {
-      if (rowDiff.updated.count() > 0) {
+      if (rowDiff.updated.isNotEmpty()) {
         val selectSQL: String =
           src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = rowDiff.updated.keys)
         val fullRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = fieldsFinal)

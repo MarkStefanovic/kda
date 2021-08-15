@@ -1,7 +1,10 @@
 package adapter.pg
 
 import adapter.JdbcExecutor
-import domain.*
+import domain.Field
+import domain.IntType
+import domain.StringType
+import domain.Table
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import service.connect
@@ -26,12 +29,12 @@ class PgInspectorTest {
           schema = null,
           name = "tmp20210708",
           fields =
-            setOf(
-              Field(name = "age", dataType = IntType(autoincrement = false)),
-              Field(name = "first_name", dataType = StringType(maxLength = null)),
-              Field(name = "id", dataType = IntType(autoincrement = true)),
-              Field(name = "last_name", dataType = StringType(maxLength = null)),
-            ),
+          setOf(
+            Field(name = "age", dataType = IntType(autoincrement = false)),
+            Field(name = "first_name", dataType = StringType(maxLength = null)),
+            Field(name = "id", dataType = IntType(autoincrement = true)),
+            Field(name = "last_name", dataType = StringType(maxLength = null)),
+          ),
           primaryKeyFieldNames = listOf("id"),
         )
       assertEquals(expected = expected, actual = actual)
