@@ -6,6 +6,8 @@ import kda.shared.connect
 import kda.shared.tableExists
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import shared.connect
+import shared.tableExists
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 

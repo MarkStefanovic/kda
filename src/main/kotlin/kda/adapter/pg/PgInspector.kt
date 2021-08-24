@@ -72,76 +72,76 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
                 val isInt = row.value("is_int_flag").value as Boolean
                 val isString = row.value("is_text_flag").value as Boolean
 
-                val dataType =
-                    when {
-                        isBool && isNullable -> NullableBoolType
-                        isBool -> BoolType
-                        isDate && isNullable -> NullableLocalDateType
-                        isDate -> LocalDateType
-                        isDateTime && isNullable -> NullableLocalDateTimeType
-                        isDateTime -> LocalDateTimeType
-                        isInt && isNullable -> IntType(autoincrement = isAutoincrement)
-                        isInt -> IntType(autoincrement = isAutoincrement)
-                        isFloat && isNullable -> NullableFloatType(maxDigits = maxFloatDigits)
-                        isFloat -> FloatType(4)
-                        isDecimal && isNullable ->
-                            NullableDecimalType(precision = precision!!, scale = scale!!)
-                        isDecimal -> DecimalType(precision = precision!!, scale = scale!!)
-                        isString && isNullable -> NullableStringType(maxLength = maxLen)
-                        isString -> StringType(maxLength = maxLen)
-                        else -> throw NotImplementedError()
-                    }
-                Field(name = fieldName, dataType = dataType)
-            }
-        val pkFieldNames = primaryKeyFields(schema = schema, table = table)
-        return Table(
-            schema = schema,
-            name = table,
-            fields = fields.toSet(),
-            primaryKeyFieldNames = pkFieldNames,
-        )
-    }
+        val dataType =
+          when {
+            isBool && isNullable -> NullableBoolType
+            isBool -> BoolType
+            isDate && isNullable -> NullableLocalDateType
+            isDate -> LocalDateType
+            isDateTime && isNullable -> NullableLocalDateTimeType
+            isDateTime -> LocalDateTimeType
+            isInt && isNullable -> IntType(autoincrement = isAutoincrement)
+            isInt -> IntType(autoincrement = isAutoincrement)
+            isFloat && isNullable -> NullableFloatType(maxDigits = maxFloatDigits)
+            isFloat -> FloatType(4)
+            isDecimal && isNullable ->
+              NullableDecimalType(precision = precision!!, scale = scale!!)
+            isDecimal -> DecimalType(precision = precision!!, scale = scale!!)
+            isString && isNullable -> NullableStringType(maxLength = maxLen)
+            isString -> StringType(maxLength = maxLen)
+            else -> throw NotImplementedError()
+          }
+        Field(name = fieldName, dataType = dataType)
+      }
+    val pkFieldNames = primaryKeyFields(schema = schema, table = table)
+    return Table(
+      schema = schema,
+      name = table,
+      fields = fields.toSet(),
+      primaryKeyFieldNames = pkFieldNames,
+    )
+  }
 
-    override fun primaryKeyFields(schema: String?, table: String): List<String> {
-        val fullTableName = if (schema == null) table else "$schema.$table"
+  override fun primaryKeyFields(schema: String?, table: String): List<String> {
+    val fullTableName = if (schema == null) table else "$schema.$table"
 
-        val sql =
-            """
-            SELECT
-                pga.attname AS column_name
-            FROM
-                pg_index AS pgi
-            ,   pg_class AS pgc
-            ,   pg_attribute AS pga
-            ,   pg_namespace AS pgn
-            WHERE
-                pgc.oid = '$fullTableName'::REGCLASS
-                AND pgi.indrelid = pgc.oid
-                AND pgc.relnamespace = pgn.oid
-                AND pga.attrelid = pgc.oid
-                AND pga.attnum = ANY(pgi.indkey)
-                AND pgi.indisprimary
-        """
-        val rows =
-            sqlExecutor.fetchRows(
-                sql = sql,
-                fields = setOf(Field("column_name", dataType = StringType(maxLength = null))),
-            )
-        return rows.map { row -> row.value("column_name").value as String }
-    }
+    val sql =
+      """
+        SELECT
+            pga.attname AS column_name
+        FROM
+            pg_index AS pgi
+        ,   pg_class AS pgc
+        ,   pg_attribute AS pga
+        ,   pg_namespace AS pgn
+        WHERE
+            pgc.oid = '$fullTableName'::REGCLASS
+            AND pgi.indrelid = pgc.oid
+            AND pgc.relnamespace = pgn.oid
+            AND pga.attrelid = pgc.oid
+            AND pga.attnum = ANY(pgi.indkey)
+            AND pgi.indisprimary
+      """
+    val rows =
+      sqlExecutor.fetchRows(
+        sql = sql,
+        fields = setOf(Field("column_name", dataType = StringType(maxLength = null))),
+      )
+    return rows.map { row -> row.value("column_name").value as String }
+  }
 
-    override fun tableExists(schema: String?, table: String): Boolean {
-        val whereClause =
-            if (schema == null) "t.table_name = '$table'"
-            else "t.table_schema = '$schema' AND t.table_name = '$table'"
+  override fun tableExists(schema: String?, table: String): Boolean {
+    val whereClause =
+      if (schema == null) "t.table_name = '$table'"
+      else "t.table_schema = '$schema' AND t.table_name = '$table'"
 
-        val sql =
-            """
+    val sql =
+      """
             SELECT COUNT(*) AS ct
             FROM information_schema.tables AS t
             WHERE $whereClause
         """
-        val ct = sqlExecutor.fetchInt(sql)
-        return ct == 1
-    }
+    val ct = sqlExecutor.fetchInt(sql)
+    return ct == 1
+  }
 }

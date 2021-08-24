@@ -54,20 +54,20 @@ class JdbcExecutorTest {
           schema = "sales",
           name = "tmp20210707",
           fields =
-            setOf(
-              Field(
-                name = "id",
-                dataType = IntType(autoincrement = true),
-              ),
-              Field(
-                name = "first_name",
-                dataType = StringType(maxLength = 40),
-              ),
-              Field(
-                name = "last_name",
-                dataType = StringType(maxLength = 40),
-              )
+          setOf(
+            Field(
+              name = "id",
+              dataType = IntType(autoincrement = true),
             ),
+            Field(
+              name = "first_name",
+              dataType = StringType(maxLength = 40),
+            ),
+            Field(
+              name = "last_name",
+              dataType = StringType(maxLength = 40),
+            )
+          ),
           primaryKeyFieldNames = listOf("id"),
         )
       val actual = executor.fetchRow(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
@@ -103,20 +103,20 @@ class JdbcExecutorTest {
           schema = "sales",
           name = "tmp20210707",
           fields =
-            setOf(
-              Field(
-                name = "id",
-                dataType = IntType(autoincrement = true),
-              ),
-              Field(
-                name = "first_name",
-                dataType = StringType(maxLength = 40),
-              ),
-              Field(
-                name = "last_name",
-                dataType = StringType(maxLength = 40),
-              )
+          setOf(
+            Field(
+              name = "id",
+              dataType = IntType(autoincrement = true),
             ),
+            Field(
+              name = "first_name",
+              dataType = StringType(maxLength = 40),
+            ),
+            Field(
+              name = "last_name",
+              dataType = StringType(maxLength = 40),
+            )
+          ),
           primaryKeyFieldNames = listOf("id"),
         )
       val actual =
@@ -345,9 +345,9 @@ class JdbcExecutorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con)
 
-      assertEquals(null as Float?, executor.fetchNullableFloat("SELECT NULL"))
+      assertEquals(null as Float?, executor.fetchNullableFloat("SELECT NULL", 5))
 
-      assertEquals(1.234f, executor.fetchNullableFloat("SELECT 1.234::FLOAT"))
+      assertEquals(1.234f, executor.fetchNullableFloat("SELECT 1.234::FLOAT", 5))
     }
   }
 
@@ -355,7 +355,7 @@ class JdbcExecutorTest {
   fun fetchNullableFloat_not_a_decimal() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'") }
+      assertFailsWith<ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'", 5) }
     }
   }
 
@@ -363,7 +363,7 @@ class JdbcExecutorTest {
   fun fetchNullableFloat_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableFloat("SELECT") }
+      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableFloat("SELECT", 5) }
     }
   }
 
@@ -372,7 +372,7 @@ class JdbcExecutorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con)
 
-      assertEquals(1.234f, executor.fetchFloat("SELECT 1.234::FLOAT"))
+      assertEquals(1.234f, executor.fetchFloat("SELECT 1.234::FLOAT", 5))
     }
   }
 
@@ -381,9 +381,9 @@ class JdbcExecutorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con)
 
-      assertEquals(null as String?, executor.fetchNullableString("SELECT NULL"))
+      assertEquals(null as String?, executor.fetchNullableString("SELECT NULL", null))
 
-      assertEquals("test", executor.fetchNullableString("SELECT 'test'"))
+      assertEquals("test", executor.fetchNullableString("SELECT 'test'", null))
     }
   }
 
@@ -391,7 +391,7 @@ class JdbcExecutorTest {
   fun fetchNullableString_not_a_string() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableString("SELECT 1") }
+      assertFailsWith<ValueError>("test") { executor.fetchNullableString("SELECT 1", null) }
     }
   }
 
@@ -399,7 +399,7 @@ class JdbcExecutorTest {
   fun fetchNullableString_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableString("SELECT") }
+      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableString("SELECT", null) }
     }
   }
 
@@ -408,7 +408,7 @@ class JdbcExecutorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con)
 
-      assertEquals("test", executor.fetchString("SELECT 'test'"))
+      assertEquals("test", executor.fetchString("SELECT 'test'", null))
     }
   }
 }
