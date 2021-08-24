@@ -1,6 +1,6 @@
 package kda.adapter
 
-import domain.*
+import kda.domain.*
 import java.math.BigDecimal
 import java.sql.*
 import java.time.LocalDate
