@@ -2,6 +2,7 @@ package kda
 
 import kda.adapter.pg.pgDatasource
 import kda.domain.CopyTableResult
+import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.Field
@@ -25,6 +26,7 @@ fun sync(
   primaryKeyFieldNames: List<String>? = null,
   includeFields: Set<String>? = null,
   maxFloatDigits: Int = 5,
+  criteria: List<Criteria> = emptyList(),
 ): SyncResult {
   try {
     if (compareFields != null && compareFields.isEmpty())
@@ -194,11 +196,11 @@ fun sync(
     val lkpTableFields = srcTableDef.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
     val srcLkpTable = srcTableDef.subset(fieldNames = lkpTableFieldNames)
-    val srcKeysSQL: String = src.adapter.select(table = srcLkpTable)
+    val srcKeysSQL: String = src.adapter.select(table = srcLkpTable, criteria = criteria)
     val srcLkpRows: Set<Row> = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields)
 
     val destLkpTable = destTableDef.subset(fieldNames = lkpTableFieldNames)
-    val destKeysSQL: String = dest.adapter.select(table = destLkpTable)
+    val destKeysSQL: String = dest.adapter.select(table = destLkpTable, criteria = criteria)
     val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields)
 
     val rowDiff: RowDiff =
@@ -249,7 +251,7 @@ fun sync(
     try {
       if (rowDiff.deleted.keys.isNotEmpty()) {
         val deleteSQL: String =
-          src.adapter.delete(table = srcTableDef, primaryKeyValues = rowDiff.deleted.keys)
+          src.adapter.deleteKeys(table = srcTableDef, primaryKeyValues = rowDiff.deleted.keys)
         src.executor.execute(sql = deleteSQL)
       }
     } catch (e: Exception) {

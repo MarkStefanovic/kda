@@ -12,6 +12,21 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
     keywords.map { kw -> kw.lowercase() }.toSet()
   }
 
+  override fun renderCriteria(criteria: List<Criteria>): String =
+    criteria.joinToString(" OR ") { c ->
+      c.predicates.joinToString(" AND ") { predicate: Predicate ->
+        val operator =
+          when (predicate.operator) {
+            Operator.Equals -> " = "
+            Operator.GreaterThan -> " > "
+            Operator.LessThan -> " < "
+            Operator.GreaterThanOrEqualTo -> " >= "
+            Operator.LessThanOrEqualTo -> " <= "
+          }
+        "(${wrapName(predicate.field.name)} $operator ${wrapValue(predicate.value)})"
+      }
+    }
+
   override fun wrapName(name: String): String {
     val n = name.lowercase()
     return if (n in standardizedKeywords) "\"$n\"" else n
@@ -32,8 +47,7 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
       is NullableIntValue -> wrapIntValue(value.value)
       is NullableLocalDateValue -> wrapLocalDateValue(value.value)
       is NullableLocalDateTimeValue -> wrapLocalDateTimeValue(value.value)
-      is NullableStringValue ->
-        wrapStringValue(value = value.value, maxLength = value.maxLength)
+      is NullableStringValue -> wrapStringValue(value = value.value, maxLength = value.maxLength)
     }
 
   override fun wrapBoolValue(value: Boolean?): String =
@@ -75,8 +89,7 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
     val dataType =
       when (field.dataType) {
         BoolType -> "BOOL NOT NULL"
-        is DecimalType ->
-          "DECIMAL(${field.dataType.precision}, ${field.dataType.scale}) NOT NULL"
+        is DecimalType -> "DECIMAL(${field.dataType.precision}, ${field.dataType.scale}) NOT NULL"
         is FloatType -> "FLOAT NOT NULL"
         is IntType -> "INT NOT NULL"
         LocalDateTimeType -> "TIMESTAMP NOT NULL"
@@ -102,8 +115,7 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
   }
 
   private fun rowValuesExpression(sortedFieldNames: List<String>, row: Row): String {
-    val valueCSV =
-      sortedFieldNames.joinToString(", ") { fldName -> wrapValue(row.value(fldName)) }
+    val valueCSV = sortedFieldNames.joinToString(", ") { fldName -> wrapValue(row.value(fldName)) }
     return "($valueCSV)"
   }
 }

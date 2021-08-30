@@ -2,9 +2,9 @@ package kda.adapter.std
 
 import kda.adapter.pg.pgSQLAdapter
 import kda.domain.*
-import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import kotlin.test.assertEquals
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StdSQLAdapterTest {
@@ -125,7 +125,7 @@ class StdSQLAdapterTest {
           "last_name" to StringValue(value = "Oil", maxLength = 40),
         ),
       )
-    val sql = pgSQLAdapter.delete(table = table, primaryKeyValues = rows)
+    val sql = pgSQLAdapter.deleteKeys(table = table, primaryKeyValues = rows)
     val expected = "DELETE FROM sales.customer WHERE customer_id IN (1, 2, 3)"
     assertEquals(expected = expected, actual = sql)
   }
@@ -159,7 +159,7 @@ class StdSQLAdapterTest {
           "age" to IntValue(74)
         ),
       )
-    val sql = pgSQLAdapter.delete(table = table, primaryKeyValues = rows)
+    val sql = pgSQLAdapter.deleteKeys(table = table, primaryKeyValues = rows)
     val expected =
       "WITH d (first_name, last_name) AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith')) " +
         "DELETE FROM sales.customer t " +

@@ -3,17 +3,17 @@ package kda.adapter.std
 import kda.domain.*
 
 class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
-    override fun createTable(table: Table): String {
-        val colDefCSV = table.fields.joinToString(", ") { fld -> impl.fieldDef(fld) }
-        val pkCSV =
-            table.primaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
-        val tableName = fullTableName(schema = table.schema, table = table.name)
-        return "CREATE TABLE $tableName ($colDefCSV, PRIMARY KEY ($pkCSV))"
-    }
+  override fun createTable(table: Table): String {
+    val colDefCSV = table.fields.joinToString(", ") { fld -> impl.fieldDef(fld) }
+    val pkCSV =
+      table.primaryKeyFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
+    val tableName = fullTableName(schema = table.schema, table = table.name)
+    return "CREATE TABLE $tableName ($colDefCSV, PRIMARY KEY ($pkCSV))"
+  }
 
-    override fun dropTable(schema: String?, table: String): String {
-        return "DROP TABLE ${fullTableName(schema = schema, table = table)}"
-    }
+  override fun dropTable(schema: String?, table: String): String {
+    return "DROP TABLE ${fullTableName(schema = schema, table = table)}"
+  }
 
   override fun add(table: Table, rows: Set<Row>): String {
     val fieldNames = table.sortedFieldNames
@@ -23,7 +23,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     return "INSERT INTO $tableName ($fieldNameCSV) VALUES $valuesCSV"
   }
 
-  override fun delete(table: Table, primaryKeyValues: Set<Row>): String {
+  override fun deleteKeys(table: Table, primaryKeyValues: Set<Row>): String {
     val tableName = fullTableName(schema = table.schema, table = table.name)
 
     return if (table.primaryKeyFieldNames.count() > 1) {
@@ -76,10 +76,15 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       "UPDATE $tableName AS t SET $setClause FROM u ON $whereClause"
   }
 
-  override fun select(table: Table): String {
+  override fun select(table: Table, criteria: List<Criteria>): String {
     val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
     val tableName = fullTableName(schema = table.schema, table = table.name)
-    return "SELECT $colNameCSV FROM $tableName"
+    val selectSQL = "SELECT $colNameCSV FROM $tableName"
+    return if (criteria.isEmpty()) {
+      selectSQL
+    } else {
+      "$selectSQL WHERE ${impl.renderCriteria(criteria)}"
+    }
   }
 
   override fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String {

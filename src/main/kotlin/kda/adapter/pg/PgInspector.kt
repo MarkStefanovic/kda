@@ -3,13 +3,13 @@ package kda.adapter.pg
 import kda.domain.*
 
 class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
-    override fun inspectTable(schema: String?, table: String, maxFloatDigits: Int): Table {
-        val whereClause =
-            if (schema == null) "c.table_name = '$table'"
-            else "c.table_schema = '$schema' AND c.table_name = '$table'"
+  override fun inspectTable(schema: String?, table: String, maxFloatDigits: Int): Table {
+    val whereClause =
+      if (schema == null) "c.table_name = '$table'"
+      else "c.table_schema = '$schema' AND c.table_name = '$table'"
 
-        val sql =
-            """
+    val sql =
+      """
             SELECT
                 c.column_name
             ,   c.data_type
@@ -36,41 +36,41 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
             WHERE $whereClause
             ORDER BY c.column_name
         """
-        val rows =
-            sqlExecutor.fetchRows(
-                sql,
-                setOf(
-                    Field(name = "column_name", dataType = StringType(40)),
-                    Field(name = "data_type", dataType = StringType(40)),
-                    Field(name = "autoincrement_flag", dataType = BoolType),
-                    Field(name = "nullable_flag", dataType = BoolType),
-                    Field(name = "max_len", dataType = NullableIntType(false)),
-                    Field(name = "precision", dataType = NullableIntType(false)),
-                    Field(name = "scale", dataType = NullableIntType(false)),
-                    Field(name = "is_bool_flag", dataType = BoolType),
-                    Field(name = "is_date_flag", dataType = BoolType),
-                    Field(name = "is_datetime_flag", dataType = BoolType),
-                    Field(name = "is_float_flag", dataType = BoolType),
-                    Field(name = "is_decimal_flag", dataType = BoolType),
-                    Field(name = "is_int_flag", dataType = BoolType),
-                    Field(name = "is_text_flag", dataType = BoolType),
-                ),
-            )
-        val fields =
-            rows.map { row ->
-                val fieldName = row.value("column_name").value as String
-                val isAutoincrement = row.value("autoincrement_flag").value as Boolean
-                val isNullable = row.value("nullable_flag").value as Boolean
-                val maxLen = row.value("max_len").value as Int?
-                val precision = row.value("precision").value as Int?
-                val scale = row.value("scale").value as Int?
-                val isBool = row.value("is_bool_flag").value as Boolean
-                val isDate = row.value("is_date_flag").value as Boolean
-                val isDateTime = row.value("is_datetime_flag").value as Boolean
-                val isFloat = row.value("is_float_flag").value as Boolean
-                val isDecimal = row.value("is_decimal_flag").value as Boolean
-                val isInt = row.value("is_int_flag").value as Boolean
-                val isString = row.value("is_text_flag").value as Boolean
+    val rows =
+      sqlExecutor.fetchRows(
+        sql,
+        setOf(
+          Field(name = "column_name", dataType = StringType(40)),
+          Field(name = "data_type", dataType = StringType(40)),
+          Field(name = "autoincrement_flag", dataType = BoolType),
+          Field(name = "nullable_flag", dataType = BoolType),
+          Field(name = "max_len", dataType = NullableIntType(false)),
+          Field(name = "precision", dataType = NullableIntType(false)),
+          Field(name = "scale", dataType = NullableIntType(false)),
+          Field(name = "is_bool_flag", dataType = BoolType),
+          Field(name = "is_date_flag", dataType = BoolType),
+          Field(name = "is_datetime_flag", dataType = BoolType),
+          Field(name = "is_float_flag", dataType = BoolType),
+          Field(name = "is_decimal_flag", dataType = BoolType),
+          Field(name = "is_int_flag", dataType = BoolType),
+          Field(name = "is_text_flag", dataType = BoolType),
+        ),
+      )
+    val fields =
+      rows.map { row ->
+        val fieldName = row.value("column_name").value as String
+        val isAutoincrement = row.value("autoincrement_flag").value as Boolean
+        val isNullable = row.value("nullable_flag").value as Boolean
+        val maxLen = row.value("max_len").value as Int?
+        val precision = row.value("precision").value as Int?
+        val scale = row.value("scale").value as Int?
+        val isBool = row.value("is_bool_flag").value as Boolean
+        val isDate = row.value("is_date_flag").value as Boolean
+        val isDateTime = row.value("is_datetime_flag").value as Boolean
+        val isFloat = row.value("is_float_flag").value as Boolean
+        val isDecimal = row.value("is_decimal_flag").value as Boolean
+        val isInt = row.value("is_int_flag").value as Boolean
+        val isString = row.value("is_text_flag").value as Boolean
 
         val dataType =
           when {

@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.5.10"
-    jacoco
+    id("org.jmailen.kotlinter") version "3.4.5"
 }
 
 group = "lime"
@@ -21,19 +21,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-
-    finalizedBy(tasks.jacocoTestReport) // jacoco test coverage report is always generated after tests run
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test) // tests are required to run before generating the report
 }
 
 tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "11"
 }
 
-jacoco {
-    toolVersion = "0.8.7"
+kotlinter {
+    indentSize = 2
+    disabledRules = arrayOf("no-wildcard-imports")
 }
-

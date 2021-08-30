@@ -4,10 +4,10 @@ import kda.domain.CopyTableResult
 import kda.domain.Dialect
 import kda.shared.connect
 import kda.shared.tableExists
-import java.sql.Connection
-import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.sql.Connection
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -19,14 +19,16 @@ class CopyTableTest {
         destCon.createStatement().use { stmt ->
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")
-          stmt.execute("""
+          stmt.execute(
+            """
             CREATE TABLE sales.customer (
                 customer_id SERIAL PRIMARY KEY
             ,   first_name TEXT
             ,   last_name TEXT
             ,   dob DATE
             )
-            """)
+            """
+          )
         }
         assert(!tableExists(destCon, "sales", "customer2"))
 
