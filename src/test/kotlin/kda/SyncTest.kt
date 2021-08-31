@@ -1,13 +1,8 @@
 package kda
 
-import kda.domain.Criteria
 import kda.domain.Dialect
-import kda.domain.Field
-import kda.domain.Operator
-import kda.domain.Predicate
-import kda.domain.StringType
-import kda.domain.StringValue
 import kda.domain.SyncResult
+import kda.domain.criteria
 import kda.shared.connect
 import kda.shared.tableExists
 import org.junit.jupiter.api.BeforeEach
@@ -144,15 +139,11 @@ class SyncTest {
             compareFields = setOf("first_name"),
             primaryKeyFieldNames = listOf("customer_id"),
             includeFields = null,
-            criteria = listOf(
-              Criteria(
-                listOf(Predicate(
-                  field = Field(name = "last_name", dataType = StringType(40)),
-                  operator = Operator.Equals,
-                  value = StringValue(value = "Smith", maxLength = 40),
-                ))
-              )
-            ),
+            criteria = criteria {
+              textField("last_name") {
+                eq("Smith")
+              }
+            },
           )
 
         val expectedSyncResult =
