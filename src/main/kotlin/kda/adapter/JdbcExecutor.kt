@@ -129,9 +129,15 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
         is FloatType ->
           FloatValue(value = getFloat(fld.name), maxDigits = fld.dataType.maxDigits)
         is NullableFloatType ->
-          FloatValue(value = getFloat(fld.name), maxDigits = fld.dataType.maxDigits)
-        is IntType -> IntValue(getInt(fld.name))
-        is NullableIntType -> NullableIntValue(getObject(fld.name) as Int?)
+          NullableFloatValue(value = getObject(fld.name) as? Float?, maxDigits = fld.dataType.maxDigits)
+        is IntType -> IntValue(getLong(fld.name).toInt())
+        is NullableIntType -> {
+          if (getObject(fld.name) == null) {
+            NullableIntValue(null)
+          } else {
+            IntValue(getLong(fld.name).toInt())
+          }
+        }
         LocalDateTimeType ->
           LocalDateTimeValue(value = getTimestamp(fld.name).toLocalDateTime())
         NullableLocalDateTimeType ->
@@ -142,6 +148,6 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
         is StringType ->
           StringValue(value = getString(fld.name), maxLength = fld.dataType.maxLength)
         is NullableStringType ->
-          StringValue(value = getString(fld.name), maxLength = fld.dataType.maxLength)
+          NullableStringValue(value = getObject(fld.name) as? String?, maxLength = fld.dataType.maxLength)
       }
   }

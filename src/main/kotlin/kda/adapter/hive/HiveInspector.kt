@@ -1,7 +1,13 @@
 package kda.adapter.hive
 
+import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Inspector
+import kda.domain.NullableDecimalType
+import kda.domain.NullableIntType
+import kda.domain.NullableLocalDateTimeType
+import kda.domain.NullableLocalDateType
+import kda.domain.NullableStringType
 import kda.domain.Table
 import java.sql.Connection
 
@@ -28,17 +34,17 @@ class HiveInspector(private val con: Connection) : Inspector {
         while (rs.next()) {
           val colName = rs.getString(1)
           val dbDataType = rs.getString(2)
-          val dataType: kda.domain.DataType<*> = if ("varchar" in dbDataType) {
+          val dataType: DataType<*> = if ("varchar" in dbDataType) {
             parseVarcharDbDataType(dbDataType)
           } else if ("decimal" in dbDataType) {
             parseDecimalDbDataType(dbDataType)
           } else {
             when (dbDataType) {
-              "bigint" -> kda.domain.IntType(false)
-              "int" -> kda.domain.IntType(false)
-              "date" -> kda.domain.LocalDateType
-              "string" -> kda.domain.StringType(null)
-              "timestamp" -> kda.domain.LocalDateTimeType
+              "bigint" -> NullableIntType(false)
+              "int" -> NullableIntType(false)
+              "date" -> NullableLocalDateType
+              "string" -> NullableStringType(null)
+              "timestamp" -> NullableLocalDateTimeType
               else -> throw NotImplementedError("dbDataType '$dbDataType' is not recognized.")
             }
           }
@@ -69,14 +75,14 @@ class HiveInspector(private val con: Connection) : Inspector {
   }
 }
 
-fun parseDecimalDbDataType(dbDataType: String): kda.domain.DecimalType {
+fun parseDecimalDbDataType(dbDataType: String): NullableDecimalType {
   val pattern = "^decimal\\((\\d+),(\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
-  return kda.domain.DecimalType(precision = match!!.groupValues[1].toInt(), scale = match.groupValues[2].toInt())
+  return NullableDecimalType(precision = match!!.groupValues[1].toInt(), scale = match.groupValues[2].toInt())
 }
 
-fun parseVarcharDbDataType(dbDataType: String): kda.domain.StringType {
+fun parseVarcharDbDataType(dbDataType: String): NullableStringType {
   val pattern = "^varchar\\((\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
-  return kda.domain.StringType(match?.groupValues?.get(1)?.toInt())
+  return NullableStringType(match?.groupValues?.get(1)?.toInt())
 }

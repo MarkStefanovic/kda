@@ -14,26 +14,26 @@ class PgInspectorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con = con)
       executor.execute("DROP TABLE IF EXISTS tmp20210708")
-      executor.execute(
-        "CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY, first_name TEXT NOT NULL, " +
-          "last_name TEXT NOT NULL, age INT NOT NULL)"
-      )
+      executor.execute("CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY, first_name TEXT NOT NULL, " + "last_name TEXT NOT NULL, age INT NOT NULL)")
 
       val inspector = PgInspector(sqlExecutor = executor)
-      val actual = inspector.inspectTable(schema = null, table = "tmp20210708", maxFloatDigits = 4)
-      val expected =
-        Table(
-          schema = null,
-          name = "tmp20210708",
-          fields =
-          setOf(
-            Field(name = "age", dataType = IntType(autoincrement = false)),
-            Field(name = "first_name", dataType = StringType(maxLength = null)),
-            Field(name = "id", dataType = IntType(autoincrement = true)),
-            Field(name = "last_name", dataType = StringType(maxLength = null)),
-          ),
-          primaryKeyFieldNames = listOf("id"),
-        )
+      val actual = inspector.inspectTable(
+        schema = null,
+        table = "tmp20210708",
+        maxFloatDigits = 4,
+        primaryKeyFieldNames = listOf("id"),
+      )
+      val expected = Table(
+        schema = null,
+        name = "tmp20210708",
+        fields = setOf(
+          Field(name = "age", dataType = IntType(autoincrement = false)),
+          Field(name = "first_name", dataType = StringType(maxLength = null)),
+          Field(name = "id", dataType = IntType(autoincrement = true)),
+          Field(name = "last_name", dataType = StringType(maxLength = null)),
+        ),
+        primaryKeyFieldNames = listOf("id"),
+      )
       assertEquals(expected = expected, actual = actual)
       executor.execute("DROP TABLE tmp20210708")
     }

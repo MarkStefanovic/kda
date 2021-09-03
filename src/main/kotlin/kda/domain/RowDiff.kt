@@ -49,7 +49,7 @@ fun compareRows(
     newRows.filter { (key, value) ->
       val oldValue = oldRows[key]
       if (oldValue == null) false
-      else value == oldValue
+      else value != oldValue
     }
 
   return RowDiff(

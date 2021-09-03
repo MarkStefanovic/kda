@@ -72,16 +72,17 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
   override fun wrapIntValue(value: Int?): String = value?.toString() ?: "NULL"
 
   override fun wrapLocalDateValue(value: LocalDate?): String =
-    if (value == null) "NULL" else "'$value'"
+    if (value == null) "NULL" else "CAST('$value' AS DATE)"
 
   override fun wrapLocalDateTimeValue(value: LocalDateTime?): String =
-    if (value == null) "NULL" else "'$value'"
+    if (value == null) "NULL" else "CAST('$value' AS TIMESTAMP)"
 
   override fun wrapStringValue(value: String?, maxLength: Int?): String =
-    when {
-      value == null -> "NULL"
-      maxLength == null -> "'$value'"
-      else -> "'${value.substring(0, kotlin.math.min(value.length, 40))}'"
+    if (value == null) {
+      "NULL"
+    } else {
+      val escaped = (if (maxLength == null) value else value.substring(0, value.length)).replace("'", "''")
+      "'$escaped'"
     }
 
   override fun fieldDef(field: Field): String {

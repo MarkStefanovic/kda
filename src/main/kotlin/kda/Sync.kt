@@ -235,8 +235,8 @@ fun sync(
         val selectSQL: String =
           src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = rowDiff.added.keys)
         val addedRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
-        val insertSQL: String = src.adapter.add(table = destTableDef, rows = addedRows)
-        src.executor.execute(sql = insertSQL)
+        val insertSQL: String = dest.adapter.add(table = destTableDef, rows = addedRows)
+        dest.executor.execute(sql = insertSQL)
       }
     } catch (e: Exception) {
       return SyncResult.Error.AddRowsFailed(
@@ -253,8 +253,8 @@ fun sync(
     try {
       if (rowDiff.deleted.keys.isNotEmpty()) {
         val deleteSQL: String =
-          src.adapter.deleteKeys(table = srcTableDef, primaryKeyValues = rowDiff.deleted.keys)
-        src.executor.execute(sql = deleteSQL)
+          dest.adapter.deleteKeys(table = destTableDef, primaryKeyValues = rowDiff.deleted.keys)
+        dest.executor.execute(sql = deleteSQL)
       }
     } catch (e: Exception) {
       return SyncResult.Error.DeleteRowsFailed(

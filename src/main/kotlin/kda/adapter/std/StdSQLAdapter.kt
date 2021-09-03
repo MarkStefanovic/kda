@@ -62,18 +62,18 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     val whereClause =
       table.primaryKeyFieldNames //
         .map { fld -> impl.wrapName(fld) }
-        .joinToString("AND ") { fld -> "t.$fld = u.$fld" }
+        .joinToString(" AND ") { fld -> "t.$fld = u.$fld" }
     val nonPKCols = fieldNames.toSet() - table.primaryKeyFieldNames.toSet()
     val setClause =
       nonPKCols //
         .sorted()
         .joinToString(", ") { fld -> //
-          "t.${impl.wrapName(fld)} = u.${impl.wrapName(fld)}"
+          "${impl.wrapName(fld)} = u.${impl.wrapName(fld)}"
         }
     val tableName = fullTableName(schema = table.schema, table = table.name)
     val valuesCSV = impl.valuesExpression(fieldNames = fieldNames, rows = rows)
     return "WITH u ($colNameCSV) AS (VALUES $valuesCSV) " +
-      "UPDATE $tableName AS t SET $setClause FROM u ON $whereClause"
+      "UPDATE $tableName AS t SET $setClause FROM u WHERE $whereClause"
   }
 
   override fun select(table: Table, criteria: List<Criteria>): String {
@@ -97,7 +97,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       val whereClause =
         pkCols //
           .map { fld -> impl.wrapName(fld) }
-          .joinToString(" AND ") { fld -> "t.$fld = d.$fld" }
+          .joinToString(" AND ") { fld -> "t.$fld = v.$fld" }
       "WITH v ($pkColNameCSV) AS (VALUES $pkValues) " +
         "SELECT $colNameCSV FROM $tableName t " +
         "JOIN v ON $whereClause"
