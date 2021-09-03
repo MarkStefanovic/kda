@@ -1,5 +1,6 @@
 package kda
 
+import kda.adapter.hive.hiveDatasource
 import kda.adapter.pg.pgDatasource
 import kda.domain.CopyTableResult
 import kda.domain.Datasource
@@ -21,13 +22,13 @@ fun copyTable(
   try {
     val src: Datasource =
       when (srcDialect) {
-        Dialect.HortonworksHive -> TODO()
+        Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
         Dialect.PostgreSQL -> pgDatasource(con = srcCon)
       }
 
     val dest: Datasource =
       when (destDialect) {
-        Dialect.HortonworksHive -> TODO()
+        Dialect.HortonworksHive -> hiveDatasource(con = destCon)
         Dialect.PostgreSQL -> pgDatasource(con = destCon)
       }
 
@@ -37,6 +38,7 @@ fun copyTable(
           schema = srcSchema,
           table = srcTable,
           maxFloatDigits = 5,
+          primaryKeyFieldNames = primaryKeyFields,
         )
       } catch (e: Exception) {
         return CopyTableResult.Error.InspectTableFailed(

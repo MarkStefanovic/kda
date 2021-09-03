@@ -4,7 +4,7 @@ import kda.adapter.std.StdSQLAdapter
 import kda.adapter.std.StdSQLAdapterImplDetails
 import kda.domain.SQLAdapter
 
-val keywords =
+val pgKeywords =
   setOf(
     "FALSE",
     "TRUE",
@@ -485,4 +485,4 @@ val keywords =
 class PgSQLAdapter(private val stdImpl: SQLAdapter) : SQLAdapter by stdImpl
 
 val pgSQLAdapter =
-  PgSQLAdapter(StdSQLAdapter(PgSQLAdapterImplDetails(StdSQLAdapterImplDetails(keywords))))
+  PgSQLAdapter(StdSQLAdapter(PgSQLAdapterImplDetails(StdSQLAdapterImplDetails(pgKeywords))))
