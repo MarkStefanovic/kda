@@ -25,7 +25,6 @@ class CopyTableTest {
                 customer_id SERIAL PRIMARY KEY
             ,   first_name TEXT
             ,   last_name TEXT
-            ,   dob DATE
             )
             """
           )
@@ -42,12 +41,12 @@ class CopyTableTest {
             srcTable = "customer",
             destSchema = "sales",
             destTable = "customer2",
-            includeFields = setOf("customer_id", "first_name", "last_name", "dob"),
+            includeFields = setOf("customer_id", "first_name", "last_name"),
             primaryKeyFields = listOf("customer_id"),
           )
         assertIs<CopyTableResult.Success>(result)
         assertEquals(
-          expected = setOf("customer_id", "first_name", "last_name", "dob"),
+          expected = setOf("customer_id", "first_name", "last_name"),
           actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()
         )
         assert(tableExists(destCon, "sales", "customer2"))

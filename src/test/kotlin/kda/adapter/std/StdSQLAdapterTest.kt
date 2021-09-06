@@ -212,8 +212,8 @@ class StdSQLAdapterTest {
     val expected =
       "WITH u (customer_id, first_name, last_name) AS " +
         "(VALUES (1, 'Mark', 'Stefanovic'), (2, 'Bob', 'Smith'), (3, 'Olive', 'Oil')) " +
-        "UPDATE sales.customer AS t SET t.first_name = u.first_name, t.last_name = u.last_name " +
-        "FROM u ON t.customer_id = u.customer_id"
+        "UPDATE sales.customer AS t SET first_name = u.first_name, last_name = u.last_name " +
+        "FROM u WHERE t.customer_id = u.customer_id"
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -310,7 +310,7 @@ class StdSQLAdapterTest {
       "WITH v (first_name, last_name) AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith'), ('Olive', 'Oil')) " +
         "SELECT age, first_name, last_name " +
         "FROM sales.customer t " +
-        "JOIN v ON t.first_name = d.first_name AND t.last_name = d.last_name"
+        "JOIN v ON t.first_name = v.first_name AND t.last_name = v.last_name"
     assertEquals(expected = expected, actual = sql)
   }
 }

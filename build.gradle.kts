@@ -15,8 +15,13 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
-    implementation("org.postgresql", "postgresql", "42.2.16")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.21")
+    implementation("org.jetbrains.exposed:exposed-core:0.33.1")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.33.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.33.1")
+
+    testImplementation("org.postgresql", "postgresql", "42.2.16")
+    implementation("org.xerial:sqlite-jdbc:3.36.0.2")
 }
 
 tasks.test {

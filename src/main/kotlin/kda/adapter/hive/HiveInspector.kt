@@ -75,13 +75,13 @@ class HiveInspector(private val con: Connection) : Inspector {
   }
 }
 
-fun parseDecimalDbDataType(dbDataType: String): NullableDecimalType {
+private fun parseDecimalDbDataType(dbDataType: String): NullableDecimalType {
   val pattern = "^decimal\\((\\d+),(\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
   return NullableDecimalType(precision = match!!.groupValues[1].toInt(), scale = match.groupValues[2].toInt())
 }
 
-fun parseVarcharDbDataType(dbDataType: String): NullableStringType {
+private fun parseVarcharDbDataType(dbDataType: String): NullableStringType {
   val pattern = "^varchar\\((\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
   return NullableStringType(match?.groupValues?.get(1)?.toInt())

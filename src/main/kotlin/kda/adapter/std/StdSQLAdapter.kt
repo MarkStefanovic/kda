@@ -111,6 +111,12 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     }
   }
 
+  override fun selectMaxValues(table: Table, fieldNames: Set<String>): String {
+    val selectCSV = fieldNames.joinToString(", ") { fld -> impl.maxValue(fld) }
+    val tableName = fullTableName(schema = table.schema, table = table.name)
+    return "SELECT $selectCSV FROM $tableName"
+  }
+
   private fun fullTableName(schema: String?, table: String): String =
     if (schema == null) impl.wrapName(table)
     else "${impl.wrapName(schema)}.${impl.wrapName(table)}"

@@ -18,6 +18,7 @@ fun copyTable(
   destTable: String,
   includeFields: Set<String>,
   primaryKeyFields: List<String>,
+  cache: Cache = DbCache(),
 ): CopyTableResult {
   try {
     val src: Datasource =
@@ -34,12 +35,22 @@ fun copyTable(
 
     val srcTableDef =
       try {
-        src.inspector.inspectTable(
-          schema = srcSchema,
-          table = srcTable,
-          maxFloatDigits = 5,
-          primaryKeyFieldNames = primaryKeyFields,
+        val cachedTableDef = cache.tableDef(
+          schema = srcSchema ?: "",
+          table = srcTable
         )
+        if (cachedTableDef == null) {
+          val tableDef = src.inspector.inspectTable(
+            schema = srcSchema,
+            table = srcTable,
+            maxFloatDigits = 5,
+            primaryKeyFieldNames = primaryKeyFields,
+          )
+          cache.addTableDef(tableDef)
+          tableDef
+        } else {
+          cachedTableDef
+        }
       } catch (e: Exception) {
         return CopyTableResult.Error.InspectTableFailed(
           srcDialect = srcDialect,

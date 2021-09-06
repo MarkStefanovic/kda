@@ -14,4 +14,6 @@ interface SQLAdapter {
   fun select(table: Table, criteria: List<Criteria>): String
 
   fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String
+
+  fun selectMaxValues(table: Table, fieldNames: Set<String>): String
 }

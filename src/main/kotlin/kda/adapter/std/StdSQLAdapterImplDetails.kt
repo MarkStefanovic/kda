@@ -108,6 +108,11 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
     return "$wrappedFieldName $dataType"
   }
 
+  override fun maxValue(fieldName: String): String {
+    val fldName = wrapName(fieldName)
+    return "MAX($fldName) AS $fldName"
+  }
+
   override fun valuesExpression(fieldNames: List<String>, rows: Set<Row>): String {
     val sortedFieldNames = fieldNames.sorted()
     return rows.joinToString(", ") { row ->

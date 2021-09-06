@@ -7,12 +7,15 @@ import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.Field
+import kda.domain.LatestTimestamp
+import kda.domain.NullableLocalDateTimeType
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.compareRows
 import java.sql.Connection
+import java.time.LocalDateTime
 
 fun sync(
   srcCon: Connection,
@@ -28,6 +31,8 @@ fun sync(
   includeFields: Set<String>? = null,
   maxFloatDigits: Int = 5,
   criteria: List<Criteria> = emptyList(),
+  cache: Cache = DbCache(),
+  timestampFieldNames: Set<String> = setOf(),
 ): SyncResult {
   try {
     if (compareFields != null && compareFields.isEmpty())
@@ -79,12 +84,22 @@ fun sync(
       }
 
     val actualSrcTableDef: Table = try {
-      src.inspector.inspectTable(
-        schema = srcSchema,
-        table = srcTable,
-        maxFloatDigits = maxFloatDigits,
-        primaryKeyFieldNames = primaryKeyFieldNames,
+      val cachedTableDef = cache.tableDef(
+        schema = srcSchema ?: "",
+        table = srcTable
       )
+      if (cachedTableDef == null) {
+        val tableDef = src.inspector.inspectTable(
+          schema = srcSchema,
+          table = srcTable,
+          maxFloatDigits = maxFloatDigits,
+          primaryKeyFieldNames = primaryKeyFieldNames,
+        )
+        cache.addTableDef(tableDef)
+        tableDef
+      } else {
+        cachedTableDef
+      }
     } catch (e: Exception) {
       return SyncResult.Error.InspectTableFailed(
         srcSchema = srcSchema,
@@ -197,12 +212,37 @@ fun sync(
     val lkpTableFieldNames = pkFieldsFinal.union(compareFieldNamesFinal)
     val lkpTableFields = srcTableDef.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
+    val fullCriteria: List<Criteria> = if (timestampFieldNames.isEmpty()) {
+      criteria
+    } else {
+      val cachedLatestTimestamps = cache.latestTimestamps(schema = srcSchema ?: "", table = srcTable)
+      if (cachedLatestTimestamps == null) {
+        val sql = src.adapter.selectMaxValues(srcTableDef, timestampFieldNames)
+        val tsFields = timestampFieldNames.map { fld ->
+          Field(name = fld, dataType = NullableLocalDateTimeType)
+        }.toSet()
+        val row = src.executor.fetchRows(sql = sql, fields = tsFields).first()
+        val timestamps: List<LatestTimestamp> = timestampFieldNames.map { fld ->
+          LatestTimestamp(fieldName = fld, timestamp = row.value(fld).value as LocalDateTime)
+        }
+        cache.addLatestTimestamp(
+          schema = srcSchema ?: "",
+          table = srcTable,
+          timestamps = timestamps.toSet(),
+        )
+        val tsCriteria = timestamps.map { Criteria(listOf(it.toPredicate())) }
+        criteria + tsCriteria
+      } else {
+        criteria + cachedLatestTimestamps
+      }
+    }
+
     val srcLkpTable = srcTableDef.subset(fieldNames = lkpTableFieldNames)
-    val srcKeysSQL: String = src.adapter.select(table = srcLkpTable, criteria = criteria)
+    val srcKeysSQL: String = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
     val srcLkpRows: Set<Row> = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields)
 
     val destLkpTable = destTableDef.subset(fieldNames = lkpTableFieldNames)
-    val destKeysSQL: String = dest.adapter.select(table = destLkpTable, criteria = criteria)
+    val destKeysSQL: String = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
     val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields)
 
     val rowDiff: RowDiff =

@@ -1,7 +1,5 @@
 package kda.adapter.hive
 
-import kda.adapter.pg.PgSQLAdapter
-import kda.adapter.pg.PgSQLAdapterImplDetails
 import kda.adapter.std.StdSQLAdapter
 import kda.adapter.std.StdSQLAdapterImplDetails
 import kda.domain.SQLAdapter
@@ -343,4 +341,4 @@ val hiveKeywords = setOf(
 
 class HiveSQLAdapter(private val stdImpl: SQLAdapter) : SQLAdapter by stdImpl
 
-val hiveSQLAdapter = PgSQLAdapter(StdSQLAdapter(PgSQLAdapterImplDetails(StdSQLAdapterImplDetails(hiveKeywords))))
+val hiveSQLAdapter = HiveSQLAdapter(StdSQLAdapter(HiveSQLAdapterImplDetails(StdSQLAdapterImplDetails(hiveKeywords))))

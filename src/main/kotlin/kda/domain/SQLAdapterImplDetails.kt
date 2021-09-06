@@ -7,6 +7,8 @@ import java.time.LocalDateTime
 interface SQLAdapterImplDetails {
   fun fieldDef(field: Field): String
 
+  fun maxValue(fieldName: String): String
+
   fun renderCriteria(criteria: List<Criteria>): String
 
   fun wrapName(name: String): String
