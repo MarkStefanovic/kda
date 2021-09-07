@@ -32,11 +32,12 @@ class DbLatestTimestampRepository(private val db: Db) : LatestTimestampRepositor
       LatestTimestamps.select {
         (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
       }
-    }.map { row ->
-      LatestTimestamp(
-        fieldName = row[LatestTimestamps.fieldName],
-        timestamp = row[LatestTimestamps.ts],
-      )
+        .map { row ->
+          LatestTimestamp(
+            fieldName = row[LatestTimestamps.fieldName],
+            timestamp = row[LatestTimestamps.ts],
+          )
+        }
+        .toSet()
     }
-      .toSet()
 }

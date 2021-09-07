@@ -223,7 +223,7 @@ fun sync(
         }.toSet()
         val row = src.executor.fetchRows(sql = sql, fields = tsFields).first()
         val timestamps: List<LatestTimestamp> = timestampFieldNames.map { fld ->
-          LatestTimestamp(fieldName = fld, timestamp = row.value(fld).value as LocalDateTime)
+          LatestTimestamp(fieldName = fld, timestamp = row.value(fld).value as LocalDateTime?)
         }
         cache.addLatestTimestamp(
           schema = srcSchema ?: "",

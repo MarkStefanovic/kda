@@ -28,7 +28,7 @@ object SqliteDb : Db() {
   override fun createTables() {
     transaction(db = db) {
 //      addLogger(StdOutSqlLogger)
-      SchemaUtils.create(PrimaryKeys, TableDefs)
+      SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
@@ -71,7 +71,7 @@ object LatestTimestamps : Table("latest_timestamp") {
   val schema = text("schema_name")
   val table = text("table_name")
   val fieldName = text("field_name")
-  val ts = datetime("ts")
+  val ts = datetime("ts").nullable()
 
   override val primaryKey = PrimaryKey(schema, table, fieldName, name = "pk_latest_timestamp")
 }
