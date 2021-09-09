@@ -1,5 +1,7 @@
 package kda.domain
 
+val nonAlphaNum = "[^a-zA-Z0-9_]".toRegex()
+
 @JvmInline
 value class Row(private val row: Map<String, Value<*>>) {
   init {
@@ -11,9 +13,9 @@ value class Row(private val row: Map<String, Value<*>>) {
     get() = row.keys
 
   fun value(fieldName: String): Value<*> =
-    row[fieldName]
+    row[unwrapName(fieldName)]
       ?: error(
-        "A field named $fieldName was not found in the row.  " +
+        "A field named ${unwrapName(fieldName)} was not found in the row.  " +
           "Available fields include the following: ${row.keys.joinToString(", ")}"
       )
 
@@ -31,3 +33,5 @@ value class Row(private val row: Map<String, Value<*>>) {
     fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())
   }
 }
+
+private fun unwrapName(name: String) = name.replace(nonAlphaNum, "")

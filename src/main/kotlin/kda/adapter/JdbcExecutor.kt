@@ -8,7 +8,15 @@ import java.time.LocalDateTime
 
 class JdbcExecutor(private val con: Connection) : SQLExecutor {
   override fun execute(sql: String) {
-    with(con) { createStatement().use { stmt -> stmt.execute(sql) } }
+    with(con) {
+      try {
+        createStatement().use { stmt -> stmt.execute(sql) }
+      } catch (e: Exception) {
+        println("The following error occurred while executing '$sql':")
+        e.printStackTrace()
+        throw e
+      }
+    }
   }
 
   override fun fetchNullableBool(sql: String): Boolean? =
@@ -55,7 +63,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
     con.createStatement().use { stmt ->
       stmt.executeQuery(sql).use { rs ->
         rs.next()
-        Row(rs.toMap(fields = fields))
+        Row(rs.toMap(fields))
       }
     }
 
@@ -64,7 +72,7 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       val rows: MutableList<Row> = mutableListOf()
       stmt.executeQuery(sql).use { rs ->
         while (rs.next()) {
-          rows.add(Row(rs.toMap(fields = fields)))
+          rows.add(Row(rs.toMap(fields)))
         }
       }
       return rows.toSet()

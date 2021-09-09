@@ -1,9 +1,8 @@
 package kda.adapter.hive
 
-import kda.adapter.std.StdSQLAdapterImplDetails
 import kda.domain.SQLAdapterImplDetails
 
-class HiveSQLAdapterImplDetails(private val stdImpl: StdSQLAdapterImplDetails) :
+class HiveSQLAdapterImplDetails(private val stdImpl: SQLAdapterImplDetails) :
   SQLAdapterImplDetails by stdImpl {
 
   override fun wrapBoolValue(value: Boolean?): String =
@@ -12,4 +11,6 @@ class HiveSQLAdapterImplDetails(private val stdImpl: StdSQLAdapterImplDetails) :
       value -> "TRUE"
       else -> "FALSE"
     }
+
+  override fun wrapName(name: String) = "`${name.lowercase()}`"
 }
