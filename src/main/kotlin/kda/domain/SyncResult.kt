@@ -93,23 +93,6 @@ sealed class SyncResult(
         originalError = originalError,
       )
 
-    data class InspectTableFailed(
-      override val srcSchema: String?,
-      override val srcTable: String,
-      override val destSchema: String?,
-      override val destTable: String,
-      override val errorMessage: String,
-      override val originalError: Exception?,
-    ) :
-      SyncResult.Error(
-        srcSchema = srcSchema,
-        srcTable = srcTable,
-        destSchema = destSchema,
-        destTable = destTable,
-        errorMessage = errorMessage,
-        originalError = originalError,
-      )
-
     data class RowComparisonFailed(
       override val srcSchema: String?,
       override val srcTable: String,
@@ -150,6 +133,24 @@ sealed class SyncResult(
       )
 
     data class UpdateRowsFailed(
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+      override val errorMessage: String,
+      override val originalError: Exception?,
+      val rows: Set<Row>,
+    ) :
+      SyncResult.Error(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        errorMessage = errorMessage,
+        originalError = originalError,
+      )
+
+    data class UpsertRowsFailed(
       override val srcSchema: String?,
       override val srcTable: String,
       override val destSchema: String?,

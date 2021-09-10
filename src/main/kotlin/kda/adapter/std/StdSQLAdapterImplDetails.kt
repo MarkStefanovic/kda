@@ -13,6 +13,14 @@ class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
+  override fun fullTableName(schema: String?, table: String): String =
+    if (schema == null) {
+      wrapName(table)
+    }
+    else {
+      "${wrapName(schema)}.${wrapName(table)}"
+    }
+
   override fun renderCriteria(criteria: List<Criteria>): String =
     criteria.joinToString(" OR ") { c ->
       c.predicates.joinToString(" AND ") { predicate: Predicate ->
@@ -111,15 +119,54 @@ class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
     return "MAX($fldName) AS $fldName"
   }
 
-  override fun valuesExpression(fieldNames: List<String>, rows: Set<Row>): String {
+  override fun valuesExpression(fieldNames: List<String>, rows: Set<Row>, tableAlias: String?): String {
     val sortedFieldNames = fieldNames.sorted()
     return rows.joinToString(", ") { row ->
-      rowValuesExpression(sortedFieldNames = sortedFieldNames, row = row)
+      rowValuesExpression(sortedFieldNames = sortedFieldNames, row = row, tableAlias = tableAlias)
     }
   }
 
-  private fun rowValuesExpression(sortedFieldNames: List<String>, row: Row): String {
-    val valueCSV = sortedFieldNames.joinToString(", ") { fldName -> wrapValue(row.value(fldName)) }
+  override fun joinFields(table: Table, leftTableAlias: String, rightTableAlias: String) =
+    fieldsEqual(
+      fieldNames = table.primaryKeyFieldNames.toSet(),
+      sep = " AND ",
+      rightTableAlias = rightTableAlias,
+      leftTableAlias = leftTableAlias,
+    )
+
+  override fun fieldNameCSV(fieldNames: Set<String>, tableAlias: String?) =
+    fieldNames.sorted().joinToString(", ") { fieldName ->
+      if (tableAlias == null) {
+        wrapName(fieldName)
+      } else {
+        "$tableAlias.${wrapName(fieldName)}"
+      }
+    }
+
+  private fun fieldsEqual(
+    fieldNames: Set<String>,
+    sep: String = " AND ",
+    rightTableAlias: String,
+    leftTableAlias: String? = null,
+  ): String =
+    fieldNames
+      .sorted()
+      .joinToString(sep) { fld ->
+        if (leftTableAlias == null) {
+          "${wrapName(fld)} = $rightTableAlias.${wrapName(fld)}"
+        } else {
+          "$leftTableAlias.${wrapName(fld)} = $rightTableAlias.${wrapName(fld)}"
+        }
+      }
+
+  private fun rowValuesExpression(sortedFieldNames: List<String>, row: Row, tableAlias: String? = null): String {
+    val valueCSV = sortedFieldNames.joinToString(", ") { fldName ->
+      if (tableAlias == null) {
+        wrapValue(row.value(fldName))
+      } else {
+        "$tableAlias.${wrapValue(row.value(fldName))}"
+      }
+    }
     return "($valueCSV)"
   }
 }

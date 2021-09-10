@@ -12,19 +12,22 @@ value class Row(private val row: Map<String, Value<*>>) {
   val fieldNames: Set<String>
     get() = row.keys
 
-  fun value(fieldName: String): Value<*> =
-    row[unwrapName(fieldName)]
+  fun value(fieldName: String): Value<*> {
+    val stdFieldName = unwrapName(fieldName)
+    return row[stdFieldName]
       ?: error(
-        "A field named ${unwrapName(fieldName)} was not found in the row.  " +
+        "A field named $stdFieldName was not found in the row.  " +
           "Available fields include the following: ${row.keys.joinToString(", ")}"
       )
+  }
 
   fun subset(fieldNames: Set<String>): Row {
-    return if (fieldNames.toSet() == row.keys) {
+    val stdFieldNames = fieldNames.map(::unwrapName)
+    return if (stdFieldNames.toSet() == row.keys) {
       this
     } else {
-      require(fieldNames.all { fldName -> row.containsKey(fldName) })
-      val subset = fieldNames.associateWith { fieldName -> row[fieldName]!! }
+      require(stdFieldNames.all { fldName -> row.containsKey(fldName) })
+      val subset = stdFieldNames.associateWith { fieldName -> row[fieldName]!! }
       Row(subset)
     }
   }

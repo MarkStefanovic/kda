@@ -145,26 +145,21 @@ fun sync(
               includeFields = lkpTableFieldNames,
             )
 
-            val (addRowsError, addedRows) = addRows(
-              src = src,
+            val (deleteRowsError, deletedRows) = deleteRows(
               dest = dest,
               srcTableDef = copySrcResult.srcTableDef,
               destTableDef = copySrcResult.destTableDef,
-              addedRows = rowDiff.added,
+              deletedRows = rowDiff.deleted,
             )
-
-            if (addRowsError != null) {
-              addRowsError
-            } else {
-              val (deleteRowsError, deletedRows) = deleteRows(
+            deleteRowsError ?: if (fullCriteria.isEmpty()) {
+              val (addRowsError, addedRows) = addRows(
+                src = src,
                 dest = dest,
                 srcTableDef = copySrcResult.srcTableDef,
                 destTableDef = copySrcResult.destTableDef,
-                deletedRows = rowDiff.deleted,
+                addedRows = rowDiff.added,
               )
-              if (deleteRowsError != null) {
-                deleteRowsError
-              } else {
+              if (addRowsError == null) {
                 val (updatedRowsError, updatedRows) = updateRows(
                   src = src,
                   dest = dest,
@@ -183,7 +178,29 @@ fun sync(
                   deleted = deletedRows,
                   updated = updatedRows,
                 )
+              } else {
+                addRowsError
               }
+            } else {
+              val (upsertRowsError, _) = upsertRows(
+                src = src,
+                dest = dest,
+                srcTableDef = copySrcResult.srcTableDef,
+                destTableDef = copySrcResult.destTableDef,
+                addedRows = rowDiff.added,
+                updatedRows = rowDiff.updated,
+              )
+              upsertRowsError ?: SyncResult.Success(
+                srcSchema = srcSchema,
+                srcTable = srcTable,
+                destSchema = destSchema,
+                destTable = destTable,
+                srcTableDef = copySrcResult.srcTableDef,
+                destTableDef = copySrcResult.destTableDef,
+                added = rowDiff.added.count(),
+                deleted = deletedRows,
+                updated = rowDiff.updated.count(),
+              )
             }
           } catch (e: Exception) {
             SyncResult.Error.RowComparisonFailed(
@@ -265,6 +282,36 @@ private fun deleteRows(
       errorMessage = "An error occurred while deleting rows: $e",
       originalError = e,
       rows = deletedRows.values.toSet(),
+    ) to 0
+  }
+
+private fun upsertRows(
+  src: Datasource,
+  dest: Datasource,
+  srcTableDef: Table,
+  destTableDef: Table,
+  addedRows: IndexedRows,
+  updatedRows: IndexedRows,
+): Pair<SyncResult.Error?, Int> =
+  try {
+    if (addedRows.keys.isNotEmpty()) {
+      val selectSQL: String =
+        src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = addedRows.keys + updatedRows.keys)
+      val newRows: Set<Row> =
+        src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
+      val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = newRows)
+      dest.executor.execute(sql = upsertSQL)
+    }
+    null to addedRows.count()
+  } catch (e: Exception) {
+    SyncResult.Error.UpsertRowsFailed(
+      srcSchema = srcTableDef.schema,
+      srcTable = srcTableDef.name,
+      destSchema = destTableDef.schema,
+      destTable = destTableDef.name,
+      errorMessage = "An error occurred while upserting rows: $e",
+      originalError = e,
+      rows = addedRows.values.toSet(),
     ) to 0
   }
 

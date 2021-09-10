@@ -7,7 +7,13 @@ import java.time.LocalDateTime
 interface SQLAdapterImplDetails {
   fun fieldDef(field: Field): String
 
+  fun fieldNameCSV(fieldNames: Set<String>, tableAlias: String? = null): String
+
+  fun fullTableName(schema: String?, table: String): String
+
   fun maxValue(fieldName: String): String
+
+  fun joinFields(table: Table, leftTableAlias: String, rightTableAlias: String): String
 
   fun renderCriteria(criteria: List<Criteria>): String
 
@@ -29,5 +35,5 @@ interface SQLAdapterImplDetails {
 
   fun wrapStringValue(value: String?, maxLength: Int?): String
 
-  fun valuesExpression(fieldNames: List<String>, rows: Set<Row>): String
+  fun valuesExpression(fieldNames: List<String>, rows: Set<Row>, tableAlias: String? = null): String
 }
