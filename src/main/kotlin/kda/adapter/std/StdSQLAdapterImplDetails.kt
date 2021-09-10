@@ -6,11 +6,12 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterImplDetails {
-  private val standardizedKeywords: Set<String> by lazy {
-    keywords.map { kw -> kw.lowercase() }.toSet()
-  }
+class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
+  private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
   override fun renderCriteria(criteria: List<Criteria>): String =
     criteria.joinToString(" OR ") { c ->
@@ -27,22 +28,24 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
       }
     }
 
-  override fun wrapName(name: String): String {
-    val n = name.lowercase()
-    return if (n in standardizedKeywords) "\"$n\"" else n
-  }
+//  override fun wrapName(name: String): String {
+//    val n = name.lowercase()
+//    return if (n in standardizedKeywords) "\"$n\"" else n
+//  }
+
+  override fun wrapName(name: String) = "\"${name.lowercase()}\""
 
   override fun wrapValue(value: Value<*>): String =
     when (value) {
       is BoolValue -> wrapBoolValue(value.value)
-      is DecimalValue -> wrapDecimalValue(value.value, scale = value.scale)
+      is DecimalValue -> wrapDecimalValue(value.value, precision = value.precision, scale = value.scale)
       is FloatValue -> wrapFloatValue(value.value, maxDigits = value.maxDigits)
       is IntValue -> wrapIntValue(value.value)
       is LocalDateValue -> wrapLocalDateValue(value.value)
       is LocalDateTimeValue -> wrapLocalDateTimeValue(value.value)
       is StringValue -> wrapStringValue(value.value, maxLength = value.maxLength)
       is NullableBoolValue -> wrapBoolValue(value.value)
-      is NullableDecimalValue -> wrapDecimalValue(value.value, scale = value.scale)
+      is NullableDecimalValue -> wrapDecimalValue(value.value, precision = value.precision, scale = value.scale)
       is NullableFloatValue -> wrapFloatValue(value.value, maxDigits = value.maxDigits)
       is NullableIntValue -> wrapIntValue(value.value)
       is NullableLocalDateValue -> wrapLocalDateValue(value.value)
@@ -52,13 +55,13 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
 
   override fun wrapBoolValue(value: Boolean?): String =
     when {
-      value == null -> "NULL"
+      value == null -> "CAST(NULL AS INT)"
       value -> "1"
       else -> "0"
     }
 
-  override fun wrapDecimalValue(value: BigDecimal?, scale: Int): String =
-    if (value == null) "NULL"
+  override fun wrapDecimalValue(value: BigDecimal?, precision: Int, scale: Int): String =
+    if (value == null) "CAST(NULL AS DECIMAL($precision, $scale))"
     else
       with(DecimalFormat("#.#")) {
         roundingMode = RoundingMode.CEILING
@@ -67,15 +70,15 @@ class StdSQLAdapterImplDetails(private val keywords: Set<String>) : SQLAdapterIm
       }
 
   override fun wrapFloatValue(value: Float?, maxDigits: Int): String =
-    if (value == null) "NULL" else "%.${maxDigits}f".format(value)
+    if (value == null) "CAST(NULL AS FLOAT)" else "%.${maxDigits}f".format(value)
 
-  override fun wrapIntValue(value: Int?): String = value?.toString() ?: "NULL"
+  override fun wrapIntValue(value: Int?): String = value?.toString() ?: "CAST(NULL AS BIGINT)"
 
   override fun wrapLocalDateValue(value: LocalDate?): String =
-    if (value == null) "NULL" else "CAST('$value' AS DATE)"
+    if (value == null) "CAST(NULL AS DATE)" else "DATE '${value.format(dateFormatter)}'"
 
   override fun wrapLocalDateTimeValue(value: LocalDateTime?): String =
-    if (value == null) "NULL" else "CAST('$value' AS TIMESTAMP)"
+    if (value == null) "CAST(NULL AS TIMESTAMP)" else "TIMESTAMP '${value.format(dateTimeFormatter)}'"
 
   override fun wrapStringValue(value: String?, maxLength: Int?): String =
     if (value == null) {

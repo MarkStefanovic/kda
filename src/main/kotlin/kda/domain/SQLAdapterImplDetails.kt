@@ -17,7 +17,7 @@ interface SQLAdapterImplDetails {
 
   fun wrapBoolValue(value: Boolean?): String
 
-  fun wrapDecimalValue(value: BigDecimal?, scale: Int): String
+  fun wrapDecimalValue(value: BigDecimal?, precision: Int, scale: Int): String
 
   fun wrapFloatValue(value: Float?, maxDigits: Int): String
 
