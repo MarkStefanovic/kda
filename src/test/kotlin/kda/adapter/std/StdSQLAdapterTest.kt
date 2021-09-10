@@ -33,15 +33,14 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.createTable(table)
     val expected =
-      "CREATE TABLE sales.customer (customer_id INT NOT NULL, first_name TEXT NULL, " +
-        "last_name TEXT NULL, PRIMARY KEY (customer_id))"
+      """CREATE TABLE "sales"."customer" ("customer_id" INT NOT NULL, "first_name" TEXT NULL, "last_name" TEXT NULL, PRIMARY KEY ("customer_id"))"""
     assertEquals(expected = expected, actual = sql)
   }
 
   @Test
   fun dropTable_happy_path() {
     val sql = pgSQLAdapter.dropTable(schema = "sales", table = "customer")
-    val expected = "DROP TABLE sales.customer"
+    val expected = """DROP TABLE "sales"."customer""""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -88,8 +87,8 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.add(table = table, rows = rows)
     val expected =
-      "INSERT INTO sales.customer (customer_id, first_name, last_name) " +
-        "VALUES (1, 'Mark', 'Stefanovic'), (2, 'Bob', 'Smith'), (3, 'Olive', 'Oil')"
+      """INSERT INTO "sales"."customer" ("customer_id", "first_name", "last_name") """ +
+        """VALUES (1, 'Mark', 'Stefanovic'), (2, 'Bob', 'Smith'), (3, 'Olive', 'Oil')"""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -126,7 +125,7 @@ class StdSQLAdapterTest {
         ),
       )
     val sql = pgSQLAdapter.deleteKeys(table = table, primaryKeyValues = rows)
-    val expected = "DELETE FROM sales.customer WHERE customer_id IN (1, 2, 3)"
+    val expected = """DELETE FROM "sales"."customer" WHERE "customer_id" IN (1, 2, 3)"""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -161,9 +160,8 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.deleteKeys(table = table, primaryKeyValues = rows)
     val expected =
-      "WITH d (first_name, last_name) AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith')) " +
-        "DELETE FROM sales.customer t " +
-        "USING d WHERE t.first_name = d.first_name AND t.last_name = d.last_name"
+      """WITH d ("first_name", "last_name") AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith')) """ +
+        """DELETE FROM "sales"."customer" t USING d WHERE t."first_name" = d."first_name" AND t."last_name" = d."last_name""""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -210,10 +208,9 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.update(table = table, rows = rows)
     val expected =
-      "WITH u (customer_id, first_name, last_name) AS " +
-        "(VALUES (1, 'Mark', 'Stefanovic'), (2, 'Bob', 'Smith'), (3, 'Olive', 'Oil')) " +
-        "UPDATE sales.customer AS t SET first_name = u.first_name, last_name = u.last_name " +
-        "FROM u WHERE t.customer_id = u.customer_id"
+      """WITH u ("customer_id", "first_name", "last_name") AS (VALUES (1, 'Mark', 'Stefanovic'), (2, 'Bob', 'Smith'), (3, 'Olive', 'Oil')) """ +
+        """UPDATE "sales"."customer" AS t SET "first_name" = u."first_name", "last_name" = u."last_name" """ +
+        """FROM u WHERE t."customer_id" = u."customer_id""""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -260,7 +257,7 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
     val expected =
-      "SELECT customer_id, first_name, last_name FROM sales.customer WHERE customer_id IN (1, 2, 3)"
+      """SELECT "customer_id", "first_name", "last_name" FROM "sales"."customer" WHERE "customer_id" IN (1, 2, 3)"""
     assertEquals(expected = expected, actual = sql)
   }
 
@@ -307,10 +304,9 @@ class StdSQLAdapterTest {
       )
     val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
     val expected =
-      "WITH v (first_name, last_name) AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith'), ('Olive', 'Oil')) " +
-        "SELECT age, first_name, last_name " +
-        "FROM sales.customer t " +
-        "JOIN v ON t.first_name = v.first_name AND t.last_name = v.last_name"
+      """WITH v ("first_name", "last_name") AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith'), ('Olive', 'Oil')) """ +
+        """SELECT "age", "first_name", "last_name" FROM "sales"."customer" t """ +
+        """JOIN v ON t."first_name" = v."first_name" AND t."last_name" = v."last_name""""
     assertEquals(expected = expected, actual = sql)
   }
 }

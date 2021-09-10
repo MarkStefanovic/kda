@@ -59,22 +59,22 @@ fun sync(
           Dialect.PostgreSQL -> pgDatasource(con = destCon)
         }
 
-      val copySrcResult =
-        copyTable(
-          srcCon = srcCon,
-          destCon = destCon,
-          srcDialect = srcDialect,
-          destDialect = destDialect,
-          srcSchema = srcSchema,
-          srcTable = srcTable,
-          destSchema = destSchema,
-          destTable = destTable,
-          includeFields = includeFields,
-          primaryKeyFields = primaryKeyFieldNames,
-          cache = cache,
-        )
-
-      when (copySrcResult) {
+      when (
+        val copySrcResult =
+          copyTable(
+            srcCon = srcCon,
+            destCon = destCon,
+            srcDialect = srcDialect,
+            destDialect = destDialect,
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+            includeFields = includeFields,
+            primaryKeyFields = primaryKeyFieldNames,
+            cache = cache,
+          )
+      ) {
         is CopyTableResult.Error -> {
           SyncResult.Error.CopyTableFailed(
             srcSchema = srcSchema,

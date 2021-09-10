@@ -19,20 +19,6 @@ sealed class InspectTableResult(
     dialect = dialect,
     primaryKeyFieldNames = primaryKeyFieldNames,
   ) {
-    data class TableDoesNotExist(
-      override val schema: String?,
-      override val table: String,
-      override val dialect: Dialect,
-      override val primaryKeyFieldNames: List<String>,
-    ) : InspectTableResult.Error(
-      schema = schema,
-      table = table,
-      dialect = dialect,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      errorMessage = "$schema.$table does not exist.",
-      originalError = null,
-    )
-
     data class InvalidArgument(
       override val schema: String?,
       override val table: String,

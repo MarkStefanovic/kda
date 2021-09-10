@@ -50,43 +50,7 @@ fun copyTable(
         cache = cache,
       )
       when (inspectSrcResult) {
-        is InspectTableResult.Error.TableDoesNotExist -> CopyTableResult.Error.SourceTableDoesNotExist(
-          srcDialect = srcDialect,
-          destDialect = destDialect,
-          srcSchema = srcSchema,
-          srcTable = srcTable,
-          destSchema = destSchema,
-          destTable = destTable,
-          includeFields = includeFields,
-          primaryKeyFields = primaryKeyFields,
-        )
-        is InspectTableResult.Error.InspectTableFailed -> CopyTableResult.Error.InspectTableFailed(
-          srcDialect = srcDialect,
-          destDialect = destDialect,
-          srcSchema = srcSchema,
-          srcTable = srcTable,
-          destSchema = destSchema,
-          destTable = destTable,
-          includeFields = includeFields,
-          primaryKeyFields = primaryKeyFields,
-          errorMessage = inspectSrcResult.errorMessage,
-          originalError = inspectSrcResult.originalError,
-        )
-        is InspectTableResult.Error.InvalidArgument -> CopyTableResult.Error.InvalidArgument(
-          srcDialect = srcDialect,
-          destDialect = destDialect,
-          srcSchema = srcSchema,
-          srcTable = srcTable,
-          destSchema = destSchema,
-          destTable = destTable,
-          includeFields = includeFields,
-          primaryKeyFields = primaryKeyFields,
-          errorMessage = inspectSrcResult.errorMessage,
-          originalError = inspectSrcResult.originalError,
-          argumentName = inspectSrcResult.argumentName,
-          argumentValue = inspectSrcResult.argumentValue,
-        )
-        is InspectTableResult.Error.Unexpected -> CopyTableResult.Error.Unexpected(
+        is InspectTableResult.Error -> CopyTableResult.Error.InspectTableFailed(
           srcDialect = srcDialect,
           destDialect = destDialect,
           srcSchema = srcSchema,

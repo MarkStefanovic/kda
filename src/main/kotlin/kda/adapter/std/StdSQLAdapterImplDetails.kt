@@ -28,11 +28,6 @@ class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       }
     }
 
-//  override fun wrapName(name: String): String {
-//    val n = name.lowercase()
-//    return if (n in standardizedKeywords) "\"$n\"" else n
-//  }
-
   override fun wrapName(name: String) = "\"${name.lowercase()}\""
 
   override fun wrapValue(value: Value<*>): String =

@@ -47,31 +47,7 @@ fun compareRows(
     )
 
     when (srcTableDefResult) {
-      is InspectTableResult.Error.TableDoesNotExist -> CompareRowsResult.Error.SourceTableDoesNotExist(
-        srcSchema = srcSchema,
-        srcTable = srcTable,
-        destSchema = destSchema,
-        destTable = destTable,
-      )
-      is InspectTableResult.Error.InspectTableFailed -> CompareRowsResult.Error.InspectTableFailed(
-        srcSchema = srcSchema,
-        srcTable = srcTable,
-        destSchema = destSchema,
-        destTable = destTable,
-        errorMessage = srcTableDefResult.errorMessage,
-        originalError = srcTableDefResult.originalError,
-      )
-      is InspectTableResult.Error.InvalidArgument -> CompareRowsResult.Error.InvalidArgument(
-        srcSchema = srcSchema,
-        srcTable = srcTable,
-        destSchema = destSchema,
-        destTable = destTable,
-        argumentName = srcTableDefResult.argumentName,
-        argumentValue = srcTableDefResult.argumentValue,
-        errorMessage = srcTableDefResult.errorMessage,
-        originalError = srcTableDefResult.originalError,
-      )
-      is InspectTableResult.Error.Unexpected -> CompareRowsResult.Error.Unexpected(
+      is InspectTableResult.Error -> CompareRowsResult.Error.InspectTableFailed(
         srcSchema = srcSchema,
         srcTable = srcTable,
         destSchema = destSchema,
@@ -90,43 +66,25 @@ fun compareRows(
           cache = cache,
         )
         when (destTableDefResult) {
-          is InspectTableResult.Error.InspectTableFailed -> CompareRowsResult.Error.InspectTableFailed(
+          is InspectTableResult.Error -> CompareRowsResult.Error.InspectTableFailed(
             srcSchema = srcSchema,
             srcTable = srcTable,
             destSchema = destSchema,
             destTable = destTable,
             errorMessage = destTableDefResult.errorMessage,
             originalError = destTableDefResult.originalError,
-          )
-          is InspectTableResult.Error.InvalidArgument -> CompareRowsResult.Error.InvalidArgument(
-            srcSchema = srcSchema,
-            srcTable = srcTable,
-            destSchema = destSchema,
-            destTable = destTable,
-            argumentName = destTableDefResult.argumentName,
-            argumentValue = destTableDefResult.argumentValue,
-            errorMessage = destTableDefResult.errorMessage,
-            originalError = destTableDefResult.originalError,
-          )
-          is InspectTableResult.Error.Unexpected -> CompareRowsResult.Error.Unexpected(
-            srcSchema = srcSchema,
-            srcTable = srcTable,
-            destSchema = destSchema,
-            destTable = destTable,
-            errorMessage = destTableDefResult.errorMessage,
-            originalError = destTableDefResult.originalError,
-          )
-          is InspectTableResult.Error.TableDoesNotExist -> CompareRowsResult.Error.DestTableDoesNotExist(
-            srcSchema = srcSchema,
-            srcTable = srcTable,
-            destSchema = destSchema,
-            destTable = destTable,
           )
           is InspectTableResult.Success -> {
-            val srcRowsSQL: String = src.adapter.select(table = srcTableDefResult.tableDef, criteria = criteria)
+            val srcRowsSQL: String = src.adapter.select(
+              table = srcTableDefResult.tableDef,
+              criteria = criteria
+            )
             val srcRows: Int = src.executor.fetchInt(srcRowsSQL)
 
-            val destRowsSQL: String = dest.adapter.select(table = destTableDefResult.tableDef, criteria = criteria)
+            val destRowsSQL: String = dest.adapter.select(
+              table = destTableDefResult.tableDef,
+              criteria = criteria
+            )
             val destRows = dest.executor.fetchInt(destRowsSQL)
 
             CompareRowsResult.Success(
