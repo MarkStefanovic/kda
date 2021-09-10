@@ -19,6 +19,7 @@ fun compareRows(
   destSchema: String?,
   destTable: String,
   primaryKeyFieldNames: List<String>,
+  includeFieldNames: Set<String>? = null,
   criteria: List<Criteria> = emptyList(),
   cache: Cache = DbCache(),
 ): CompareRowsResult =
@@ -41,52 +42,103 @@ fun compareRows(
       schema = srcSchema,
       table = srcTable,
       primaryKeyFieldNames = primaryKeyFieldNames,
+      includeFieldNames = includeFieldNames,
       cache = cache,
     )
-    when (val result = srcTableDefResult) {
+
+    when (srcTableDefResult) {
+      is InspectTableResult.Error.TableDoesNotExist -> CompareRowsResult.Error.SourceTableDoesNotExist(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+      )
       is InspectTableResult.Error.InspectTableFailed -> CompareRowsResult.Error.InspectTableFailed(
         srcSchema = srcSchema,
         srcTable = srcTable,
         destSchema = destSchema,
         destTable = destTable,
-        errorMessage = result.errorMessage,
-        originalError = result.originalError,
+        errorMessage = srcTableDefResult.errorMessage,
+        originalError = srcTableDefResult.originalError,
       )
       is InspectTableResult.Error.InvalidArgument -> CompareRowsResult.Error.InvalidArgument(
         srcSchema = srcSchema,
         srcTable = srcTable,
         destSchema = destSchema,
         destTable = destTable,
-        argumentName = result.argumentName,
-        argumentValue = result.argumentValue,
-        errorMessage = result.errorMessage,
-        originalError = result.originalError,
+        argumentName = srcTableDefResult.argumentName,
+        argumentValue = srcTableDefResult.argumentValue,
+        errorMessage = srcTableDefResult.errorMessage,
+        originalError = srcTableDefResult.originalError,
       )
       is InspectTableResult.Error.Unexpected -> CompareRowsResult.Error.Unexpected(
         srcSchema = srcSchema,
         srcTable = srcTable,
         destSchema = destSchema,
         destTable = destTable,
-        errorMessage = result.errorMessage,
-        originalError = result.originalError,
+        errorMessage = srcTableDefResult.errorMessage,
+        originalError = srcTableDefResult.originalError,
       )
       is InspectTableResult.Success -> {
-        val destTableDef = result.tableDef.copy(schema = destSchema, name = destTable)
-
-        val srcRowsSQL: String = src.adapter.select(table = result.tableDef, criteria = criteria)
-        val srcRows: Int = src.executor.fetchInt(srcRowsSQL)
-
-        val destRowsSQL: String = dest.adapter.select(table = destTableDef, criteria = criteria)
-        val destRows = dest.executor.fetchInt(destRowsSQL)
-
-        CompareRowsResult.Success(
-          srcSchema = srcSchema,
-          srcTable = srcTable,
-          destSchema = destSchema,
-          destTable = destTable,
-          srcRows = srcRows,
-          destRows = destRows,
+        val destTableDefResult = inspectTable(
+          con = destCon,
+          dialect = destDialect,
+          schema = destSchema,
+          table = destTable,
+          primaryKeyFieldNames = primaryKeyFieldNames,
+          includeFieldNames = includeFieldNames,
+          cache = cache,
         )
+        when (destTableDefResult) {
+          is InspectTableResult.Error.InspectTableFailed -> CompareRowsResult.Error.InspectTableFailed(
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+            errorMessage = destTableDefResult.errorMessage,
+            originalError = destTableDefResult.originalError,
+          )
+          is InspectTableResult.Error.InvalidArgument -> CompareRowsResult.Error.InvalidArgument(
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+            argumentName = destTableDefResult.argumentName,
+            argumentValue = destTableDefResult.argumentValue,
+            errorMessage = destTableDefResult.errorMessage,
+            originalError = destTableDefResult.originalError,
+          )
+          is InspectTableResult.Error.Unexpected -> CompareRowsResult.Error.Unexpected(
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+            errorMessage = destTableDefResult.errorMessage,
+            originalError = destTableDefResult.originalError,
+          )
+          is InspectTableResult.Error.TableDoesNotExist -> CompareRowsResult.Error.DestTableDoesNotExist(
+            srcSchema = srcSchema,
+            srcTable = srcTable,
+            destSchema = destSchema,
+            destTable = destTable,
+          )
+          is InspectTableResult.Success -> {
+            val srcRowsSQL: String = src.adapter.select(table = srcTableDefResult.tableDef, criteria = criteria)
+            val srcRows: Int = src.executor.fetchInt(srcRowsSQL)
+
+            val destRowsSQL: String = dest.adapter.select(table = destTableDefResult.tableDef, criteria = criteria)
+            val destRows = dest.executor.fetchInt(destRowsSQL)
+
+            CompareRowsResult.Success(
+              srcSchema = srcSchema,
+              srcTable = srcTable,
+              destSchema = destSchema,
+              destTable = destTable,
+              srcRows = srcRows,
+              destRows = destRows,
+            )
+          }
+        }
       }
     }
   } catch (e: Exception) {

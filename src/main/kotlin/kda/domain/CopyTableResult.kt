@@ -7,7 +7,7 @@ sealed class CopyTableResult(
   open val srcTable: String,
   open val destSchema: String?,
   open val destTable: String,
-  open val includeFields: Set<String>,
+  open val includeFields: Set<String>?,
   open val primaryKeyFields: List<String>,
 ) {
   sealed class Error(
@@ -17,10 +17,10 @@ sealed class CopyTableResult(
     override val srcTable: String,
     override val destSchema: String?,
     override val destTable: String,
-    override val includeFields: Set<String>,
+    override val includeFields: Set<String>?,
     override val primaryKeyFields: List<String>,
     open val errorMessage: String,
-    open val originalError: Exception,
+    open val originalError: Exception?,
   ) :
     CopyTableResult(
       srcDialect = srcDialect,
@@ -32,6 +32,54 @@ sealed class CopyTableResult(
       includeFields = includeFields,
       primaryKeyFields = primaryKeyFields,
     ) {
+    data class InvalidArgument(
+      override val srcDialect: Dialect,
+      override val destDialect: Dialect,
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+      override val includeFields: Set<String>?,
+      override val primaryKeyFields: List<String>,
+      override val errorMessage: String,
+      override val originalError: Exception?,
+      val argumentName: String,
+      val argumentValue: Any?,
+    ) : CopyTableResult.Error(
+      srcDialect = srcDialect,
+      destDialect = destDialect,
+      srcSchema = srcSchema,
+      srcTable = srcTable,
+      destSchema = destSchema,
+      destTable = destTable,
+      includeFields = includeFields,
+      primaryKeyFields = primaryKeyFields,
+      errorMessage = errorMessage,
+      originalError = originalError,
+    )
+
+    data class SourceTableDoesNotExist(
+      override val srcDialect: Dialect,
+      override val destDialect: Dialect,
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+      override val includeFields: Set<String>?,
+      override val primaryKeyFields: List<String>,
+    ) : CopyTableResult.Error(
+      srcDialect = srcDialect,
+      destDialect = destDialect,
+      srcSchema = srcSchema,
+      srcTable = srcTable,
+      destSchema = destSchema,
+      destTable = destTable,
+      includeFields = includeFields,
+      primaryKeyFields = primaryKeyFields,
+      errorMessage = "The table, $srcSchema.$srcTable, does not exist.",
+      originalError = null,
+    )
+
     data class CreateTableFailed(
       override val srcDialect: Dialect,
       override val destDialect: Dialect,
@@ -39,10 +87,10 @@ sealed class CopyTableResult(
       override val srcTable: String,
       override val destSchema: String?,
       override val destTable: String,
-      override val includeFields: Set<String>,
+      override val includeFields: Set<String>?,
       override val primaryKeyFields: List<String>,
       override val errorMessage: String,
-      override val originalError: Exception,
+      override val originalError: Exception?,
     ) :
       CopyTableResult.Error(
         srcDialect = srcDialect,
@@ -64,10 +112,10 @@ sealed class CopyTableResult(
       override val srcTable: String,
       override val destSchema: String?,
       override val destTable: String,
-      override val includeFields: Set<String>,
+      override val includeFields: Set<String>?,
       override val primaryKeyFields: List<String>,
       override val errorMessage: String,
-      override val originalError: Exception,
+      override val originalError: Exception?,
     ) :
       CopyTableResult.Error(
         srcDialect = srcDialect,
@@ -89,10 +137,10 @@ sealed class CopyTableResult(
       override val srcTable: String,
       override val destSchema: String?,
       override val destTable: String,
-      override val includeFields: Set<String>,
+      override val includeFields: Set<String>?,
       override val primaryKeyFields: List<String>,
       override val errorMessage: String,
-      override val originalError: Exception,
+      override val originalError: Exception?,
     ) :
       CopyTableResult.Error(
         srcDialect = srcDialect,
@@ -115,7 +163,7 @@ sealed class CopyTableResult(
     override val srcTable: String,
     override val destSchema: String?,
     override val destTable: String,
-    override val includeFields: Set<String>,
+    override val includeFields: Set<String>?,
     override val primaryKeyFields: List<String>,
     val srcTableDef: Table,
     val destTableDef: Table,

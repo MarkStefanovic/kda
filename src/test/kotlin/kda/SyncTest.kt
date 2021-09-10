@@ -1,7 +1,11 @@
 package kda
 
 import kda.domain.Dialect
+import kda.domain.Field
+import kda.domain.IntType
+import kda.domain.NullableStringType
 import kda.domain.SyncResult
+import kda.domain.Table
 import kda.domain.criteria
 import kda.shared.connect
 import kda.shared.tableExists
@@ -35,8 +39,7 @@ fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
 
 fun addCustomers(con: Connection, customers: List<Customer>) {
   for (customer in customers) {
-    val sql =
-      """
+    val sql = """
       INSERT INTO sales.customer (customer_id, first_name, last_name)
       VALUES (${customer.customerId}, '${customer.firstName}', '${customer.lastName}')
     """
@@ -101,6 +104,26 @@ class SyncTest {
             srcTable = "customer",
             destSchema = "sales",
             destTable = "customer2",
+            srcTableDef = Table(
+              schema = "sales",
+              name = "customer",
+              fields = setOf(
+                Field(name = "customer_id", dataType = IntType(false)),
+                Field(name = "first_name", dataType = NullableStringType(null)),
+                Field(name = "last_name", dataType = NullableStringType(null)),
+              ),
+              primaryKeyFieldNames = listOf("customer_id"),
+            ),
+            destTableDef = Table(
+              schema = "sales",
+              name = "customer2",
+              fields = setOf(
+                Field(name = "customer_id", dataType = IntType(false)),
+                Field(name = "first_name", dataType = NullableStringType(null)),
+                Field(name = "last_name", dataType = NullableStringType(null)),
+              ),
+              primaryKeyFieldNames = listOf("customer_id"),
+            ),
             added = 3,
             deleted = 0,
             updated = 0,
@@ -152,6 +175,26 @@ class SyncTest {
             srcTable = "customer",
             destSchema = "sales",
             destTable = "customer2",
+            srcTableDef = Table(
+              schema = "sales",
+              name = "customer",
+              fields = setOf(
+                Field(name = "customer_id", dataType = IntType(false)),
+                Field(name = "first_name", dataType = NullableStringType(null)),
+                Field(name = "last_name", dataType = NullableStringType(null)),
+              ),
+              primaryKeyFieldNames = listOf("customer_id"),
+            ),
+            destTableDef = Table(
+              schema = "sales",
+              name = "customer2",
+              fields = setOf(
+                Field(name = "customer_id", dataType = IntType(false)),
+                Field(name = "first_name", dataType = NullableStringType(null)),
+                Field(name = "last_name", dataType = NullableStringType(null)),
+              ),
+              primaryKeyFieldNames = listOf("customer_id"),
+            ),
             added = 2,
             deleted = 0,
             updated = 0,

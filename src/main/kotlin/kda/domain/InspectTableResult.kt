@@ -12,20 +12,34 @@ sealed class InspectTableResult(
     override val dialect: Dialect,
     override val primaryKeyFieldNames: List<String>,
     open val errorMessage: String,
-    open val originalError: Throwable?
+    open val originalError: Exception?
   ) : InspectTableResult(
     schema = schema,
     table = table,
     dialect = dialect,
     primaryKeyFieldNames = primaryKeyFieldNames,
   ) {
+    data class TableDoesNotExist(
+      override val schema: String?,
+      override val table: String,
+      override val dialect: Dialect,
+      override val primaryKeyFieldNames: List<String>,
+    ) : InspectTableResult.Error(
+      schema = schema,
+      table = table,
+      dialect = dialect,
+      primaryKeyFieldNames = primaryKeyFieldNames,
+      errorMessage = "$schema.$table does not exist.",
+      originalError = null,
+    )
+
     data class InvalidArgument(
       override val schema: String?,
       override val table: String,
       override val dialect: Dialect,
       override val primaryKeyFieldNames: List<String>,
       override val errorMessage: String,
-      override val originalError: Throwable?,
+      override val originalError: Exception?,
       val argumentName: String,
       val argumentValue: Any?,
     ) : InspectTableResult.Error(
@@ -43,7 +57,7 @@ sealed class InspectTableResult(
       override val dialect: Dialect,
       override val primaryKeyFieldNames: List<String>,
       override val errorMessage: String,
-      override val originalError: Throwable?,
+      override val originalError: Exception?,
     ) : InspectTableResult.Error(
       schema = schema,
       table = table,
@@ -59,7 +73,7 @@ sealed class InspectTableResult(
       override val dialect: Dialect,
       override val primaryKeyFieldNames: List<String>,
       override val errorMessage: String,
-      override val originalError: Throwable?,
+      override val originalError: Exception?,
     ) : InspectTableResult.Error(
       schema = schema,
       table = table,

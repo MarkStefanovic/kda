@@ -78,6 +78,36 @@ sealed class CompareRowsResult(
         originalError = originalError,
       )
 
+    data class SourceTableDoesNotExist(
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+    ) :
+      CompareRowsResult.Error(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        errorMessage = "$srcSchema.$srcTable does not exist.",
+        originalError = null,
+      )
+
+    data class DestTableDoesNotExist(
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+    ) :
+      CompareRowsResult.Error(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        errorMessage = "$destSchema.$destTable does not exist.",
+        originalError = null,
+      )
+
     data class Unexpected(
       override val srcSchema: String?,
       override val srcTable: String,
