@@ -2,7 +2,7 @@ package kda.adapter.std
 
 import kda.domain.*
 
-class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
+open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
   override fun add(table: Table, rows: Set<Row>): String {
     val fieldNames = table.sortedFieldNames
     val fieldNameCSV = fieldNames.joinToString(", ") { fldName -> impl.wrapName(fldName) }
@@ -65,7 +65,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       leftTableAlias = "t",
       rightTableAlias = "v",
     )
-    val setValuesCSV = setValues(
+    val setValuesCSV = impl.setValues(
       table = table,
       rightTableAlias = "v",
     )
@@ -122,7 +122,7 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     val fieldNames = table.sortedFieldNames
     val colNameCSV = fieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
     val whereClause = impl.joinFields(table = table, leftTableAlias = "t", rightTableAlias = "u")
-    val setClause = setValues(table = table, rightTableAlias = "u")
+    val setClause = impl.setValues(table = table, rightTableAlias = "u")
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val valuesCSV = impl.valuesExpression(fieldNames = fieldNames, rows = rows)
     return "WITH u ($colNameCSV) AS (VALUES $valuesCSV) " +
@@ -131,12 +131,4 @@ class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
 
   private fun pkColNameCSV(table: Table, tableAlias: String? = null): String =
     impl.fieldNameCSV(fieldNames = table.primaryKeyFieldNames.toSet(), tableAlias = tableAlias)
-
-  private fun setValues(table: Table, rightTableAlias: String) =
-    fieldsEqual(
-      fieldNames = table.sortedFieldNames.toSet() - table.primaryKeyFieldNames.toSet(),
-      sep = ", ",
-      rightTableAlias = rightTableAlias,
-      leftTableAlias = null,
-    )
 }

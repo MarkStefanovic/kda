@@ -16,8 +16,7 @@ class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
   override fun fullTableName(schema: String?, table: String): String =
     if (schema == null) {
       wrapName(table)
-    }
-    else {
+    } else {
       "${wrapName(schema)}.${wrapName(table)}"
     }
 
@@ -142,6 +141,14 @@ class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
         "$tableAlias.${wrapName(fieldName)}"
       }
     }
+
+  override fun setValues(table: Table, rightTableAlias: String) =
+    fieldsEqual(
+      fieldNames = table.sortedFieldNames.toSet() - table.primaryKeyFieldNames.toSet(),
+      sep = ", ",
+      rightTableAlias = rightTableAlias,
+      leftTableAlias = null,
+    )
 
   private fun fieldsEqual(
     fieldNames: Set<String>,

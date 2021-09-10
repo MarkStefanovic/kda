@@ -17,6 +17,8 @@ interface SQLAdapterImplDetails {
 
   fun renderCriteria(criteria: List<Criteria>): String
 
+  fun setValues(table: Table, rightTableAlias: String): String
+
   fun wrapName(name: String): String
 
   fun wrapValue(value: Value<*>): String

@@ -12,9 +12,10 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       try {
         createStatement().use { stmt -> stmt.execute(sql) }
       } catch (e: Exception) {
-        println("The following error occurred while executing '$sql':")
-        e.printStackTrace()
-        throw e
+//        println("The following error occurred while executing '$sql':")
+//        e.printStackTrace()
+//        throw e
+        throw Exception("The following error occurred while executing '$sql': ${e.stackTraceToString()}")
       }
     }
   }
@@ -70,10 +71,14 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
   override fun fetchRows(sql: String, fields: Set<Field>): Set<Row> =
     con.createStatement().use { stmt ->
       val rows: MutableList<Row> = mutableListOf()
-      stmt.executeQuery(sql).use { rs ->
-        while (rs.next()) {
-          rows.add(Row(rs.toMap(fields)))
+      try {
+        stmt.executeQuery(sql).use { rs ->
+          while (rs.next()) {
+            rows.add(Row(rs.toMap(fields)))
+          }
         }
+      } catch (e: Exception) {
+        throw Exception("The following error occurred while executing '$sql': ${e.stackTraceToString()}")
       }
       return rows.toSet()
     }

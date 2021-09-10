@@ -102,14 +102,14 @@ fun sync(
               criteria
             } else {
               val cachedLatestTimestamps =
-                cache.latestTimestamps(schema = srcSchema ?: "", table = srcTable)
+                cache.latestTimestamps(schema = destSchema ?: "", table = destTable)
               if (cachedLatestTimestamps == null) {
-                val sql = src.adapter.selectMaxValues(copySrcResult.srcTableDef, timestampFieldNames)
+                val sql = dest.adapter.selectMaxValues(copySrcResult.destTableDef, timestampFieldNames)
                 val tsFields =
                   timestampFieldNames
                     .map { fld -> Field(name = fld, dataType = NullableLocalDateTimeType) }
                     .toSet()
-                val row = src.executor.fetchRows(sql = sql, fields = tsFields).first()
+                val row = dest.executor.fetchRows(sql = sql, fields = tsFields).first()
                 val timestamps: List<LatestTimestamp> =
                   timestampFieldNames.map { fld ->
                     LatestTimestamp(
@@ -117,8 +117,8 @@ fun sync(
                     )
                   }
                 cache.addLatestTimestamp(
-                  schema = srcSchema ?: "",
-                  table = srcTable,
+                  schema = destSchema ?: "",
+                  table = destTable,
                   timestamps = timestamps.toSet(),
                 )
                 val tsCriteria = timestamps.map { Criteria(listOf(it.toPredicate())) }
