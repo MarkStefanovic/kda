@@ -4,7 +4,6 @@ import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SqliteDb
-import kda.domain.Criteria
 import kda.domain.LatestTimestamp
 import kda.domain.Table
 
@@ -23,7 +22,7 @@ interface Cache {
 
   fun tableDef(schema: String, table: String): Table?
 
-  fun latestTimestamps(schema: String, table: String): Criteria?
+  fun latestTimestamps(schema: String, table: String): Set<LatestTimestamp>
 }
 
 class DbCache(private val db: Db = SqliteDb) : Cache {
@@ -68,13 +67,6 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
   override fun tableDef(schema: String, table: String) =
     tableDefRepo.get(schema = schema, table = table)
 
-  override fun latestTimestamps(schema: String, table: String): Criteria? {
-    val latestTs = latestTimestampRepo.get(schema = schema, table = table)
-    return if (latestTs.isEmpty()) {
-      null
-    } else {
-      val predicates = latestTs.sortedBy { it.fieldName }.map { it.toPredicate() }
-      Criteria(predicates)
-    }
-  }
+  override fun latestTimestamps(schema: String, table: String): Set<LatestTimestamp> =
+    latestTimestampRepo.get(schema = schema, table = table)
 }

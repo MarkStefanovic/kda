@@ -14,7 +14,10 @@ class PgInspectorTest {
     connect().use { con ->
       val executor = JdbcExecutor(con = con)
       executor.execute("DROP TABLE IF EXISTS tmp20210708")
-      executor.execute("CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY, first_name TEXT NOT NULL, " + "last_name TEXT NOT NULL, age INT NOT NULL)")
+      executor.execute(
+        "CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY, first_name TEXT NOT NULL, " +
+          "last_name TEXT NOT NULL, age INT NOT NULL)"
+      )
 
       val inspector = PgInspector(sqlExecutor = executor)
       val actual = inspector.inspectTable(

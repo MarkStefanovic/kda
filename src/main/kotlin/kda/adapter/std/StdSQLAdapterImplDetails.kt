@@ -8,7 +8,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
+open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
   private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

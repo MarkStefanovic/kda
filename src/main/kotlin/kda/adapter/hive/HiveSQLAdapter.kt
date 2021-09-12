@@ -1,11 +1,8 @@
 package kda.adapter.hive
 
 import kda.adapter.std.StdSQLAdapter
-import kda.adapter.std.StdSQLAdapterImplDetails
-import kda.domain.SQLAdapter
+import kda.domain.SQLAdapterImplDetails
 
-class HiveSQLAdapter(private val std: SQLAdapter) : SQLAdapter by std
+class HiveSQLAdapter(impl: SQLAdapterImplDetails) : StdSQLAdapter(impl)
 
-private val implDetails = HiveSQLAdapterImplDetails(StdSQLAdapterImplDetails())
-
-val hiveSQLAdapter = HiveSQLAdapter(std = StdSQLAdapter(implDetails))
+val hiveSQLAdapter = HiveSQLAdapter(HiveSQLAdapterImplDetails())

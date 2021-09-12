@@ -1,8 +1,8 @@
 package kda.adapter.hive
 
-import kda.domain.SQLAdapterImplDetails
+import kda.adapter.std.StdSQLAdapterImplDetails
 
-class HiveSQLAdapterImplDetails(private val std: SQLAdapterImplDetails) : SQLAdapterImplDetails by std {
+class HiveSQLAdapterImplDetails : StdSQLAdapterImplDetails() {
   override fun wrapBoolValue(value: Boolean?): String =
     when {
       value == null -> "NULL"

@@ -94,38 +94,21 @@ fun sync(
               fieldNames.filter { fldName -> fldName in compareFields }.toSet()
             }
           val pkFields = copySrcResult.srcTableDef.primaryKeyFieldNames.toSet()
-          val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal)
+          val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal).union(timestampFieldNames)
           val lkpTableFields = copySrcResult.srcTableDef.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
           val fullCriteria: List<Criteria> =
             if (timestampFieldNames.isEmpty()) {
               criteria
             } else {
-              val cachedLatestTimestamps =
-                cache.latestTimestamps(schema = destSchema ?: "", table = destTable)
-              if (cachedLatestTimestamps == null) {
-                val sql = dest.adapter.selectMaxValues(copySrcResult.destTableDef, timestampFieldNames)
-                val tsFields =
-                  timestampFieldNames
-                    .map { fld -> Field(name = fld, dataType = NullableLocalDateTimeType) }
-                    .toSet()
-                val row = dest.executor.fetchRows(sql = sql, fields = tsFields).first()
-                val timestamps: List<LatestTimestamp> =
-                  timestampFieldNames.map { fld ->
-                    LatestTimestamp(
-                      fieldName = fld, timestamp = row.value(fld).value as LocalDateTime?
-                    )
-                  }
-                cache.addLatestTimestamp(
-                  schema = destSchema ?: "",
-                  table = destTable,
-                  timestamps = timestamps.toSet(),
-                )
-                val tsCriteria = timestamps.map { Criteria(listOf(it.toPredicate())) }
-                criteria + tsCriteria
-              } else {
-                criteria + cachedLatestTimestamps
-              }
+              val destTimestamps = getLatestTimestamps(
+                ds = dest,
+                table = copySrcResult.destTableDef,
+                tsFieldNames = timestampFieldNames,
+                cache = cache,
+              )
+              val tsCriteria = destTimestamps.map { Criteria(listOf(it.toPredicate())) }
+              criteria + tsCriteria
             }
 
           val srcLkpTable = copySrcResult.srcTableDef.subset(fieldNames = lkpTableFieldNames)
@@ -167,17 +150,30 @@ fun sync(
                   destTableDef = copySrcResult.destTableDef,
                   updatedRows = rowDiff.updated,
                 )
-                updatedRowsError ?: SyncResult.Success(
-                  srcSchema = srcSchema,
-                  srcTable = srcTable,
-                  destSchema = destSchema,
-                  destTable = destTable,
-                  srcTableDef = copySrcResult.srcTableDef,
-                  destTableDef = copySrcResult.destTableDef,
-                  added = addedRows,
-                  deleted = deletedRows,
-                  updated = updatedRows,
-                )
+                if (updatedRowsError == null) {
+                  if (timestampFieldNames.isNotEmpty()) {
+                    updateLatestTimestamps(
+                      timestampFieldNames = timestampFieldNames,
+                      destRows = destLkpRows,
+                      destSchema = destSchema,
+                      destTable = destTable,
+                      cache = cache,
+                    )
+                  }
+                  SyncResult.Success(
+                    srcSchema = srcSchema,
+                    srcTable = srcTable,
+                    destSchema = destSchema,
+                    destTable = destTable,
+                    srcTableDef = copySrcResult.srcTableDef,
+                    destTableDef = copySrcResult.destTableDef,
+                    added = addedRows,
+                    deleted = deletedRows,
+                    updated = updatedRows,
+                  )
+                } else {
+                  updatedRowsError
+                }
               } else {
                 addRowsError
               }
@@ -190,17 +186,30 @@ fun sync(
                 addedRows = rowDiff.added,
                 updatedRows = rowDiff.updated,
               )
-              upsertRowsError ?: SyncResult.Success(
-                srcSchema = srcSchema,
-                srcTable = srcTable,
-                destSchema = destSchema,
-                destTable = destTable,
-                srcTableDef = copySrcResult.srcTableDef,
-                destTableDef = copySrcResult.destTableDef,
-                added = rowDiff.added.count(),
-                deleted = deletedRows,
-                updated = rowDiff.updated.count(),
-              )
+              if (upsertRowsError == null) {
+                if (timestampFieldNames.isNotEmpty()) {
+                  updateLatestTimestamps(
+                    timestampFieldNames = timestampFieldNames,
+                    destRows = destLkpRows,
+                    destSchema = destSchema,
+                    destTable = destTable,
+                    cache = cache,
+                  )
+                }
+                SyncResult.Success(
+                  srcSchema = srcSchema,
+                  srcTable = srcTable,
+                  destSchema = destSchema,
+                  destTable = destTable,
+                  srcTableDef = copySrcResult.srcTableDef,
+                  destTableDef = copySrcResult.destTableDef,
+                  added = rowDiff.added.count(),
+                  deleted = deletedRows,
+                  updated = rowDiff.updated.count(),
+                )
+              } else {
+                upsertRowsError
+              }
             }
           } catch (e: Exception) {
             SyncResult.Error.RowComparisonFailed(
@@ -343,3 +352,46 @@ private fun updateRows(
       rows = updatedRows.values.toSet(),
     ) to 0
   }
+
+private fun getLatestTimestamps(
+  ds: Datasource,
+  table: Table,
+  tsFieldNames: Set<String>,
+  cache: Cache,
+): Set<LatestTimestamp> {
+  val cachedLatestTimestamps = cache.latestTimestamps(schema = table.schema ?: "", table = table.name)
+  return cachedLatestTimestamps.ifEmpty {
+    val sql = ds.adapter.selectMaxValues(table = table, fieldNames = tsFieldNames)
+    val tsFields = tsFieldNames.map { fld -> Field(name = fld, dataType = NullableLocalDateTimeType) }.toSet()
+    val row = ds.executor.fetchRows(sql = sql, fields = tsFields).first()
+    val timestamps: Set<LatestTimestamp> = tsFieldNames.map { fld ->
+      LatestTimestamp(fieldName = fld, timestamp = row.value(fld).value as LocalDateTime?)
+    }.toSet()
+    cache.addLatestTimestamp(
+      schema = table.schema ?: "",
+      table = table.name,
+      timestamps = timestamps,
+    )
+    timestamps
+  }
+}
+
+fun updateLatestTimestamps(
+  timestampFieldNames: Set<String>,
+  destRows: Set<Row>,
+  destSchema: String?,
+  destTable: String,
+  cache: Cache,
+) {
+  if (timestampFieldNames.isNotEmpty()) {
+    val latestTimestamps = timestampFieldNames.map { fld ->
+      val latestTimestamp = destRows.mapNotNull { it.value(fld) as LocalDateTime? }.maxOrNull()
+      LatestTimestamp(fieldName = fld, timestamp = latestTimestamp)
+    }.toSet()
+    cache.addLatestTimestamp(
+      schema = destSchema ?: "",
+      table = destTable,
+      timestamps = latestTimestamps,
+    )
+  }
+}
