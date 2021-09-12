@@ -15,7 +15,7 @@ interface SQLAdapterImplDetails {
 
   fun joinFields(table: Table, leftTableAlias: String, rightTableAlias: String): String
 
-  fun renderCriteria(criteria: List<Criteria>): String
+  fun renderCriteria(criteria: Set<Criteria>): String
 
   fun setValues(table: Table, rightTableAlias: String): String
 

@@ -19,6 +19,22 @@ sealed class InspectTableResult(
     dialect = dialect,
     primaryKeyFieldNames = primaryKeyFieldNames,
   ) {
+    data class CacheError(
+      override val schema: String?,
+      override val table: String,
+      override val dialect: Dialect,
+      override val primaryKeyFieldNames: List<String>,
+      override val errorMessage: String,
+      override val originalError: Exception?,
+    ) : InspectTableResult.Error(
+      schema = schema,
+      table = table,
+      dialect = dialect,
+      primaryKeyFieldNames = primaryKeyFieldNames,
+      errorMessage = errorMessage,
+      originalError = originalError,
+    )
+
     data class InvalidArgument(
       override val schema: String?,
       override val table: String,

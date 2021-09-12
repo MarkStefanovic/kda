@@ -6,18 +6,18 @@ import java.time.LocalDateTime
 
 @DslMarker annotation class CriteriaDSL
 
-fun or(init: Or.Builder.() -> Unit): List<Criteria> =
+fun or(init: Or.Builder.() -> Unit): Set<Criteria> =
   Or.Builder().apply(init).build().criteria
 
-fun criteria(init: And.Builder.() -> Unit): List<Criteria> =
-  listOf(Criteria(And.Builder().apply(init).build().predicates))
+fun criteria(init: And.Builder.() -> Unit): Set<Criteria> =
+  setOf(Criteria(And.Builder().apply(init).build().predicates.toSet()))
 
-data class Or(val criteria: List<Criteria>) {
+data class Or(val criteria: Set<Criteria>) {
   @CriteriaDSL
   class Builder {
     private val andCriteria: MutableList<Criteria> = mutableListOf()
 
-    fun build() = Or(andCriteria)
+    fun build() = Or(andCriteria.toSet())
 
     fun or(criteria: And.Builder.() -> Unit) {
       andCriteria.add(Criteria(And.Builder().apply(criteria).build().predicates))
@@ -25,12 +25,12 @@ data class Or(val criteria: List<Criteria>) {
   }
 }
 
-data class And(val predicates: List<Predicate>) {
+data class And(val predicates: Set<Predicate>) {
   @CriteriaDSL
   class Builder {
     private val orCriteria: MutableList<Predicate> = mutableListOf()
 
-    fun build() = And(orCriteria)
+    fun build() = And(orCriteria.toSet())
 
     fun boolField(
       name: String,

@@ -20,7 +20,7 @@ fun compareRows(
   destTable: String,
   primaryKeyFieldNames: List<String>,
   includeFieldNames: Set<String>? = null,
-  criteria: List<Criteria> = emptyList(),
+  criteria: Set<Criteria> = emptySet(),
   cache: Cache = DbCache(),
 ): CompareRowsResult =
   try {
@@ -77,13 +77,13 @@ fun compareRows(
           is InspectTableResult.Success -> {
             val srcRowsSQL: String = src.adapter.select(
               table = srcTableDefResult.tableDef,
-              criteria = criteria
+              criteria = criteria,
             )
             val srcRows: Int = src.executor.fetchInt(srcRowsSQL)
 
             val destRowsSQL: String = dest.adapter.select(
               table = destTableDefResult.tableDef,
-              criteria = criteria
+              criteria = criteria,
             )
             val destRows = dest.executor.fetchInt(destRowsSQL)
 

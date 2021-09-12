@@ -39,6 +39,23 @@ sealed class SyncResult(
         originalError = originalError,
       )
 
+    data class CacheError(
+      override val srcSchema: String?,
+      override val srcTable: String,
+      override val destSchema: String?,
+      override val destTable: String,
+      override val errorMessage: String,
+      override val originalError: Exception?,
+    ) :
+      SyncResult.Error(
+        srcSchema = srcSchema,
+        srcTable = srcTable,
+        destSchema = destSchema,
+        destTable = destTable,
+        errorMessage = errorMessage,
+        originalError = originalError,
+      )
+
     data class CopyTableFailed(
       override val srcSchema: String?,
       override val srcTable: String,

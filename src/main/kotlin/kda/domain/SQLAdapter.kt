@@ -11,7 +11,7 @@ interface SQLAdapter {
 
   fun merge(table: Table, rows: Set<Row>): String
 
-  fun select(table: Table, criteria: List<Criteria>): String
+  fun select(table: Table, criteria: Set<Criteria>): String
 
   fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String
 

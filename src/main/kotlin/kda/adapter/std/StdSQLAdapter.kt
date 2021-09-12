@@ -77,7 +77,7 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       "UPDATE SET $setValuesCSV"
   }
 
-  override fun select(table: Table, criteria: List<Criteria>): String {
+  override fun select(table: Table, criteria: Set<Criteria>): String {
     val selectClause = impl.fieldNameCSV(table.sortedFieldNames.toSet())
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val selectSQL = "SELECT $selectClause FROM $tableName"

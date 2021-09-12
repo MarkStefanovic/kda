@@ -20,8 +20,8 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       "${wrapName(schema)}.${wrapName(table)}"
     }
 
-  override fun renderCriteria(criteria: List<Criteria>): String =
-    criteria.joinToString(" OR ") { c ->
+  override fun renderCriteria(criteria: Set<Criteria>): String =
+    criteria.sortedBy { it.description }.joinToString(" OR ") { c ->
       c.predicates.joinToString(" AND ") { predicate: Predicate ->
         val operator =
           when (predicate.operator) {
