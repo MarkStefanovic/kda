@@ -75,7 +75,7 @@ sealed class InspectTableResult(
       override val dialect: Dialect,
       override val primaryKeyFieldNames: List<String>,
       override val errorMessage: String,
-      override val originalError: Exception?,
+      override val originalError: Exception,
     ) : InspectTableResult.Error(
       schema = schema,
       table = table,

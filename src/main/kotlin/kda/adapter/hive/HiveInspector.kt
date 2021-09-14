@@ -22,9 +22,9 @@ class HiveInspector(private val con: Connection) : Inspector {
       "The primary key column names must be provided for a Hive table, as they cannot be inspected."
     }
     val fullTableName = if (schema == null) {
-      table
+      "`$table`"
     } else {
-      "$schema.$table"
+      "`$schema`.`$table`"
     }
     val sql = "DESCRIBE $fullTableName"
 
@@ -68,7 +68,7 @@ class HiveInspector(private val con: Connection) : Inspector {
     val sql = if (schema == null) {
       "SHOW TABLES LIKE '$table'"
     } else {
-      "SHOW TABLES IN $schema LIKE '$table'"
+      "SHOW TABLES IN `$schema` LIKE '$table'"
     }
     con.createStatement().use { stmt ->
       stmt.executeQuery(sql).use { rs ->

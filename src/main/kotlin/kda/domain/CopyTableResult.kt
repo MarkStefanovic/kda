@@ -114,7 +114,7 @@ sealed class CopyTableResult(
       override val includeFields: Set<String>?,
       override val primaryKeyFields: List<String>,
       override val errorMessage: String,
-      override val originalError: Exception?,
+      override val originalError: Exception,
     ) :
       CopyTableResult.Error(
         srcDialect = srcDialect,

@@ -116,7 +116,7 @@ sealed class SyncResult(
       override val destSchema: String?,
       override val destTable: String,
       override val errorMessage: String,
-      override val originalError: Exception?,
+      override val originalError: Exception,
       val srcRows: Set<Row>,
       val destRows: Set<Row>,
       val pkFields: Set<String>,
@@ -138,7 +138,7 @@ sealed class SyncResult(
       override val destSchema: String?,
       override val destTable: String,
       override val errorMessage: String,
-      override val originalError: Exception?,
+      override val originalError: Exception,
     ) :
       SyncResult.Error(
         srcSchema = srcSchema,

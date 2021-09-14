@@ -239,7 +239,7 @@ fun sync(
                 destSchema = destSchema,
                 destTable = destTable,
                 errorMessage = "An error occurred while executing compareRows: $e",
-                originalError = null,
+                originalError = e,
                 srcRows = srcLkpRows,
                 destRows = destLkpRows,
                 pkFields = pkFields,
@@ -430,7 +430,7 @@ fun updateLatestTimestamps(
       timestampFieldNames
         .map { fld ->
           val latestTimestamp =
-            destRows.mapNotNull { it.value(fld) as LocalDateTime? }.maxOrNull()
+            destRows.mapNotNull { it.value(fld).value as LocalDateTime? }.maxOrNull()
           LatestTimestamp(fieldName = fld, timestamp = latestTimestamp)
         }
         .toSet()

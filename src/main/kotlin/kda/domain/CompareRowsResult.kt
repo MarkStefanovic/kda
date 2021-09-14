@@ -12,7 +12,7 @@ sealed class CompareRowsResult(
     override val destSchema: String?,
     override val destTable: String,
     open val errorMessage: String,
-    open val originalError: Throwable?
+    open val originalError: Exception?,
   ) :
     CompareRowsResult(
       srcSchema = srcSchema,
@@ -26,7 +26,7 @@ sealed class CompareRowsResult(
       override val destSchema: String?,
       override val destTable: String,
       override val errorMessage: String,
-      override val originalError: Throwable?,
+      override val originalError: Exception?,
     ) :
       CompareRowsResult.Error(
         srcSchema = srcSchema,
@@ -43,7 +43,7 @@ sealed class CompareRowsResult(
       override val destSchema: String?,
       override val destTable: String,
       override val errorMessage: String,
-      override val originalError: Throwable?,
+      override val originalError: Exception,
     ) : CompareRowsResult.Error(
       srcSchema = srcSchema,
       srcTable = srcTable,

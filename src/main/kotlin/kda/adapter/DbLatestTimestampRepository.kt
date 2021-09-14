@@ -10,6 +10,7 @@ import org.jetbrains.exposed.sql.select
 class DbLatestTimestampRepository(private val db: Db) : LatestTimestampRepository {
   override fun add(schema: String, table: String, latestTimestamp: LatestTimestamp) {
     db.exec {
+      LatestTimestamps.deleteWhere { (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table) }
       LatestTimestamps.insert {
         it[LatestTimestamps.schema] = schema
         it[LatestTimestamps.table] = table
