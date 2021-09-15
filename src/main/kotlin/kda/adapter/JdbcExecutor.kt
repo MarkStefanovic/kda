@@ -84,40 +84,44 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
     }
 
   private inline fun <reified Out : Any?> fetchScalar(sql: String, dataType: DataType<Out>): Out =
-    con.createStatement().use { stmt ->
-      stmt.executeQuery(sql).use { rs ->
-        rs.next()
-        val value =
-          try {
-            rs.getObject(1)
-          } catch (e: Exception) {
-            if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql = sql) else throw e
-          }
-
-        try {
-          when (value) {
-            null ->
-              if (dataType.nullable) null
-              else throw NullValueError(expectedType = dataType::class.simpleName ?: "Unknown")
-            is Out -> value
-            else -> {
-              when (dataType) {
-                BoolType, NullableBoolType -> value as Boolean
-                is DecimalType, is NullableDecimalType -> value as BigDecimal
-                is FloatType, is NullableFloatType -> (value as Double).toFloat()
-                is IntType, is NullableIntType -> if (value is Long) value.toInt() else value
-                LocalDateTimeType, NullableLocalDateTimeType ->
-                  (value as Timestamp).toLocalDateTime()
-                LocalDateType, NullableLocalDateType -> (value as Date).toLocalDate()
-                is StringType, is NullableStringType -> value as String
-              }
+    try {
+      con.createStatement().use { stmt ->
+        stmt.executeQuery(sql).use { rs ->
+          rs.next()
+          val value =
+            try {
+              rs.getObject(1)
+            } catch (e: Exception) {
+              if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql = sql) else throw e
             }
-          } as
-            Out
-        } catch (e: ClassCastException) {
-          throw ValueError(value = value, expectedType = Out::class.simpleName ?: "Unknown")
+
+          try {
+            when (value) {
+              null ->
+                if (dataType.nullable) null
+                else throw NullValueError(expectedType = dataType::class.simpleName ?: "Unknown")
+              is Out -> value
+              else -> {
+                when (dataType) {
+                  BoolType, NullableBoolType -> value as Boolean
+                  is DecimalType, is NullableDecimalType -> value as BigDecimal
+                  is FloatType, is NullableFloatType -> (value as Double).toFloat()
+                  is IntType, is NullableIntType -> if (value is Long) value.toInt() else value
+                  LocalDateTimeType, NullableLocalDateTimeType ->
+                    (value as Timestamp).toLocalDateTime()
+                  LocalDateType, NullableLocalDateType -> (value as Date).toLocalDate()
+                  is StringType, is NullableStringType -> value as String
+                }
+              }
+            } as
+              Out
+          } catch (e: ClassCastException) {
+            throw ValueError(value = value, expectedType = Out::class.simpleName ?: "Unknown")
+          }
         }
       }
+    } catch (e: Exception) {
+      throw KDAError.SQLError(sql = sql, originalError = e)
     }
 }
 

@@ -2,11 +2,13 @@ package kda
 
 import kda.adapter.hive.hiveDatasource
 import kda.adapter.pg.pgDatasource
-import kda.domain.CompareRowsResult
 import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.InspectTableResult
+import kda.domain.Row
+import kda.domain.RowDiff
+import kda.domain.flatMap
 import java.sql.Connection
 
 fun compareRows(
@@ -18,94 +20,92 @@ fun compareRows(
   srcTable: String,
   destSchema: String?,
   destTable: String,
+  compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
-  includeFieldNames: Set<String>? = null,
   criteria: Set<Criteria> = emptySet(),
   cache: Cache = DbCache(),
-): CompareRowsResult =
-  try {
-    val src: Datasource =
-      when (srcDialect) {
-        Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
-        Dialect.PostgreSQL -> pgDatasource(con = srcCon)
-      }
+): Result<RowDiff> = runCatching {
+  val src: Datasource = when (srcDialect) {
+    Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
+    Dialect.PostgreSQL -> pgDatasource(con = srcCon)
+  }
 
-    val dest: Datasource =
-      when (destDialect) {
-        Dialect.HortonworksHive -> hiveDatasource(con = destCon)
-        Dialect.PostgreSQL -> pgDatasource(con = destCon)
-      }
+  val dest: Datasource = when (destDialect) {
+    Dialect.HortonworksHive -> hiveDatasource(con = destCon)
+    Dialect.PostgreSQL -> pgDatasource(con = destCon)
+  }
 
-    val srcTableDefResult = inspectTable(
-      con = srcCon,
-      dialect = srcDialect,
-      schema = srcSchema,
-      table = srcTable,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      includeFieldNames = includeFieldNames,
-      cache = cache,
-    )
+  val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
 
-    when (srcTableDefResult) {
-      is InspectTableResult.Error -> CompareRowsResult.Error.InspectTableFailed(
-        srcSchema = srcSchema,
-        srcTable = srcTable,
-        destSchema = destSchema,
-        destTable = destTable,
-        errorMessage = srcTableDefResult.errorMessage,
-        originalError = srcTableDefResult.originalError,
+  return fetchLookupTable(
+    ds = src,
+    con = srcCon,
+    dialect = srcDialect,
+    schema = srcSchema,
+    table = srcTable,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    compareFields = compareFields,
+    criteria = criteria,
+    cache = cache,
+  )
+    .flatMap { srcRows ->
+      fetchLookupTable(
+        ds = dest,
+        con = destCon,
+        dialect = destDialect,
+        schema = destSchema,
+        table = destTable,
+        primaryKeyFieldNames = primaryKeyFieldNames,
+        compareFields = compareFields,
+        criteria = criteria,
+        cache = cache,
       )
-      is InspectTableResult.Success -> {
-        val destTableDefResult = inspectTable(
-          con = destCon,
-          dialect = destDialect,
-          schema = destSchema,
-          table = destTable,
-          primaryKeyFieldNames = primaryKeyFieldNames,
-          includeFieldNames = includeFieldNames,
-          cache = cache,
-        )
-        when (destTableDefResult) {
-          is InspectTableResult.Error -> CompareRowsResult.Error.InspectTableFailed(
-            srcSchema = srcSchema,
-            srcTable = srcTable,
-            destSchema = destSchema,
-            destTable = destTable,
-            errorMessage = destTableDefResult.errorMessage,
-            originalError = destTableDefResult.originalError,
-          )
-          is InspectTableResult.Success -> {
-            val srcRowsSQL: String = src.adapter.select(
-              table = srcTableDefResult.tableDef,
-              criteria = criteria,
-            )
-            val srcRows: Int = src.executor.fetchInt(srcRowsSQL)
-
-            val destRowsSQL: String = dest.adapter.select(
-              table = destTableDefResult.tableDef,
-              criteria = criteria,
-            )
-            val destRows = dest.executor.fetchInt(destRowsSQL)
-
-            CompareRowsResult.Success(
-              srcSchema = srcSchema,
-              srcTable = srcTable,
-              destSchema = destSchema,
-              destTable = destTable,
-              srcRows = srcRows,
-              destRows = destRows,
+        .flatMap { destRows ->
+          runCatching {
+            kda.domain.compareRows(
+              dest = destRows,
+              src = srcRows,
+              primaryKeyFields = primaryKeyFieldNames.toSet(),
+              compareFields = compareFields,
+              includeFields = includeFieldNames,
             )
           }
         }
-      }
     }
-  } catch (e: Exception) {
-    CompareRowsResult.Error.Unexpected(
-      srcSchema = srcSchema,
-      srcTable = srcTable,
-      destSchema = destSchema,
-      destTable = destTable,
-      errorMessage = "An unexpected error occurred while executing inspectTable: ${e.message}",
-      originalError = e,
+}
+
+fun fetchLookupTable(
+  ds: Datasource,
+  con: Connection,
+  dialect: Dialect,
+  schema: String?,
+  table: String,
+  primaryKeyFieldNames: List<String>,
+  compareFields: Set<String>,
+  criteria: Set<Criteria>,
+  cache: Cache,
+): Result<Set<Row>> = runCatching {
+  val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
+  val tableDefResult = inspectTable(
+    con = con,
+    dialect = dialect,
+    schema = schema,
+    table = table,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    includeFieldNames = includeFieldNames,
+    cache = cache,
+  )
+  return when (tableDefResult) {
+    is InspectTableResult.Error -> Result.failure(
+      tableDefResult.originalError
+        ?: Exception("An error occurred while inspecting $schema.$table.")
     )
+    is InspectTableResult.Success -> {
+      val srcLkpTable = tableDefResult.tableDef.subset(includeFieldNames)
+      val includeFields = tableDefResult.tableDef.fields.filter { it.name in includeFieldNames }.toSet()
+      val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
+      val rows = ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
+      Result.success(rows)
+    }
   }
+}

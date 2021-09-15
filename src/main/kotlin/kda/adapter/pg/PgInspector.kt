@@ -33,8 +33,8 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       ,   CASE WHEN data_type LIKE 'timestamp%' THEN TRUE ELSE FALSE END AS is_datetime_flag
       ,   CASE WHEN data_type = 'double precision' THEN TRUE ELSE FALSE END AS is_float_flag
       ,   CASE WHEN data_type = 'numeric' THEN TRUE ELSE FALSE END AS is_decimal_flag
-      ,   CASE WHEN data_type = 'integer' THEN TRUE ELSE FALSE END AS is_int_flag
-      ,   CASE WHEN data_type = 'text' THEN TRUE ELSE FALSE END AS is_text_flag
+      ,   CASE WHEN data_type IN ('bigint', 'integer') THEN TRUE ELSE FALSE END AS is_int_flag
+      ,   CASE WHEN data_type IN ('character', 'character varying', 'text') THEN TRUE ELSE FALSE END AS is_text_flag
       FROM information_schema.columns AS c
       WHERE $whereClause
       ORDER BY c.column_name
@@ -59,6 +59,7 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       ),
     )
     val fields = rows.map { row ->
+      val sqlDataType = row.value("data_type").value as String
       val fieldName = row.value("column_name").value as String
       val isAutoincrement = row.value("autoincrement_flag").value as Boolean
       val isNullable = row.value("nullable_flag").value as Boolean
@@ -84,11 +85,11 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
         isInt -> IntType(autoincrement = isAutoincrement)
         isFloat && isNullable -> NullableFloatType(maxDigits = maxFloatDigits)
         isFloat -> FloatType(4)
-        isDecimal && isNullable -> NullableDecimalType(precision = precision!!, scale = scale!!)
-        isDecimal -> DecimalType(precision = precision!!, scale = scale!!)
+        isDecimal && isNullable -> NullableDecimalType(precision = precision ?: 19, scale = scale ?: 4)
+        isDecimal -> DecimalType(precision = precision ?: 19, scale = scale ?: 4)
         isString && isNullable -> NullableStringType(maxLength = maxLen)
         isString -> StringType(maxLength = maxLen)
-        else -> throw NotImplementedError()
+        else -> throw NotImplementedError("Could not recognize the data type, '$sqlDataType'.")
       }
       Field(name = fieldName, dataType = dataType)
     }

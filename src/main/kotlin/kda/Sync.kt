@@ -137,8 +137,8 @@ fun sync(
             try {
               val rowDiff: RowDiff =
                 compareRows(
-                  old = destLkpRows,
-                  new = srcLkpRows,
+                  dest = destLkpRows,
+                  src = srcLkpRows,
                   primaryKeyFields = pkFields,
                   compareFields = compareFieldNamesFinal,
                   includeFields = lkpTableFieldNames,

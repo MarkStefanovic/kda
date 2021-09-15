@@ -9,6 +9,8 @@ interface SQLAdapter {
 
   fun dropTable(schema: String?, table: String): String
 
+  fun getRowCount(schema: String?, table: String): String
+
   fun merge(table: Table, rows: Set<Row>): String
 
   fun select(table: Table, criteria: Set<Criteria>): String

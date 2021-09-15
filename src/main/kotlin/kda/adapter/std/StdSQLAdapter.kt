@@ -52,9 +52,11 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     }
   }
 
-  override fun dropTable(schema: String?, table: String): String {
-    return "DROP TABLE ${impl.fullTableName(schema = schema, table = table)}"
-  }
+  override fun dropTable(schema: String?, table: String): String =
+    "DROP TABLE ${impl.fullTableName(schema = schema, table = table)}"
+
+  override fun getRowCount(schema: String?, table: String): String =
+    "SELECT COUNT(*) AS ${impl.wrapName("rows")} FROM ${impl.fullTableName(schema = schema, table = table)}"
 
   override fun merge(table: Table, rows: Set<Row>): String {
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
