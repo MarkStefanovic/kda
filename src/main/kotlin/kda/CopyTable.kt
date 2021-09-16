@@ -1,6 +1,7 @@
 package kda
 
 import kda.adapter.hive.hiveDatasource
+import kda.adapter.mssql.mssqlDatasource
 import kda.adapter.pg.pgDatasource
 import kda.domain.CopyTableResult
 import kda.domain.Datasource
@@ -25,6 +26,7 @@ fun copyTable(
     val src: Datasource =
       when (srcDialect) {
         Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
+        Dialect.MSSQLServer -> mssqlDatasource(con = srcCon)
         Dialect.PostgreSQL -> pgDatasource(con = srcCon)
       }
 
@@ -82,6 +84,7 @@ fun copyTable(
           val dest: Datasource =
             when (destDialect) {
               Dialect.HortonworksHive -> hiveDatasource(con = destCon)
+              Dialect.MSSQLServer -> mssqlDatasource(con = destCon)
               Dialect.PostgreSQL -> pgDatasource(con = destCon)
             }
 

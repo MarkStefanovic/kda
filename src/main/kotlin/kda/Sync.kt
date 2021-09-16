@@ -1,6 +1,7 @@
 package kda
 
 import kda.adapter.hive.hiveDatasource
+import kda.adapter.mssql.mssqlDatasource
 import kda.adapter.pg.pgDatasource
 import kda.domain.CacheResult
 import kda.domain.CopyTableResult
@@ -51,12 +52,14 @@ fun sync(
       val src: Datasource =
         when (srcDialect) {
           Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
+          Dialect.MSSQLServer -> mssqlDatasource(con = srcCon)
           Dialect.PostgreSQL -> pgDatasource(con = srcCon)
         }
 
       val dest: Datasource =
         when (destDialect) {
           Dialect.HortonworksHive -> hiveDatasource(con = destCon)
+          Dialect.MSSQLServer -> mssqlDatasource(con = destCon)
           Dialect.PostgreSQL -> pgDatasource(con = destCon)
         }
 

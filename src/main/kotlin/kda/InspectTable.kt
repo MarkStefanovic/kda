@@ -1,6 +1,7 @@
 package kda
 
 import kda.adapter.hive.hiveDatasource
+import kda.adapter.mssql.mssqlDatasource
 import kda.adapter.pg.pgDatasource
 import kda.domain.CacheResult
 import kda.domain.Datasource
@@ -44,6 +45,7 @@ fun inspectTable(
       val ds: Datasource =
         when (dialect) {
           Dialect.HortonworksHive -> hiveDatasource(con = con)
+          Dialect.MSSQLServer -> mssqlDatasource(con = con)
           Dialect.PostgreSQL -> pgDatasource(con = con)
         }
       try {
