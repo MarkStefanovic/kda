@@ -12,10 +12,12 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       try {
         createStatement().use { stmt -> stmt.execute(sql) }
       } catch (e: Exception) {
-//        println("The following error occurred while executing '$sql':")
-//        e.printStackTrace()
-//        throw e
-        throw Exception("The following error occurred while executing '$sql': ${e.stackTraceToString()}")
+        //        println("The following error occurred while executing '$sql':")
+        //        e.printStackTrace()
+        //        throw e
+        throw Exception(
+          "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
+        )
       }
     }
   }
@@ -78,7 +80,9 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
           }
         }
       } catch (e: Exception) {
-        throw Exception("The following error occurred while executing '$sql': ${e.stackTraceToString()}")
+        throw Exception(
+          "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
+        )
       }
       return rows.toSet()
     }
@@ -88,40 +92,43 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       con.createStatement().use { stmt ->
         stmt.executeQuery(sql).use { rs ->
           rs.next()
-          val value =
+          if (rs.metaData.columnCount == 0) {
+            throw KDAError.NoRowsReturned(sql = sql)
+          } else {
+            val value = rs.getObject(1)
             try {
-              rs.getObject(1)
-            } catch (e: Exception) {
-              if (rs.metaData.columnCount == 0) throw NoRowsReturned(sql = sql) else throw e
-            }
-
-          try {
-            when (value) {
-              null ->
-                if (dataType.nullable) null
-                else throw NullValueError(expectedType = dataType::class.simpleName ?: "Unknown")
-              is Out -> value
-              else -> {
-                when (dataType) {
-                  BoolType, NullableBoolType -> value as Boolean
-                  is DecimalType, is NullableDecimalType -> value as BigDecimal
-                  is FloatType, is NullableFloatType -> (value as Double).toFloat()
-                  is IntType, is NullableIntType -> if (value is Long) value.toInt() else value
-                  LocalDateTimeType, NullableLocalDateTimeType ->
-                    (value as Timestamp).toLocalDateTime()
-                  LocalDateType, NullableLocalDateType -> (value as Date).toLocalDate()
-                  is StringType, is NullableStringType -> value as String
+              when (value) {
+                null ->
+                  if (dataType.nullable) null
+                  else
+                    throw KDAError.NullValueError(expectedType = dataType::class.simpleName ?: "Unknown")
+                is Out -> value
+                else -> {
+                  when (dataType) {
+                    BoolType, NullableBoolType -> value as Boolean
+                    is DecimalType, is NullableDecimalType -> value as BigDecimal
+                    is FloatType, is NullableFloatType -> (value as Double).toFloat()
+                    is IntType, is NullableIntType -> if (value is Long) value.toInt() else value
+                    LocalDateTimeType, NullableLocalDateTimeType ->
+                      (value as Timestamp).toLocalDateTime()
+                    LocalDateType, NullableLocalDateType -> (value as Date).toLocalDate()
+                    is StringType, is NullableStringType -> value as String
+                  }
                 }
-              }
-            } as
-              Out
-          } catch (e: ClassCastException) {
-            throw ValueError(value = value, expectedType = Out::class.simpleName ?: "Unknown")
+              } as
+                Out
+            } catch (e: ClassCastException) {
+              throw KDAError.ValueError(value = value, expectedType = Out::class.simpleName ?: "Unknown")
+            }
           }
         }
       }
     } catch (e: Exception) {
-      throw KDAError.SQLError(sql = sql, originalError = e)
+      if (e is KDAError) {
+        throw e
+      } else {
+        throw KDAError.SQLError(sql = sql, originalError = e)
+      }
     }
 }
 
@@ -146,7 +153,9 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
         is FloatType ->
           FloatValue(value = getFloat(fld.name), maxDigits = fld.dataType.maxDigits)
         is NullableFloatType ->
-          NullableFloatValue(value = getObject(fld.name) as? Float?, maxDigits = fld.dataType.maxDigits)
+          NullableFloatValue(
+            value = getObject(fld.name) as? Float?, maxDigits = fld.dataType.maxDigits
+          )
         is IntType -> IntValue(getLong(fld.name).toInt())
         is NullableIntType -> {
           if (getObject(fld.name) == null) {
@@ -165,6 +174,8 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
         is StringType ->
           StringValue(value = getString(fld.name), maxLength = fld.dataType.maxLength)
         is NullableStringType ->
-          NullableStringValue(value = getObject(fld.name) as? String?, maxLength = fld.dataType.maxLength)
+          NullableStringValue(
+            value = getObject(fld.name) as? String?, maxLength = fld.dataType.maxLength
+          )
       }
   }

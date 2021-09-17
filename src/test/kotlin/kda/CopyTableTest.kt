@@ -43,8 +43,8 @@ class CopyTableTest {
             destTable = "customer2",
             includeFields = setOf("customer_id", "first_name", "last_name"),
             primaryKeyFields = listOf("customer_id"),
-          )
-        assertIs<CopyTableResult.Success>(result)
+          ).getOrThrow()
+        assertIs<CopyTableResult>(result)
         assertEquals(
           expected = setOf("customer_id", "first_name", "last_name"),
           actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()

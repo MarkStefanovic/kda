@@ -2,8 +2,12 @@ package kda
 
 import kda.domain.Dialect
 import kda.domain.Field
+import kda.domain.IndexedRows
 import kda.domain.IntType
+import kda.domain.IntValue
 import kda.domain.NullableStringType
+import kda.domain.NullableStringValue
+import kda.domain.Row
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.criteria
@@ -93,17 +97,13 @@ class SyncTest {
             srcTable = "customer",
             destSchema = "sales",
             destTable = "customer2",
-            compareFields = setOf("first_name"),
+            compareFields = setOf("first_name", "last_name"),
             primaryKeyFieldNames = listOf("customer_id"),
             includeFields = null,
-          )
+          ).getOrThrow()
 
         val expectedSyncResult =
-          SyncResult.Success(
-            srcSchema = "sales",
-            srcTable = "customer",
-            destSchema = "sales",
-            destTable = "customer2",
+          SyncResult(
             srcTableDef = Table(
               schema = "sales",
               name = "customer",
@@ -124,9 +124,25 @@ class SyncTest {
               ),
               primaryKeyFieldNames = listOf("customer_id"),
             ),
-            added = 3,
-            deleted = 0,
-            updated = 0,
+            added = IndexedRows.of(
+              Row.of("customer_id" to IntValue(1)) to Row.of(
+                "customer_id" to IntValue(1),
+                "first_name" to NullableStringValue("Mark", null),
+                "last_name" to NullableStringValue("Stefanovic", null),
+              ),
+              Row.of("customer_id" to IntValue(2)) to Row.of(
+                "customer_id" to IntValue(2),
+                "first_name" to NullableStringValue("Bob", null),
+                "last_name" to NullableStringValue("Smith", null),
+              ),
+              Row.of("customer_id" to IntValue(3)) to Row.of(
+                "customer_id" to IntValue(3),
+                "first_name" to NullableStringValue("Mandie", null),
+                "last_name" to NullableStringValue("Mandlebrot", null),
+              ),
+            ),
+            deleted = IndexedRows.empty(),
+            updated = IndexedRows.empty(),
           )
         assertEquals(expected = expectedSyncResult, actual = result)
 
@@ -167,14 +183,10 @@ class SyncTest {
                 eq("Smith")
               }
             },
-          )
+          ).getOrThrow()
 
         val expectedSyncResult =
-          SyncResult.Success(
-            srcSchema = "sales",
-            srcTable = "customer",
-            destSchema = "sales",
-            destTable = "customer2",
+          SyncResult(
             srcTableDef = Table(
               schema = "sales",
               name = "customer",
@@ -195,9 +207,18 @@ class SyncTest {
               ),
               primaryKeyFieldNames = listOf("customer_id"),
             ),
-            added = 2,
-            deleted = 0,
-            updated = 0,
+            added = IndexedRows.of(
+              Row.of("customer_id" to IntValue(2)) to Row.of(
+                "customer_id" to IntValue(2),
+                "first_name" to NullableStringValue("Bob", null)
+              ),
+              Row.of("customer_id" to IntValue(3)) to Row.of(
+                "customer_id" to IntValue(3),
+                "first_name" to NullableStringValue("Mandie", null)
+              ),
+            ),
+            deleted = IndexedRows.empty(),
+            updated = IndexedRows.empty(),
           )
         assertEquals(expected = expectedSyncResult, actual = result)
 

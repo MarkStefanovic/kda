@@ -3,12 +3,11 @@ package kda.adapter
 import kda.domain.Field
 import kda.domain.IntType
 import kda.domain.IntValue
-import kda.domain.NoRowsReturned
+import kda.domain.KDAError
 import kda.domain.Row
 import kda.domain.StringType
 import kda.domain.StringValue
 import kda.domain.Table
-import kda.domain.ValueError
 import kda.shared.connect
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -161,7 +160,7 @@ class JdbcExecutorTest {
   fun fetchNullableBool_not_a_bool() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableBool("SELECT 'a'") }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableBool("SELECT 'a'") }
     }
   }
 
@@ -169,7 +168,7 @@ class JdbcExecutorTest {
   fun fetchNullableBool_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableBool("SELECT") }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableBool("SELECT") }
     }
   }
 
@@ -202,7 +201,7 @@ class JdbcExecutorTest {
   fun fetchNullableDate_not_a_date() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableDate("SELECT 'a'") }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDate("SELECT 'a'") }
     }
   }
 
@@ -210,7 +209,7 @@ class JdbcExecutorTest {
   fun fetchNullableDate_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableDate("SELECT") }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDate("SELECT") }
     }
   }
 
@@ -241,7 +240,7 @@ class JdbcExecutorTest {
   fun fetchNullableDateTime_not_a_timestamp() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableDateTime("SELECT 'a'") }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDateTime("SELECT 'a'") }
     }
   }
 
@@ -249,7 +248,7 @@ class JdbcExecutorTest {
   fun fetchNullableDateTime_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableDateTime("SELECT") }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDateTime("SELECT") }
     }
   }
 
@@ -283,7 +282,7 @@ class JdbcExecutorTest {
   fun fetchNullableDecimal_not_a_decimal() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableDecimal("SELECT 'a'") }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDecimal("SELECT 'a'") }
     }
   }
 
@@ -291,7 +290,7 @@ class JdbcExecutorTest {
   fun fetchNullableDecimal_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableDecimal("SELECT") }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDecimal("SELECT") }
     }
   }
 
@@ -319,7 +318,7 @@ class JdbcExecutorTest {
   fun fetchNullableInt_not_a_decimal() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableInt("SELECT 'a'") }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableInt("SELECT 'a'") }
     }
   }
 
@@ -327,7 +326,7 @@ class JdbcExecutorTest {
   fun fetchNullableInt_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableInt("SELECT") }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableInt("SELECT") }
     }
   }
 
@@ -355,7 +354,7 @@ class JdbcExecutorTest {
   fun fetchNullableFloat_not_a_decimal() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'", 5) }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'", 5) }
     }
   }
 
@@ -363,7 +362,7 @@ class JdbcExecutorTest {
   fun fetchNullableFloat_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableFloat("SELECT", 5) }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableFloat("SELECT", 5) }
     }
   }
 
@@ -391,7 +390,7 @@ class JdbcExecutorTest {
   fun fetchNullableString_not_a_string() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<ValueError>("test") { executor.fetchNullableString("SELECT 1", null) }
+      assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableString("SELECT 1", null) }
     }
   }
 
@@ -399,7 +398,7 @@ class JdbcExecutorTest {
   fun fetchNullableString_no_rows_returned() {
     connect().use { con ->
       val executor = JdbcExecutor(con)
-      assertFailsWith<NoRowsReturned>("test") { executor.fetchNullableString("SELECT", null) }
+      assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableString("SELECT", null) }
     }
   }
 
