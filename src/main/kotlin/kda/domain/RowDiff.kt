@@ -22,10 +22,12 @@ data class RowDiff(
       absVariance / srcRows.count().toFloat()
     }
 
-  val description = """extra rows: ${deleted.count()}
-    |missing rows: ${added.count()}
-    |stale rows: ${updated.count()}
-  """.trimIndent()
+  val description =
+    "- " + listOf(
+      "extra rows: $extraRows",
+      "missing rows: $missingRows",
+      "stale rows: $staleRows"
+    ).joinToString("\n- ")
 
   val extraRows: Int
     get() = deleted.count()
