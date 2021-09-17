@@ -4,26 +4,25 @@ import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SqliteDb
-import kda.domain.CacheResult
 import kda.domain.LatestTimestamp
 import kda.domain.Table
 
 interface Cache {
-  fun addTableDef(tableDef: Table): CacheResult.AddTableDef
+  fun addTableDef(tableDef: Table): Result<Unit>
 
   fun addLatestTimestamp(
     schema: String,
     table: String,
     timestamps: Set<LatestTimestamp>,
-  ): CacheResult.AddLatestTimestamp
+  ): Result<Unit>
 
-  fun clearTableDef(schema: String, table: String): CacheResult.ClearTableDef
+  fun clearTableDef(schema: String, table: String): Result<Unit>
 
-  fun clearLatestTimestamps(schema: String, table: String): CacheResult.ClearLatestTimestamps
+  fun clearLatestTimestamps(schema: String, table: String): Result<Unit>
 
-  fun tableDef(schema: String, table: String): CacheResult.TableDef
+  fun tableDef(schema: String, table: String): Result<Table?>
 
-  fun latestTimestamps(schema: String, table: String): CacheResult.LatestTimestamps
+  fun latestTimestamps(schema: String, table: String): Result<Set<LatestTimestamp>>
 }
 
 class DbCache(private val db: Db = SqliteDb) : Cache {
@@ -39,24 +38,15 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
     db.createTables()
   }
 
-  override fun addTableDef(tableDef: Table) =
-    try {
-      tableDefRepo.add(tableDef)
-      CacheResult.AddTableDef.Success(tableDef)
-    } catch (e: Exception) {
-      CacheResult.AddTableDef.Error(
-        tableDef = tableDef,
-        originalError = e,
-        errorMessage = "An error occurred while adding the table def for " +
-          "${tableDef.schema}.${tableDef.name}: ${e.message}."
-      )
-    }
+  override fun addTableDef(tableDef: Table): Result<Unit> = runCatching {
+    tableDefRepo.add(tableDef)
+  }
 
   override fun addLatestTimestamp(
     schema: String,
     table: String,
     timestamps: Set<LatestTimestamp>,
-  ) = try {
+  ) = runCatching {
     timestamps.forEach { ts ->
       latestTimestampRepo.add(
         schema = schema,
@@ -64,89 +54,21 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
         latestTimestamp = ts,
       )
     }
-    CacheResult.AddLatestTimestamp.Success(
-      schema = schema,
-      table = table,
-      timestamps = timestamps
-    )
-  } catch (e: Exception) {
-    CacheResult.AddLatestTimestamp.Error(
-      schema = schema,
-      table = table,
-      timestamps = timestamps,
-      originalError = e,
-      errorMessage = "An error occurred while adding the latest " +
-        "timestamps, $timestamps: ${e.message}"
-    )
   }
 
-  override fun clearTableDef(schema: String, table: String) =
-    try {
-      tableDefRepo.delete(schema = schema, table = table)
-      CacheResult.ClearTableDef.Success(
-        schema = schema,
-        table = table,
-      )
-    } catch (e: Exception) {
-      CacheResult.ClearTableDef.Error(
-        schema = schema,
-        table = table,
-        originalError = e,
-        errorMessage = "An error occurred while clearing the table def " +
-          "for $schema.$table: ${e.message}",
-      )
-    }
+  override fun clearTableDef(schema: String, table: String) = runCatching {
+    tableDefRepo.delete(schema = schema, table = table)
+  }
 
-  override fun clearLatestTimestamps(schema: String, table: String) =
-    try {
-      latestTimestampRepo.delete(schema = schema, table = table)
-      CacheResult.ClearLatestTimestamps.Success(
-        schema = schema,
-        table = table,
-      )
-    } catch (e: Exception) {
-      CacheResult.ClearLatestTimestamps.Error(
-        schema = schema,
-        table = table,
-        originalError = e,
-        errorMessage = "An error occurred while clearing the timestamps " +
-          "for $schema.$table: ${e.message}",
-      )
-    }
+  override fun clearLatestTimestamps(schema: String, table: String) = runCatching {
+    latestTimestampRepo.delete(schema = schema, table = table)
+  }
 
-  override fun tableDef(schema: String, table: String) =
-    try {
-      val tableDef = tableDefRepo.get(schema = schema, table = table)
-      CacheResult.TableDef.Success(
-        schema = schema,
-        table = table,
-        tableDef = tableDef,
-      )
-    } catch (e: Exception) {
-      CacheResult.TableDef.Error(
-        schema = schema,
-        table = table,
-        originalError = e,
-        errorMessage = "An error occurred while getting the table def " +
-          "for $schema.$table: ${e.message}",
-      )
-    }
+  override fun tableDef(schema: String, table: String) = runCatching {
+    tableDefRepo.get(schema = schema, table = table)
+  }
 
-  override fun latestTimestamps(schema: String, table: String) =
-    try {
-      val timestamps = latestTimestampRepo.get(schema = schema, table = table)
-      CacheResult.LatestTimestamps.Success(
-        schema = schema,
-        table = table,
-        timestamps = timestamps,
-      )
-    } catch (e: Exception) {
-      CacheResult.LatestTimestamps.Error(
-        schema = schema,
-        table = table,
-        originalError = e,
-        errorMessage = "An error occurred while getting the latest timestamps " +
-          "for $schema.$table: ${e.message}",
-      )
-    }
+  override fun latestTimestamps(schema: String, table: String) = runCatching {
+    latestTimestampRepo.get(schema = schema, table = table)
+  }
 }

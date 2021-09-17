@@ -5,10 +5,9 @@ import kda.adapter.pg.pgDatasource
 import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
-import kda.domain.InspectTableResult
+import kda.domain.KDAError
 import kda.domain.Row
 import kda.domain.RowDiff
-import kda.domain.flatMap
 import java.sql.Connection
 
 fun compareRows(
@@ -37,7 +36,7 @@ fun compareRows(
 
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
 
-  return fetchLookupTable(
+  val srcRows = fetchLookupTable(
     ds = src,
     con = srcCon,
     dialect = srcDialect,
@@ -47,31 +46,27 @@ fun compareRows(
     compareFields = compareFields,
     criteria = criteria,
     cache = cache,
+  ).getOrThrow()
+
+  val destRows = fetchLookupTable(
+    ds = dest,
+    con = destCon,
+    dialect = destDialect,
+    schema = destSchema,
+    table = destTable,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    compareFields = compareFields,
+    criteria = criteria,
+    cache = cache,
+  ).getOrThrow()
+
+  kda.domain.compareRows(
+    dest = destRows,
+    src = srcRows,
+    primaryKeyFields = primaryKeyFieldNames.toSet(),
+    compareFields = compareFields,
+    includeFields = includeFieldNames,
   )
-    .flatMap { srcRows ->
-      fetchLookupTable(
-        ds = dest,
-        con = destCon,
-        dialect = destDialect,
-        schema = destSchema,
-        table = destTable,
-        primaryKeyFieldNames = primaryKeyFieldNames,
-        compareFields = compareFields,
-        criteria = criteria,
-        cache = cache,
-      )
-        .flatMap { destRows ->
-          runCatching {
-            kda.domain.compareRows(
-              dest = destRows,
-              src = srcRows,
-              primaryKeyFields = primaryKeyFieldNames.toSet(),
-              compareFields = compareFields,
-              includeFields = includeFieldNames,
-            )
-          }
-        }
-    }
 }
 
 fun fetchLookupTable(
@@ -86,7 +81,8 @@ fun fetchLookupTable(
   cache: Cache,
 ): Result<Set<Row>> = runCatching {
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
-  val tableDefResult = inspectTable(
+
+  val tableDef = inspectTable(
     con = con,
     dialect = dialect,
     schema = schema,
@@ -94,18 +90,14 @@ fun fetchLookupTable(
     primaryKeyFieldNames = primaryKeyFieldNames,
     includeFieldNames = includeFieldNames,
     cache = cache,
-  )
-  return when (tableDefResult) {
-    is InspectTableResult.Error -> Result.failure(
-      tableDefResult.originalError
-        ?: Exception("An error occurred while inspecting $schema.$table.")
-    )
-    is InspectTableResult.Success -> {
-      val srcLkpTable = tableDefResult.tableDef.subset(includeFieldNames)
-      val includeFields = tableDefResult.tableDef.fields.filter { it.name in includeFieldNames }.toSet()
-      val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
-      val rows = ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
-      Result.success(rows)
-    }
+  ).getOrThrow()
+
+  if (tableDef == null) {
+    throw KDAError.TableNotFound(schema = schema, table = table)
+  } else {
+    val srcLkpTable = tableDef.subset(includeFieldNames)
+    val includeFields = tableDef.fields.filter { it.name in includeFieldNames }.toSet()
+    val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
+    ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
   }
 }
