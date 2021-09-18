@@ -3,6 +3,14 @@ package kda.domain
 sealed class KDAError : Exception() {
   abstract val errorMessage: String
 
+  data class FieldNotFound(
+    val fieldName: String,
+    val availableFieldNames: Set<String>,
+  ) : KDAError() {
+    override val errorMessage = "A field named $fieldName was not found.  " +
+      "Available fields include the following: ${availableFieldNames.joinToString(", ")}"
+  }
+
   data class SQLError(
     val sql: String,
     val originalError: Exception,

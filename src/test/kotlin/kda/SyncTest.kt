@@ -11,6 +11,7 @@ import kda.domain.Row
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.criteria
+import kda.domain.index
 import kda.shared.connect
 import kda.shared.tableExists
 import org.junit.jupiter.api.BeforeEach
@@ -185,6 +186,17 @@ class SyncTest {
             },
           ).getOrThrow()
 
+        val destTable = Table(
+          schema = "sales",
+          name = "customer2",
+          fields = setOf(
+            Field(name = "customer_id", dataType = IntType(false)),
+            Field(name = "first_name", dataType = NullableStringType(null)),
+            Field(name = "last_name", dataType = NullableStringType(null)),
+          ),
+          primaryKeyFieldNames = listOf("customer_id"),
+        )
+
         val expectedSyncResult =
           SyncResult(
             srcTableDef = Table(
@@ -197,39 +209,34 @@ class SyncTest {
               ),
               primaryKeyFieldNames = listOf("customer_id"),
             ),
-            destTableDef = Table(
-              schema = "sales",
-              name = "customer2",
-              fields = setOf(
-                Field(name = "customer_id", dataType = IntType(false)),
-                Field(name = "first_name", dataType = NullableStringType(null)),
-                Field(name = "last_name", dataType = NullableStringType(null)),
-              ),
-              primaryKeyFieldNames = listOf("customer_id"),
-            ),
-            added = IndexedRows.of(
-              Row.of("customer_id" to IntValue(2)) to Row.of(
-                "customer_id" to IntValue(2),
-                "first_name" to NullableStringValue("Bob", null)
-              ),
-              Row.of("customer_id" to IntValue(3)) to Row.of(
-                "customer_id" to IntValue(3),
-                "first_name" to NullableStringValue("Mandie", null)
-              ),
-            ),
+            destTableDef = destTable,
+            added = destTable.rows(
+              mapOf("customer_id" to 2, "first_name" to "Bob"),
+              mapOf("customer_id" to 3, "first_name" to "Mandie")
+            ).index("customer_id"),
+//            added = IndexedRows.of(
+//              Row.of("customer_id" to IntValue(2)) to Row.of(
+//                "customer_id" to IntValue(2),
+//                "first_name" to NullableStringValue("Bob", null)
+//              ),
+//              Row.of("customer_id" to IntValue(3)) to Row.of(
+//                "customer_id" to IntValue(3),
+//                "first_name" to NullableStringValue("Mandie", null)
+//              ),
+//            ),
             deleted = IndexedRows.empty(),
             updated = IndexedRows.empty(),
           )
         assertEquals(expected = expectedSyncResult, actual = result)
 
-        val expectedRows = setOf(
+        val expectedCustomers = setOf(
           Customer(customerId = 2, firstName = "Bob", lastName = "Smith"),
           Customer(customerId = 3, firstName = "Mandie", lastName = "Smith"),
         )
 
-        val actualRows = fetchCustomers(con = destCon, tableName = "customer2")
+        val actualCustomers = fetchCustomers(con = destCon, tableName = "customer2")
 
-        assertEquals(expected = expectedRows, actual = actualRows)
+        assertEquals(expected = expectedCustomers, actual = actualCustomers)
       }
     }
   }

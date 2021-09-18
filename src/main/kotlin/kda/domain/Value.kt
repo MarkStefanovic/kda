@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-sealed interface Value<V : Any?> {
+sealed interface Value<out V : Any?> {
   val value: V
 }
 
