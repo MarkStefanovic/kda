@@ -270,7 +270,7 @@ private fun getFullCriteria(
   }
 }
 
-fun updateLatestTimestamps(
+private fun updateLatestTimestamps(
   timestampFieldNames: Set<String>,
   destRows: Set<Row>,
   destSchema: String?,

@@ -61,7 +61,7 @@ fun compareRows(
   )
 }
 
-fun fetchLookupTable(
+private fun fetchLookupTable(
   ds: Datasource,
   con: Connection,
   dialect: Dialect,
