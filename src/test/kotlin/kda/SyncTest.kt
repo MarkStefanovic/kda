@@ -85,52 +85,51 @@ class SyncTest {
           )
         addCustomers(con = srcCon, customers = customers)
 
-        val result =
-          sync(
-            srcCon = srcCon,
-            destCon = destCon,
-            srcDialect = Dialect.PostgreSQL,
-            destDialect = Dialect.PostgreSQL,
-            srcSchema = "sales",
-            srcTable = "customer",
-            destSchema = "sales",
-            destTable = "customer2",
-            compareFields = setOf("first_name", "last_name"),
-            primaryKeyFieldNames = listOf("customer_id"),
-            includeFields = null,
-          ).getOrThrow()
+        val result = sync(
+          srcCon = srcCon,
+          destCon = destCon,
+          srcDialect = Dialect.PostgreSQL,
+          destDialect = Dialect.PostgreSQL,
+          srcSchema = "sales",
+          srcTable = "customer",
+          destSchema = "sales",
+          destTable = "customer2",
+          compareFields = setOf("first_name", "last_name"),
+          primaryKeyFieldNames = listOf("customer_id"),
+          includeFields = null,
+          cache = testDbCache(),
+        ).getOrThrow()
 
         val destTable = Table(
           schema = "sales",
           name = "customer2",
           fields = setOf(
-            Field(name = "customer_id", dataType = IntType(false)),
+            Field(name = "customer_id", dataType = IntType(true)),
             Field(name = "first_name", dataType = NullableStringType(null)),
             Field(name = "last_name", dataType = NullableStringType(null)),
           ),
           primaryKeyFieldNames = listOf("customer_id"),
         )
-        val expectedSyncResult =
-          SyncResult(
-            srcTableDef = Table(
-              schema = "sales",
-              name = "customer",
-              fields = setOf(
-                Field(name = "customer_id", dataType = IntType(false)),
-                Field(name = "first_name", dataType = NullableStringType(null)),
-                Field(name = "last_name", dataType = NullableStringType(null)),
-              ),
-              primaryKeyFieldNames = listOf("customer_id"),
+        val expectedSyncResult = SyncResult(
+          srcTableDef = Table(
+            schema = "sales",
+            name = "customer",
+            fields = setOf(
+              Field(name = "customer_id", dataType = IntType(true)),
+              Field(name = "first_name", dataType = NullableStringType(null)),
+              Field(name = "last_name", dataType = NullableStringType(null)),
             ),
-            destTableDef = destTable,
-            added = destTable.rows(
-              mapOf("customer_id" to 1, "first_name" to "Mark", "last_name" to "Stefanovic"),
-              mapOf("customer_id" to 2, "first_name" to "Bob", "last_name" to "Smith"),
-              mapOf("customer_id" to 3, "first_name" to "Mandie", "last_name" to "Mandlebrot"),
-            ).index("customer_id"),
-            deleted = IndexedRows.empty(),
-            updated = IndexedRows.empty(),
-          )
+            primaryKeyFieldNames = listOf("customer_id"),
+          ),
+          destTableDef = destTable,
+          added = destTable.rows(
+            mapOf("customer_id" to 1, "first_name" to "Mark", "last_name" to "Stefanovic"),
+            mapOf("customer_id" to 2, "first_name" to "Bob", "last_name" to "Smith"),
+            mapOf("customer_id" to 3, "first_name" to "Mandie", "last_name" to "Mandlebrot"),
+          ).index("customer_id"),
+          deleted = IndexedRows.empty(),
+          updated = IndexedRows.empty(),
+        )
         assertEquals(expected = expectedSyncResult, actual = result)
 
         val actualRows = fetchCustomers(con = destCon, tableName = "customer2")
@@ -152,53 +151,52 @@ class SyncTest {
           )
         addCustomers(con = srcCon, customers = customers)
 
-        val result =
-          sync(
-            srcCon = srcCon,
-            destCon = destCon,
-            srcDialect = Dialect.PostgreSQL,
-            destDialect = Dialect.PostgreSQL,
-            srcSchema = "sales",
-            srcTable = "customer",
-            destSchema = "sales",
-            destTable = "customer2",
-            compareFields = setOf("first_name"),
-            primaryKeyFieldNames = listOf("customer_id"),
-            includeFields = null,
-            criteria = textField("last_name") { eq("Smith") },
-          ).getOrThrow()
+        val result = sync(
+          srcCon = srcCon,
+          destCon = destCon,
+          srcDialect = Dialect.PostgreSQL,
+          destDialect = Dialect.PostgreSQL,
+          srcSchema = "sales",
+          srcTable = "customer",
+          destSchema = "sales",
+          destTable = "customer2",
+          compareFields = setOf("first_name"),
+          primaryKeyFieldNames = listOf("customer_id"),
+          includeFields = null,
+          criteria = textField("last_name") { eq("Smith") },
+          cache = testDbCache(),
+        ).getOrThrow()
 
         val destTable = Table(
           schema = "sales",
           name = "customer2",
           fields = setOf(
-            Field(name = "customer_id", dataType = IntType(false)),
+            Field(name = "customer_id", dataType = IntType(true)),
             Field(name = "first_name", dataType = NullableStringType(null)),
             Field(name = "last_name", dataType = NullableStringType(null)),
           ),
           primaryKeyFieldNames = listOf("customer_id"),
         )
 
-        val expectedSyncResult =
-          SyncResult(
-            srcTableDef = Table(
-              schema = "sales",
-              name = "customer",
-              fields = setOf(
-                Field(name = "customer_id", dataType = IntType(false)),
-                Field(name = "first_name", dataType = NullableStringType(null)),
-                Field(name = "last_name", dataType = NullableStringType(null)),
-              ),
-              primaryKeyFieldNames = listOf("customer_id"),
+        val expectedSyncResult = SyncResult(
+          srcTableDef = Table(
+            schema = "sales",
+            name = "customer",
+            fields = setOf(
+              Field(name = "customer_id", dataType = IntType(true)),
+              Field(name = "first_name", dataType = NullableStringType(null)),
+              Field(name = "last_name", dataType = NullableStringType(null)),
             ),
-            destTableDef = destTable,
-            added = destTable.rows(
-              mapOf("customer_id" to 2, "first_name" to "Bob"),
-              mapOf("customer_id" to 3, "first_name" to "Mandie")
-            ).index("customer_id"),
-            deleted = IndexedRows.empty(),
-            updated = IndexedRows.empty(),
-          )
+            primaryKeyFieldNames = listOf("customer_id"),
+          ),
+          destTableDef = destTable,
+          added = destTable.rows(
+            mapOf("customer_id" to 2, "first_name" to "Bob"),
+            mapOf("customer_id" to 3, "first_name" to "Mandie")
+          ).index("customer_id"),
+          deleted = IndexedRows.empty(),
+          updated = IndexedRows.empty(),
+        )
         assertEquals(expected = expectedSyncResult, actual = result)
 
         val expectedCustomers = setOf(

@@ -11,18 +11,18 @@ interface Cache {
   fun addTableDef(tableDef: Table): Result<Unit>
 
   fun addLatestTimestamp(
-    schema: String,
+    schema: String?,
     table: String,
     timestamps: Set<LatestTimestamp>,
   ): Result<Unit>
 
-  fun clearTableDef(schema: String, table: String): Result<Unit>
+  fun clearTableDef(schema: String?, table: String): Result<Unit>
 
-  fun clearLatestTimestamps(schema: String, table: String): Result<Unit>
+  fun clearLatestTimestamps(schema: String?, table: String): Result<Unit>
 
-  fun tableDef(schema: String, table: String): Result<Table?>
+  fun tableDef(schema: String?, table: String): Result<Table?>
 
-  fun latestTimestamps(schema: String, table: String): Result<Set<LatestTimestamp>>
+  fun latestTimestamps(schema: String?, table: String): Result<Set<LatestTimestamp>>
 }
 
 class DbCache(private val db: Db = SqliteDb) : Cache {
@@ -43,7 +43,7 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
   }
 
   override fun addLatestTimestamp(
-    schema: String,
+    schema: String?,
     table: String,
     timestamps: Set<LatestTimestamp>,
   ) = runCatching {
@@ -56,19 +56,19 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
     }
   }
 
-  override fun clearTableDef(schema: String, table: String) = runCatching {
+  override fun clearTableDef(schema: String?, table: String) = runCatching {
     tableDefRepo.delete(schema = schema, table = table)
   }
 
-  override fun clearLatestTimestamps(schema: String, table: String) = runCatching {
+  override fun clearLatestTimestamps(schema: String?, table: String) = runCatching {
     latestTimestampRepo.delete(schema = schema, table = table)
   }
 
-  override fun tableDef(schema: String, table: String) = runCatching {
+  override fun tableDef(schema: String?, table: String) = runCatching {
     tableDefRepo.get(schema = schema, table = table)
   }
 
-  override fun latestTimestamps(schema: String, table: String) = runCatching {
+  override fun latestTimestamps(schema: String?, table: String) = runCatching {
     latestTimestampRepo.get(schema = schema, table = table)
   }
 }

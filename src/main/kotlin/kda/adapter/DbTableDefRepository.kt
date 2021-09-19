@@ -79,17 +79,36 @@ class DbTableDefRepository(
     }
   }
 
-  override fun delete(schema: String, table: String) {
+  override fun delete(schema: String?, table: String) {
     db.exec {
-      PrimaryKeys.deleteWhere { (PrimaryKeys.schema eq schema) and (PrimaryKeys.table eq table) }
-      TableDefs.deleteWhere { (TableDefs.schema eq schema) and (TableDefs.table eq table) }
+      PrimaryKeys.deleteWhere {
+        if (schema == null) {
+          PrimaryKeys.table eq table
+        } else {
+          (PrimaryKeys.schema eq schema) and (PrimaryKeys.table eq table)
+        }
+      }
+      TableDefs.deleteWhere {
+        if (schema == null) {
+          TableDefs.table eq table
+        } else {
+          (TableDefs.schema eq schema) and (TableDefs.table eq table)
+        }
+      }
     }
   }
 
-  override fun get(schema: String, table: String): Table? {
+  override fun get(schema: String?, table: String): Table? {
     val fields =
       db.fetch {
-        TableDefs.select { (TableDefs.schema eq schema) and (TableDefs.table eq table) }
+        TableDefs
+          .select {
+            if (schema == null) {
+              TableDefs.table eq table
+            } else {
+              (TableDefs.schema eq schema) and (TableDefs.table eq table)
+            }
+          }
           .map { row ->
             val dtype =
               when (row[TableDefs.dataType]) {
@@ -101,7 +120,7 @@ class DbTableDefRepository(
                     scale = row[TableDefs.scale] ?: error("scale is required"),
                   )
                 DataTypeName.Float -> FloatType(maxFloatDigits)
-                DataTypeName.Int -> IntType(false)
+                DataTypeName.Int -> IntType(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
                 DataTypeName.Date -> LocalDateType
                 DataTypeName.DateTime -> LocalDateTimeType
                 DataTypeName.Text -> StringType(row[TableDefs.maxLength])
@@ -114,7 +133,7 @@ class DbTableDefRepository(
                   )
                 DataTypeName.NullableFloat -> NullableFloatType(maxFloatDigits)
                 DataTypeName.NullableInt ->
-                  NullableIntType(row[TableDefs.autoincrement] ?: false)
+                  NullableIntType(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
                 DataTypeName.NullableDate -> NullableLocalDateType
                 DataTypeName.NullableDateTime -> NullableLocalDateTimeType
                 DataTypeName.NullableText -> NullableStringType(row[TableDefs.maxLength])
@@ -128,7 +147,14 @@ class DbTableDefRepository(
     } else {
       val primaryKeyFieldNames: List<String> =
         db.fetch {
-          PrimaryKeys.select { (PrimaryKeys.schema eq schema) and (PrimaryKeys.table eq table) }
+          PrimaryKeys
+            .select {
+              if (schema == null) {
+                PrimaryKeys.table eq table
+              } else {
+                (PrimaryKeys.schema eq schema) and (PrimaryKeys.table eq table)
+              }
+            }
             .orderBy(PrimaryKeys.order to SortOrder.ASC)
             .map { it[PrimaryKeys.fieldName] }
         }

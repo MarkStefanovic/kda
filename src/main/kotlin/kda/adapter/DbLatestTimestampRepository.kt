@@ -8,11 +8,17 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 
 class DbLatestTimestampRepository(private val db: Db) : LatestTimestampRepository {
-  override fun add(schema: String, table: String, latestTimestamp: LatestTimestamp) {
+  override fun add(schema: String?, table: String, latestTimestamp: LatestTimestamp) {
     db.exec {
-      LatestTimestamps.deleteWhere { (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table) }
+      LatestTimestamps.deleteWhere {
+        if (schema == null) {
+          LatestTimestamps.table eq table
+        } else {
+          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
+        }
+      }
       LatestTimestamps.insert {
-        it[LatestTimestamps.schema] = schema
+        it[LatestTimestamps.schema] = schema ?: ""
         it[LatestTimestamps.table] = table
         it[LatestTimestamps.fieldName] = latestTimestamp.fieldName
         it[LatestTimestamps.ts] = latestTimestamp.timestamp
@@ -20,19 +26,28 @@ class DbLatestTimestampRepository(private val db: Db) : LatestTimestampRepositor
     }
   }
 
-  override fun delete(schema: String, table: String) {
+  override fun delete(schema: String?, table: String) {
     db.exec {
       LatestTimestamps.deleteWhere {
-        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
+        if (schema == null) {
+          LatestTimestamps.table eq table
+        } else {
+          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
+        }
       }
     }
   }
 
-  override fun get(schema: String, table: String): Set<LatestTimestamp> =
+  override fun get(schema: String?, table: String): Set<LatestTimestamp> =
     db.fetch {
-      LatestTimestamps.select {
-        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-      }
+      LatestTimestamps
+        .select {
+          if (schema == null) {
+            LatestTimestamps.table eq table
+          } else {
+            (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
+          }
+        }
         .map { row ->
           LatestTimestamp(
             fieldName = row[LatestTimestamps.fieldName],
