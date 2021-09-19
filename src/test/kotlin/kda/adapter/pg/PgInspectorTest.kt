@@ -2,7 +2,7 @@ package kda.adapter.pg
 
 import kda.adapter.JdbcExecutor
 import kda.domain.*
-import kda.shared.connect
+import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 class PgInspectorTest {
   @Test
   fun inspectTable_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con = con)
       executor.execute("DROP TABLE IF EXISTS tmp20210708")
       executor.execute(
@@ -44,7 +44,7 @@ class PgInspectorTest {
 
   @Test
   fun tableExists_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con = con)
       executor.execute("DROP TABLE IF EXISTS tmp20210708")
       executor.execute("CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY)")
@@ -58,7 +58,7 @@ class PgInspectorTest {
 
   @Test
   fun primaryKeyFields_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con = con)
       executor.execute("DROP TABLE IF EXISTS tmp20210708")
       executor.execute("CREATE TEMP TABLE tmp20210708 (id SERIAL PRIMARY KEY)")

@@ -8,7 +8,7 @@ import kda.domain.Row
 import kda.domain.StringType
 import kda.domain.StringValue
 import kda.domain.Table
-import kda.shared.connect
+import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.math.BigDecimal
@@ -21,7 +21,7 @@ import kotlin.test.assertFailsWith
 class JdbcExecutorTest {
   @Test
   fun execute_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       executor.execute("DROP TABLE IF EXISTS tmp20210707")
@@ -37,7 +37,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchRow_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       executor.execute("DROP TABLE IF EXISTS sales.tmp20210707")
@@ -83,7 +83,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchRows_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       executor.execute("DROP TABLE IF EXISTS sales.tmp20210707")
@@ -145,7 +145,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableBool() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as Boolean?, executor.fetchNullableBool("SELECT NULL"))
@@ -158,7 +158,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableBool_not_a_bool() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableBool("SELECT 'a'") }
     }
@@ -166,7 +166,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableBool_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableBool("SELECT") }
     }
@@ -174,7 +174,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchBool_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(true, executor.fetchBool("SELECT TRUE"))
@@ -185,7 +185,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDate_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as LocalDate?, executor.fetchNullableDate("SELECT NULL"))
@@ -199,7 +199,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDate_not_a_date() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDate("SELECT 'a'") }
     }
@@ -207,7 +207,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDate_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDate("SELECT") }
     }
@@ -215,7 +215,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchDate_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(LocalDate.of(2010, 1, 2), executor.fetchDate("SELECT '2010-01-02'::DATE"))
@@ -224,7 +224,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDateTime_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as LocalDateTime?, executor.fetchNullableDateTime("SELECT NULL"))
@@ -238,7 +238,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDateTime_not_a_timestamp() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDateTime("SELECT 'a'") }
     }
@@ -246,7 +246,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDateTime_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDateTime("SELECT") }
     }
@@ -254,7 +254,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchDateTime_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(
@@ -266,7 +266,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDecimal_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as BigDecimal?, executor.fetchNullableDecimal("SELECT NULL"))
@@ -280,7 +280,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDecimal_not_a_decimal() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableDecimal("SELECT 'a'") }
     }
@@ -288,7 +288,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableDecimal_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableDecimal("SELECT") }
     }
@@ -296,7 +296,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchDecimal() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(BigDecimal.valueOf(1.234), executor.fetchDecimal("SELECT 1.234::DECIMAL(4, 3)"))
@@ -305,7 +305,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableInt() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as Int?, executor.fetchNullableInt("SELECT NULL"))
@@ -316,7 +316,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableInt_not_a_decimal() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableInt("SELECT 'a'") }
     }
@@ -324,7 +324,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableInt_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableInt("SELECT") }
     }
@@ -332,7 +332,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchInt_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(1, executor.fetchInt("SELECT 1"))
@@ -341,7 +341,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableFloat() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as Float?, executor.fetchNullableFloat("SELECT NULL", 5))
@@ -352,7 +352,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableFloat_not_a_decimal() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableFloat("SELECT 'a'", 5) }
     }
@@ -360,7 +360,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableFloat_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableFloat("SELECT", 5) }
     }
@@ -368,7 +368,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchFloat_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(1.234f, executor.fetchFloat("SELECT 1.234::FLOAT", 5))
@@ -377,7 +377,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableString_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals(null as String?, executor.fetchNullableString("SELECT NULL", null))
@@ -388,7 +388,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableString_not_a_string() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.ValueError>("test") { executor.fetchNullableString("SELECT 1", null) }
     }
@@ -396,7 +396,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchNullableString_no_rows_returned() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
       assertFailsWith<KDAError.NoRowsReturned>("test") { executor.fetchNullableString("SELECT", null) }
     }
@@ -404,7 +404,7 @@ class JdbcExecutorTest {
 
   @Test
   fun fetchString_happy_path() {
-    connect().use { con ->
+    testPgConnection().use { con ->
       val executor = JdbcExecutor(con)
 
       assertEquals("test", executor.fetchString("SELECT 'test'", null))

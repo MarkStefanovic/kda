@@ -1,14 +1,6 @@
 package kda.shared
 
 import java.sql.Connection
-import java.sql.DriverManager
-
-fun connect(): Connection =
-  DriverManager.getConnection(
-    "jdbc:postgresql://localhost:5432/testdb",
-    System.getenv("DB_USER"),
-    System.getenv("DB_PASS")
-  )
 
 fun tableExists(con: Connection, schema: String, table: String): Boolean =
   con.createStatement().use { stmt ->

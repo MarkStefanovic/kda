@@ -9,8 +9,9 @@ import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.index
 import kda.domain.textField
-import kda.shared.connect
 import kda.shared.tableExists
+import kda.shared.testDbCache
+import kda.shared.testPgConnection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -53,8 +54,8 @@ fun addCustomers(con: Connection, customers: List<Customer>) {
 class SyncTest {
   @BeforeEach
   fun setup() {
-    connect().use { srcCon ->
-      connect().use { destCon ->
+    testPgConnection().use { srcCon ->
+      testPgConnection().use { destCon ->
         srcCon.createStatement().use { stmt ->
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")
@@ -75,8 +76,8 @@ class SyncTest {
 
   @Test
   fun when_dest_table_is_empty_then_all_rows_added() {
-    connect().use { srcCon ->
-      connect().use { destCon ->
+    testPgConnection().use { srcCon ->
+      testPgConnection().use { destCon ->
         val customers =
           listOf(
             Customer(customerId = 1, firstName = "Mark", lastName = "Stefanovic"),
@@ -141,8 +142,8 @@ class SyncTest {
 
   @Test
   fun sync_with_criteria_should_only_refresh_rows_that_match_criteria() {
-    connect().use { srcCon ->
-      connect().use { destCon ->
+    testPgConnection().use { srcCon ->
+      testPgConnection().use { destCon ->
         val customers =
           listOf(
             Customer(customerId = 1, firstName = "Mark", lastName = "Stefanovic"),

@@ -1,7 +1,7 @@
 package kda.adapter.std
 
 import kda.domain.*
-import kda.standardizeSQL
+import kda.shared.standardizeSQL
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals

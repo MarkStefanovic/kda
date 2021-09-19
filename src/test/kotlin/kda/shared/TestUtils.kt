@@ -1,4 +1,4 @@
-package kda
+package kda.shared
 
 fun standardizeSQL(sql: String) =
   sql

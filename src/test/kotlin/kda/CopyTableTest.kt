@@ -2,8 +2,8 @@ package kda
 
 import kda.domain.CopyTableResult
 import kda.domain.Dialect
-import kda.shared.connect
 import kda.shared.tableExists
+import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
@@ -14,8 +14,8 @@ import kotlin.test.assertIs
 class CopyTableTest {
   @Test
   fun when_dest_does_not_exist_then_it_should_be_created() {
-    connect().use { srcCon: Connection ->
-      connect().use { destCon: Connection ->
+    testPgConnection().use { srcCon: Connection ->
+      testPgConnection().use { destCon: Connection ->
         destCon.createStatement().use { stmt ->
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")

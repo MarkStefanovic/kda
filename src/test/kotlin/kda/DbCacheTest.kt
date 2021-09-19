@@ -5,6 +5,7 @@ import kda.domain.IntType
 import kda.domain.LatestTimestamp
 import kda.domain.StringType
 import kda.domain.Table
+import kda.shared.testDbCache
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
