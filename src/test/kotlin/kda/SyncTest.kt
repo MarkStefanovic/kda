@@ -4,14 +4,11 @@ import kda.domain.Dialect
 import kda.domain.Field
 import kda.domain.IndexedRows
 import kda.domain.IntType
-import kda.domain.IntValue
 import kda.domain.NullableStringType
-import kda.domain.NullableStringValue
-import kda.domain.Row
 import kda.domain.SyncResult
 import kda.domain.Table
-import kda.domain.criteria
 import kda.domain.index
+import kda.domain.textField
 import kda.shared.connect
 import kda.shared.tableExists
 import org.junit.jupiter.api.BeforeEach
@@ -103,6 +100,16 @@ class SyncTest {
             includeFields = null,
           ).getOrThrow()
 
+        val destTable = Table(
+          schema = "sales",
+          name = "customer2",
+          fields = setOf(
+            Field(name = "customer_id", dataType = IntType(false)),
+            Field(name = "first_name", dataType = NullableStringType(null)),
+            Field(name = "last_name", dataType = NullableStringType(null)),
+          ),
+          primaryKeyFieldNames = listOf("customer_id"),
+        )
         val expectedSyncResult =
           SyncResult(
             srcTableDef = Table(
@@ -115,33 +122,12 @@ class SyncTest {
               ),
               primaryKeyFieldNames = listOf("customer_id"),
             ),
-            destTableDef = Table(
-              schema = "sales",
-              name = "customer2",
-              fields = setOf(
-                Field(name = "customer_id", dataType = IntType(false)),
-                Field(name = "first_name", dataType = NullableStringType(null)),
-                Field(name = "last_name", dataType = NullableStringType(null)),
-              ),
-              primaryKeyFieldNames = listOf("customer_id"),
-            ),
-            added = IndexedRows.of(
-              Row.of("customer_id" to IntValue(1)) to Row.of(
-                "customer_id" to IntValue(1),
-                "first_name" to NullableStringValue("Mark", null),
-                "last_name" to NullableStringValue("Stefanovic", null),
-              ),
-              Row.of("customer_id" to IntValue(2)) to Row.of(
-                "customer_id" to IntValue(2),
-                "first_name" to NullableStringValue("Bob", null),
-                "last_name" to NullableStringValue("Smith", null),
-              ),
-              Row.of("customer_id" to IntValue(3)) to Row.of(
-                "customer_id" to IntValue(3),
-                "first_name" to NullableStringValue("Mandie", null),
-                "last_name" to NullableStringValue("Mandlebrot", null),
-              ),
-            ),
+            destTableDef = destTable,
+            added = destTable.rows(
+              mapOf("customer_id" to 1, "first_name" to "Mark", "last_name" to "Stefanovic"),
+              mapOf("customer_id" to 2, "first_name" to "Bob", "last_name" to "Smith"),
+              mapOf("customer_id" to 3, "first_name" to "Mandie", "last_name" to "Mandlebrot"),
+            ).index("customer_id"),
             deleted = IndexedRows.empty(),
             updated = IndexedRows.empty(),
           )
@@ -179,11 +165,7 @@ class SyncTest {
             compareFields = setOf("first_name"),
             primaryKeyFieldNames = listOf("customer_id"),
             includeFields = null,
-            criteria = criteria {
-              textField("last_name") {
-                eq("Smith")
-              }
-            },
+            criteria = textField("last_name") { eq("Smith") },
           ).getOrThrow()
 
         val destTable = Table(
@@ -214,16 +196,6 @@ class SyncTest {
               mapOf("customer_id" to 2, "first_name" to "Bob"),
               mapOf("customer_id" to 3, "first_name" to "Mandie")
             ).index("customer_id"),
-//            added = IndexedRows.of(
-//              Row.of("customer_id" to IntValue(2)) to Row.of(
-//                "customer_id" to IntValue(2),
-//                "first_name" to NullableStringValue("Bob", null)
-//              ),
-//              Row.of("customer_id" to IntValue(3)) to Row.of(
-//                "customer_id" to IntValue(3),
-//                "first_name" to NullableStringValue("Mandie", null)
-//              ),
-//            ),
             deleted = IndexedRows.empty(),
             updated = IndexedRows.empty(),
           )
