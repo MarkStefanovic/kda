@@ -66,7 +66,7 @@ class SyncTest {
             ,   first_name TEXT
             ,   last_name TEXT
             )
-            """.trimIndent()
+            """
           )
         }
         assertFalse(tableExists(destCon, schema = "sales", table = "customer2"))
