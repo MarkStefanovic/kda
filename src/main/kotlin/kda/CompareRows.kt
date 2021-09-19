@@ -1,8 +1,5 @@
 package kda
 
-import kda.adapter.hive.hiveDatasource
-import kda.adapter.mssql.mssqlDatasource
-import kda.adapter.pg.pgDatasource
 import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
@@ -25,17 +22,9 @@ fun compareRows(
   criteria: Set<Criteria> = emptySet(),
   cache: Cache = DbCache(),
 ): Result<RowDiff> = runCatching {
-  val src: Datasource = when (srcDialect) {
-    Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
-    Dialect.MSSQLServer -> mssqlDatasource(con = srcCon)
-    Dialect.PostgreSQL -> pgDatasource(con = srcCon)
-  }
+  val src = datasource(con = srcCon, dialect = srcDialect)
 
-  val dest: Datasource = when (destDialect) {
-    Dialect.HortonworksHive -> hiveDatasource(con = destCon)
-    Dialect.MSSQLServer -> mssqlDatasource(con = destCon)
-    Dialect.PostgreSQL -> pgDatasource(con = destCon)
-  }
+  val dest = datasource(con = destCon, dialect = destDialect)
 
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
 

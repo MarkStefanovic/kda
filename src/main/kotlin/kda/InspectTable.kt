@@ -1,9 +1,5 @@
 package kda
 
-import kda.adapter.hive.hiveDatasource
-import kda.adapter.mssql.mssqlDatasource
-import kda.adapter.pg.pgDatasource
-import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.KDAError
 import kda.domain.Table
@@ -31,13 +27,10 @@ fun inspectTable(
       argumentValue = primaryKeyFieldNames,
     )
   } else {
-    val ds: Datasource =
-      when (dialect) {
-        Dialect.HortonworksHive -> hiveDatasource(con = con)
-        Dialect.MSSQLServer -> mssqlDatasource(con = con)
-        Dialect.PostgreSQL -> pgDatasource(con = con)
-      }
+    val ds = datasource(con = con, dialect = dialect)
+
     val cachedTableDef = cache.tableDef(schema = schema ?: "", table = table).getOrThrow()
+
     val tableDef =
       if (cachedTableDef == null) {
         val def = ds.inspector.inspectTable(

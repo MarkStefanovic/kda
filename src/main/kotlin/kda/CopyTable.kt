@@ -1,10 +1,6 @@
 package kda
 
-import kda.adapter.hive.hiveDatasource
-import kda.adapter.mssql.mssqlDatasource
-import kda.adapter.pg.pgDatasource
 import kda.domain.CopyTableResult
-import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.KDAError
 import java.sql.Connection
@@ -47,11 +43,7 @@ fun copyTable(
     primaryKeyFieldNames = primaryKeyFields,
   )
 
-  val dest: Datasource = when (destDialect) {
-    Dialect.HortonworksHive -> hiveDatasource(con = destCon)
-    Dialect.MSSQLServer -> mssqlDatasource(con = destCon)
-    Dialect.PostgreSQL -> pgDatasource(con = destCon)
-  }
+  val dest = datasource(con = destCon, dialect = destDialect)
 
   val create = !dest.inspector.tableExists(schema = destSchema, table = destTable)
   if (create) {

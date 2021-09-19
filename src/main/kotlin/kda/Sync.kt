@@ -1,8 +1,5 @@
 package kda
 
-import kda.adapter.hive.hiveDatasource
-import kda.adapter.mssql.mssqlDatasource
-import kda.adapter.pg.pgDatasource
 import kda.domain.Criteria
 import kda.domain.Datasource
 import kda.domain.Dialect
@@ -43,17 +40,9 @@ fun sync(
     )
   }
 
-  val src: Datasource = when (srcDialect) {
-    Dialect.HortonworksHive -> hiveDatasource(con = srcCon)
-    Dialect.MSSQLServer -> mssqlDatasource(con = srcCon)
-    Dialect.PostgreSQL -> pgDatasource(con = srcCon)
-  }
+  val src = datasource(con = srcCon, dialect = srcDialect)
 
-  val dest: Datasource = when (destDialect) {
-    Dialect.HortonworksHive -> hiveDatasource(con = destCon)
-    Dialect.MSSQLServer -> mssqlDatasource(con = destCon)
-    Dialect.PostgreSQL -> pgDatasource(con = destCon)
-  }
+  val dest = datasource(con = destCon, dialect = destDialect)
 
   val tables =
     copyTable(
@@ -95,11 +84,11 @@ fun sync(
     ).getOrThrow()
 
   val srcLkpTable = tables.srcTableDef.subset(fieldNames = lkpTableFieldNames)
-  val srcKeysSQL: String = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
-  val srcLkpRows: Set<Row> = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields)
+  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
+  val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields)
 
   val destLkpTable = tables.destTableDef.subset(fieldNames = lkpTableFieldNames)
-  val destKeysSQL: String = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
+  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
   val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields)
 
   val rowDiff: RowDiff =
