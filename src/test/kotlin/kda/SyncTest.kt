@@ -104,7 +104,7 @@ class SyncTest {
           schema = "sales",
           name = "customer2",
           fields = setOf(
-            Field(name = "customer_id", dataType = IntType(true)),
+            Field(name = "customer_id", dataType = IntType(false)),
             Field(name = "first_name", dataType = NullableStringType(null)),
             Field(name = "last_name", dataType = NullableStringType(null)),
           ),
@@ -171,7 +171,7 @@ class SyncTest {
           schema = "sales",
           name = "customer2",
           fields = setOf(
-            Field(name = "customer_id", dataType = IntType(true)),
+            Field(name = "customer_id", dataType = IntType(false)),
             Field(name = "first_name", dataType = NullableStringType(null)),
             Field(name = "last_name", dataType = NullableStringType(null)),
           ),
