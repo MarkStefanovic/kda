@@ -2,7 +2,9 @@ package kda
 
 import kda.domain.CopyTableResult
 import kda.domain.Dialect
+import kda.domain.IntType
 import kda.domain.KDAError
+import kda.domain.NullableIntType
 import java.sql.Connection
 
 fun copyTable(
@@ -17,6 +19,7 @@ fun copyTable(
   primaryKeyFields: List<String>,
   includeFields: Set<String>? = null,
   cache: Cache = DbCache(),
+  ignoreAutoincrement: Boolean = true,
 ): Result<CopyTableResult> = runCatching {
   val srcTableDef = inspectTable(
     con = srcCon,
@@ -28,7 +31,7 @@ fun copyTable(
     cache = cache,
   ).getOrThrow() ?: throw KDAError.TableNotFound(schema = srcSchema, table = srcTable)
 
-  val includeFieldsDef = if (includeFields == null) {
+  val includeFieldDefs = if (includeFields == null) {
     srcTableDef.fields
   } else {
     srcTableDef.fields
@@ -36,10 +39,21 @@ fun copyTable(
       .toSet()
   }
 
+  val fields = if (ignoreAutoincrement) {
+    includeFieldDefs.map { fld ->
+      when (fld.dataType) {
+        is IntType, is NullableIntType -> fld.copy(dataType = IntType(false))
+        else -> fld
+      }
+    }.toSet()
+  } else {
+    includeFieldDefs
+  }
+
   val destTableDef = srcTableDef.copy(
     schema = destSchema,
     name = destTable,
-    fields = includeFieldsDef,
+    fields = fields,
     primaryKeyFieldNames = primaryKeyFields,
   )
 
