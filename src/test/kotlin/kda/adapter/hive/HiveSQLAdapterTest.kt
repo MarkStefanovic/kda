@@ -3,10 +3,8 @@ package kda.adapter.hive
 import kda.adapter.pg.pgSQLAdapter
 import kda.domain.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HiveSQLAdapterTest {
   @Test
   fun createTable_happy_path() {

@@ -1,10 +1,8 @@
 package kda.domain
 
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class IndexedRowsTest {
   @Test
   fun index_happy_path() {

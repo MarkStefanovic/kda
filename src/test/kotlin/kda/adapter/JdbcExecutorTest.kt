@@ -10,14 +10,12 @@ import kda.domain.StringValue
 import kda.domain.Table
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class JdbcExecutorTest {
   @Test
   fun execute_happy_path() {

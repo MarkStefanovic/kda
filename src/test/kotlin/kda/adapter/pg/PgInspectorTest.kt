@@ -4,10 +4,8 @@ import kda.adapter.JdbcExecutor
 import kda.domain.*
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PgInspectorTest {
   @Test
   fun inspectTable_happy_path() {

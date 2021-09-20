@@ -7,7 +7,7 @@ data class LatestTimestamp(
   val timestamp: LocalDateTime?,
 ) {
   fun toPredicate() = Predicate(
-    field = Field(name = fieldName, dataType = LocalDateTimeType),
+    field = Field(name = fieldName, dataType = NullableLocalDateTimeType),
     operator = Operator.GreaterThan,
     value = NullableLocalDateTimeValue(timestamp),
   )

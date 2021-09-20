@@ -1,12 +1,16 @@
 package kda.adapter.std
 
-import kda.domain.*
+import kda.domain.Field
+import kda.domain.IntType
+import kda.domain.IntValue
+import kda.domain.Row
+import kda.domain.StringType
+import kda.domain.StringValue
+import kda.domain.Table
 import kda.shared.standardizeSQL
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import kotlin.test.assertEquals
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class StdSQLAdapterTest {
   @Test
   fun add_happy_path() {

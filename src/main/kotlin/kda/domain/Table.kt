@@ -7,8 +7,9 @@ data class Table(
   val primaryKeyFieldNames: List<String>,
 ) {
   init {
-    if (schema != null)
+    if (schema != null) {
       require(schema.isNotBlank()) { "If a schema is provided, it must be at least 1 char." }
+    }
 
     require(name.isNotBlank()) { "A table's name must be at least 1 char, but got $name." }
 
@@ -21,20 +22,33 @@ data class Table(
 
   val sortedFieldNames: List<String> by lazy { fields.map { fld -> fld.name }.sorted() }
 
-  fun row(vararg keyValuePairs: Pair<String, Any?>) = Row(
-    keyValuePairs.associate { (fieldName, value) ->
-      val field = fields.find { field -> field.name == fieldName }
-      val wrappedValue = field?.dataType?.wrapValue(value) ?: throw KDAError.FieldNotFound(
-        fieldName = fieldName,
-        availableFieldNames = fields.map { it.name }.toSet(),
-      )
-      fieldName to wrappedValue
+  fun row(vararg keyValuePairs: Pair<String, Any?>): Row {
+    val rowMap = keyValuePairs.associate { (fieldName, value) ->
+      wrapFieldValue(fields = fields, fieldName = fieldName, value = value)
     }
-  )
+    return Row(rowMap)
+  }
 
   fun rows(vararg rowMaps: Map<String, Any?>): List<Row> =
     rowMaps.map { map -> row(*map.entries.map { it.toPair() }.toTypedArray()) }
 
   fun subset(fieldNames: Set<String>): Table =
     copy(fields = fields.filter { fld -> fld.name in fieldNames }.toSet())
+}
+
+private fun wrapFieldValue(
+  fields: Set<Field>,
+  fieldName: String,
+  value: Any?,
+): Pair<String, Value<*>> {
+  val field = fields.find { fld -> fld.name == fieldName }
+  if (field == null) {
+    throw KDAError.FieldNotFound(
+      fieldName = fieldName,
+      availableFieldNames = fields.map { it.name }.toSet(),
+    )
+  } else {
+    val wrappedValue = field.dataType.wrapValue(value)
+    return fieldName to wrappedValue
+  }
 }

@@ -5,12 +5,10 @@ import kda.domain.Dialect
 import kda.shared.tableExists
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CopyTableTest {
   @Test
   fun when_dest_does_not_exist_then_it_should_be_created() {

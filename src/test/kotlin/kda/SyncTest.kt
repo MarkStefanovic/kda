@@ -14,7 +14,6 @@ import kda.shared.testDbCache
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -50,7 +49,6 @@ fun addCustomers(con: Connection, customers: List<Customer>) {
   }
 }
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SyncTest {
   @BeforeEach
   fun setup() {
