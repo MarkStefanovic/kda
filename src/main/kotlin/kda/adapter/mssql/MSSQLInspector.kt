@@ -14,7 +14,7 @@ class MSSQLInspector(private val sqlExecutor: SQLExecutor) : Inspector {
 
     val sql = """
       SELECT
-          c.[column_name]
+          LOWER(c.[column_name]) AS column_name
       ,   c.[data_type]
       ,   CASE
               WHEN c.[data_type] = 'integer' AND c.[column_default] LIKE 'nextval%'
@@ -28,13 +28,13 @@ class MSSQLInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       ,   c.[character_maximum_length] AS max_len
       ,   c.[numeric_precision] AS precision
       ,   c.[numeric_scale] AS scale
-      ,   CASE WHEN [data_type] = 'boolean' THEN 1 ELSE 0 END AS is_bool_flag
+      ,   CASE WHEN [data_type] = 'bit' THEN 1 ELSE 0 END AS is_bool_flag
       ,   CASE WHEN [data_type] = 'date' THEN 1 ELSE 0 END AS is_date_flag
-      ,   CASE WHEN [data_type] LIKE 'timestamp%' THEN 1 ELSE 0 END AS is_datetime_flag
-      ,   CASE WHEN [data_type] = 'double precision' THEN 1 ELSE 0 END AS is_float_flag
+      ,   CASE WHEN [data_type] = 'datetime' THEN 1 ELSE 0 END AS is_datetime_flag
+      ,   CASE WHEN [data_type] = 'double' THEN 1 ELSE 0 END AS is_float_flag
       ,   CASE WHEN [data_type] IN ('money', 'decimal', 'numeric') THEN 1 ELSE 0 END AS is_decimal_flag
-      ,   CASE WHEN [data_type] IN ('bigint', 'integer') THEN 1 ELSE 0 END AS is_int_flag
-      ,   CASE WHEN [data_type] IN ('character', 'character varying', 'text') THEN 1 ELSE 0 END AS is_text_flag
+      ,   CASE WHEN [data_type] IN ('bit', 'bigint', 'int', 'smallint') THEN 1 ELSE 0 END AS is_int_flag
+      ,   CASE WHEN [data_type] IN ('char', 'nchar', 'ntext', 'nvarchar', 'text', 'uniqueidentifier', 'varchar') THEN 1 ELSE 0 END AS is_text_flag
       FROM [information_schema].[columns] AS c
       WHERE $whereClause
       ORDER BY c.[column_name]
