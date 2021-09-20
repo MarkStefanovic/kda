@@ -118,7 +118,7 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
     return "MAX($fldName) AS $fldName"
   }
 
-  override fun valuesExpression(fieldNames: List<String>, rows: Set<Row>, tableAlias: String?): String {
+  override fun valuesExpression(fieldNames: Set<String>, rows: Set<Row>, tableAlias: String?): String {
     val sortedFieldNames = fieldNames.sorted()
     return rows.joinToString(", ") { row ->
       rowValuesExpression(sortedFieldNames = sortedFieldNames, row = row, tableAlias = tableAlias)
@@ -149,6 +149,14 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       rightTableAlias = rightTableAlias,
       leftTableAlias = null,
     )
+
+  override fun valuesCTE(cteName: String, fieldNames: Set<String>, rows: Set<Row>): String {
+    val fieldsCSV = fieldNameCSV(fieldNames = fieldNames.toSet(), tableAlias = null)
+    val valuesExpr = valuesExpression(
+      fieldNames = fieldNames, rows = rows, tableAlias = null
+    )
+    return "$cteName ($fieldsCSV) AS (VALUES $valuesExpr)"
+  }
 
   private fun fieldsEqual(
     fieldNames: Set<String>,

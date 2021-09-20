@@ -33,7 +33,7 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       ,   CASE WHEN data_type LIKE 'timestamp%' THEN TRUE ELSE FALSE END AS is_datetime_flag
       ,   CASE WHEN data_type = 'double precision' THEN TRUE ELSE FALSE END AS is_float_flag
       ,   CASE WHEN data_type = 'numeric' THEN TRUE ELSE FALSE END AS is_decimal_flag
-      ,   CASE WHEN data_type IN ('bigint', 'integer') THEN TRUE ELSE FALSE END AS is_int_flag
+      ,   CASE WHEN data_type IN ('bit', 'bigint', 'integer') THEN TRUE ELSE FALSE END AS is_int_flag
       ,   CASE WHEN data_type IN ('character', 'character varying', 'text') THEN TRUE ELSE FALSE END AS is_text_flag
       FROM information_schema.columns AS c
       WHERE $whereClause

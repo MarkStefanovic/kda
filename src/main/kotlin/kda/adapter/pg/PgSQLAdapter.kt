@@ -8,7 +8,7 @@ import kda.domain.Table
 class PgSQLAdapter(private val impl: SQLAdapterImplDetails) : StdSQLAdapter(impl) {
   override fun merge(table: Table, rows: Set<Row>): String {
     val valuesCSV = impl.valuesExpression(
-      fieldNames = table.sortedFieldNames,
+      fieldNames = table.sortedFieldNames.toSet(),
       rows = rows,
       tableAlias = null,
     )

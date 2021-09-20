@@ -28,10 +28,10 @@ class MSSQLInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       ,   c.[character_maximum_length] AS max_len
       ,   c.[numeric_precision] AS precision
       ,   c.[numeric_scale] AS scale
-      ,   CASE WHEN [data_type] = 'bit' THEN 1 ELSE 0 END AS is_bool_flag
+      ,   0 AS is_bool_flag
       ,   CASE WHEN [data_type] = 'date' THEN 1 ELSE 0 END AS is_date_flag
       ,   CASE WHEN [data_type] = 'datetime' THEN 1 ELSE 0 END AS is_datetime_flag
-      ,   CASE WHEN [data_type] = 'double' THEN 1 ELSE 0 END AS is_float_flag
+      ,   CASE WHEN [data_type] IN ('double', 'float') THEN 1 ELSE 0 END AS is_float_flag
       ,   CASE WHEN [data_type] IN ('money', 'decimal', 'numeric') THEN 1 ELSE 0 END AS is_decimal_flag
       ,   CASE WHEN [data_type] IN ('bit', 'bigint', 'int', 'smallint') THEN 1 ELSE 0 END AS is_int_flag
       ,   CASE WHEN [data_type] IN ('char', 'nchar', 'ntext', 'nvarchar', 'text', 'uniqueidentifier', 'varchar') THEN 1 ELSE 0 END AS is_text_flag

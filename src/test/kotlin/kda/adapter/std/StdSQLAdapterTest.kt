@@ -229,12 +229,13 @@ class StdSQLAdapterTest {
     )
     val expected = standardizeSQL(
       """
-      MERGE INTO "sales"."customer" t
-      USING (
+      WITH v ("age", "first_name", "last_name") AS (
         VALUES 
-          (99, 'Mark', 'Stefanovic'),
+          (99, 'Mark', 'Stefanovic'), 
           (74, 'Bob', 'Smith')
-      ) v
+      )
+      MERGE INTO "sales"."customer" t
+      USING v
         ON t."first_name" = v."first_name" 
         AND t."last_name" = v."last_name"
       WHEN NOT MATCHED 

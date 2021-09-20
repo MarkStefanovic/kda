@@ -37,5 +37,7 @@ interface SQLAdapterImplDetails {
 
   fun wrapStringValue(value: String?, maxLength: Int?): String
 
-  fun valuesExpression(fieldNames: List<String>, rows: Set<Row>, tableAlias: String? = null): String
+  fun valuesCTE(cteName: String, fieldNames: Set<String>, rows: Set<Row>): String
+
+  fun valuesExpression(fieldNames: Set<String>, rows: Set<Row>, tableAlias: String? = null): String
 }
