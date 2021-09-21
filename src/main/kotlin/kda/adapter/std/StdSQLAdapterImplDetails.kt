@@ -25,11 +25,11 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       c.predicates.joinToString(" AND ") { predicate: Predicate ->
         val operator =
           when (predicate.operator) {
-            Operator.Equals -> " = "
-            Operator.GreaterThan -> " > "
-            Operator.LessThan -> " < "
-            Operator.GreaterThanOrEqualTo -> " >= "
-            Operator.LessThanOrEqualTo -> " <= "
+            Operator.Equals -> "="
+            Operator.GreaterThan -> ">"
+            Operator.LessThan -> "<"
+            Operator.GreaterThanOrEqualTo -> ">="
+            Operator.LessThanOrEqualTo -> "<="
           }
         "(${wrapName(predicate.field.name)} $operator ${wrapValue(predicate.value)})"
       }

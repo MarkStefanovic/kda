@@ -8,7 +8,7 @@ import kda.domain.NullableStringType
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.index
-import kda.domain.textField
+import kda.domain.where
 import kda.shared.tableExists
 import kda.shared.testDbCache
 import kda.shared.testPgConnection
@@ -162,7 +162,7 @@ class SyncTest {
           compareFields = setOf("first_name"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          criteria = textField("last_name") { eq("Smith") },
+          criteria = where { textField("last_name") { eq("Smith") } },
           cache = testDbCache(),
         ).getOrThrow()
 

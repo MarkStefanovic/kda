@@ -292,7 +292,7 @@ class StdSQLAdapterTest {
     val expected = standardizeSQL(
       """
       SELECT "customer_id", "first_name", "last_name" 
-      FROM "sales"."customer" 
+      FROM "sales"."customer"
       WHERE "customer_id" IN (1, 2, 3)
     """
     )
@@ -350,9 +350,9 @@ class StdSQLAdapterTest {
           ('Olive', 'Oil')
       )
       SELECT 
-        "age",
-        "first_name",
-        "last_name"
+        t."age",
+        t."first_name",
+        t."last_name"
       FROM "sales"."customer" t
       JOIN v 
         ON t."first_name" = v."first_name" 

@@ -91,10 +91,10 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
   }
 
   override fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String {
-    val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> "t." + impl.wrapName(fld) }
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val pkCols = table.primaryKeyFieldNames
     return if (pkCols.count() > 1) {
+      val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> "t." + impl.wrapName(fld) }
       val joinClause =
         pkCols
           .map { fld -> impl.wrapName(fld) }
@@ -108,12 +108,13 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         "SELECT $colNameCSV FROM $tableName t " +
         "JOIN v ON $joinClause"
     } else {
+      val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
       val pkCol = impl.wrapName(pkCols.first())
       val valuesCSV =
         primaryKeyValues.joinToString(", ") { row ->
           impl.wrapValue(row.value(pkCol))
         }
-      "SELECT $colNameCSV FROM $tableName t WHERE $pkCol IN ($valuesCSV)"
+      "SELECT $colNameCSV FROM $tableName WHERE $pkCol IN ($valuesCSV)"
     }
   }
 

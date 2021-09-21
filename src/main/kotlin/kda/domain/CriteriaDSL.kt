@@ -6,79 +6,10 @@ import java.time.LocalDateTime
 
 @DslMarker annotation class CriteriaDSL
 
-fun or(init: Or.Builder.() -> Unit): Set<Criteria> =
-  Or.Builder().apply(init).build().criteria
+fun where(init: Or.Builder.() -> Unit): Set<Criteria> = Or.Builder().apply(init).build().criteria
 
 fun and(init: And.Builder.() -> Unit): Set<Criteria> =
   setOf(Criteria(And.Builder().apply(init).build().predicates.toSet()))
-
-fun boolField(fieldName: String, init: BooleanFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(BooleanFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun nullableBoolField(fieldName: String, init: NullableBooleanFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableBooleanFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun decimalField(
-  fieldName: String,
-  precision: Int = 19,
-  scale: Int = 2,
-  init: DecimalFieldPredicate.Builder.() -> Unit,
-): Set<Criteria> =
-  setOf(
-    Criteria(
-      DecimalFieldPredicate.Builder(
-        fieldName = fieldName,
-        precision = precision,
-        scale = scale,
-      ).apply(init).build().predicates.toSet()
-    )
-  )
-
-fun nullableDecimalField(
-  fieldName: String,
-  precision: Int = 19,
-  scale: Int = 2,
-  init: NullableDecimalFieldPredicate.Builder.() -> Unit,
-): Set<Criteria> =
-  setOf(
-    Criteria(
-      NullableDecimalFieldPredicate.Builder(
-        fieldName = fieldName,
-        precision = precision,
-        scale = scale,
-      ).apply(init).build().predicates.toSet()
-    )
-  )
-
-fun intField(fieldName: String, init: IntFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(IntFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun nullableIntField(fieldName: String, init: NullableIntFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableIntFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun floatField(fieldName: String, maxDigits: Int = 5, init: FloatFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(FloatFieldPredicate.Builder(fieldName = fieldName, maxDigits = maxDigits).apply(init).build().predicates.toSet()))
-
-fun nullableFloatField(fieldName: String, maxDigits: Int = 5, init: NullableFloatFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableFloatFieldPredicate.Builder(fieldName = fieldName, maxDigits = maxDigits).apply(init).build().predicates.toSet()))
-
-fun dateField(fieldName: String, init: LocalDateFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(LocalDateFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun nullableDateField(fieldName: String, init: NullableLocalDateTimeFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableLocalDateTimeFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun dateTimeField(fieldName: String, init: LocalDateFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(LocalDateFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun nullableDateTimeField(fieldName: String, init: NullableLocalDateTimeFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableLocalDateTimeFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun textField(fieldName: String, init: TextFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(TextFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
-
-fun nullableTextField(fieldName: String, init: NullableTextFieldPredicate.Builder.() -> Unit): Set<Criteria> =
-  setOf(Criteria(NullableTextFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()))
 
 data class Or(val criteria: Set<Criteria>) {
   @CriteriaDSL
@@ -87,8 +18,202 @@ data class Or(val criteria: Set<Criteria>) {
 
     fun build() = Or(andCriteria.toSet())
 
-    fun or(criteria: And.Builder.() -> Unit) {
+    fun and(criteria: And.Builder.() -> Unit) {
       andCriteria.add(Criteria(And.Builder().apply(criteria).build().predicates))
+    }
+
+    fun boolField(fieldName: String, init: BooleanFieldPredicate.Builder.() -> Unit): Criteria {
+      val criteria =
+        Criteria(BooleanFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet())
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableBoolField(
+      fieldName: String,
+      init: NullableBooleanFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableBooleanFieldPredicate.Builder(fieldName)
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun decimalField(
+      fieldName: String,
+      precision: Int = 19,
+      scale: Int = 2,
+      init: DecimalFieldPredicate.Builder.() -> Unit,
+    ): Criteria {
+      val criteria =
+        Criteria(
+          DecimalFieldPredicate.Builder(
+            fieldName = fieldName,
+            precision = precision,
+            scale = scale,
+          )
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableDecimalField(
+      fieldName: String,
+      precision: Int = 19,
+      scale: Int = 2,
+      init: NullableDecimalFieldPredicate.Builder.() -> Unit,
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableDecimalFieldPredicate.Builder(
+            fieldName = fieldName,
+            precision = precision,
+            scale = scale,
+          )
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun intField(fieldName: String, init: IntFieldPredicate.Builder.() -> Unit): Criteria {
+      val criteria =
+        Criteria(IntFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet())
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableIntField(
+      fieldName: String,
+      init: NullableIntFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableIntFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun floatField(
+      fieldName: String,
+      maxDigits: Int = 5,
+      init: FloatFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          FloatFieldPredicate.Builder(fieldName = fieldName, maxDigits = maxDigits)
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableFloatField(
+      fieldName: String,
+      maxDigits: Int = 5,
+      init: NullableFloatFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableFloatFieldPredicate.Builder(fieldName = fieldName, maxDigits = maxDigits)
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun dateField(fieldName: String, init: LocalDateFieldPredicate.Builder.() -> Unit): Criteria {
+      val criteria =
+        Criteria(
+          LocalDateFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableDateField(
+      fieldName: String,
+      init: NullableLocalDateTimeFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableLocalDateTimeFieldPredicate.Builder(fieldName)
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun dateTimeField(
+      fieldName: String,
+      init: LocalDateFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          LocalDateFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableDateTimeField(
+      fieldName: String,
+      init: NullableLocalDateTimeFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria =
+        Criteria(
+          NullableLocalDateTimeFieldPredicate.Builder(fieldName)
+            .apply(init)
+            .build()
+            .predicates
+            .toSet()
+        )
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun textField(fieldName: String, init: TextFieldPredicate.Builder.() -> Unit): Criteria {
+      val criteria = Criteria(TextFieldPredicate.Builder(fieldName).apply(init).build().predicates.toSet())
+      andCriteria.add(criteria)
+      return criteria
+    }
+
+    fun nullableTextField(
+      fieldName: String,
+      init: NullableTextFieldPredicate.Builder.() -> Unit
+    ): Criteria {
+      val criteria = Criteria(
+        NullableTextFieldPredicate.Builder(fieldName)
+          .apply(init)
+          .build()
+          .predicates
+          .toSet()
+      )
+      andCriteria.add(criteria)
+      return criteria
     }
   }
 }
@@ -186,36 +311,21 @@ data class And(val predicates: Set<Predicate>) {
       name: String,
       init: IntFieldPredicate.Builder.() -> Unit,
     ) {
-      orCriteria.addAll(
-        IntFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
-      )
+      orCriteria.addAll(IntFieldPredicate.Builder(name).apply(init).build().predicates)
     }
 
     fun nullableIntField(
       name: String,
       init: NullableIntFieldPredicate.Builder.() -> Unit,
     ) {
-      orCriteria.addAll(
-        NullableIntFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
-      )
+      orCriteria.addAll(NullableIntFieldPredicate.Builder(name).apply(init).build().predicates)
     }
 
     fun localDateField(
       name: String,
       init: LocalDateFieldPredicate.Builder.() -> Unit,
     ) {
-      orCriteria.addAll(
-        LocalDateFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
-      )
+      orCriteria.addAll(LocalDateFieldPredicate.Builder(name).apply(init).build().predicates)
     }
 
     fun nullableLocalDateField(
@@ -223,10 +333,7 @@ data class And(val predicates: Set<Predicate>) {
       init: NullableLocalDateFieldPredicate.Builder.() -> Unit,
     ) {
       orCriteria.addAll(
-        NullableLocalDateFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
+        NullableLocalDateFieldPredicate.Builder(name).apply(init).build().predicates
       )
     }
 
@@ -234,12 +341,7 @@ data class And(val predicates: Set<Predicate>) {
       name: String,
       init: LocalDateTimeFieldPredicate.Builder.() -> Unit,
     ) {
-      orCriteria.addAll(
-        LocalDateTimeFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
-      )
+      orCriteria.addAll(LocalDateTimeFieldPredicate.Builder(name).apply(init).build().predicates)
     }
 
     fun nullableLocalDateTimeField(
@@ -247,10 +349,7 @@ data class And(val predicates: Set<Predicate>) {
       init: NullableLocalDateTimeFieldPredicate.Builder.() -> Unit,
     ) {
       orCriteria.addAll(
-        NullableLocalDateTimeFieldPredicate.Builder(name)
-          .apply(init)
-          .build()
-          .predicates
+        NullableLocalDateTimeFieldPredicate.Builder(name).apply(init).build().predicates
       )
     }
 

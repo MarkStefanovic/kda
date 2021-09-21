@@ -29,8 +29,8 @@ data class Table(
     return Row(rowMap)
   }
 
-  fun rows(vararg rowMaps: Map<String, Any?>): List<Row> =
-    rowMaps.map { map -> row(*map.entries.map { it.toPair() }.toTypedArray()) }
+  fun rows(vararg rowMaps: Map<String, Any?>): Set<Row> =
+    rowMaps.map { map -> row(*map.entries.map { it.toPair() }.toTypedArray()) }.toSet()
 
   fun subset(fieldNames: Set<String>): Table =
     copy(fields = fields.filter { fld -> fld.name in fieldNames }.toSet())

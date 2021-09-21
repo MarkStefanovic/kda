@@ -303,7 +303,8 @@ class HiveSQLAdapterTest {
     val sql = pgSQLAdapter.selectKeys(table = table, primaryKeyValues = rows)
     val expected =
       """WITH v ("first_name", "last_name") AS (VALUES ('Mark', 'Stefanovic'), ('Bob', 'Smith'), ('Olive', 'Oil')) """ +
-        """SELECT "age", "first_name", "last_name" FROM "sales"."customer" t """ +
+        """SELECT t."age", t."first_name", t."last_name" """ +
+        """FROM "sales"."customer" t """ +
         """JOIN v ON t."first_name" = v."first_name" AND t."last_name" = v."last_name""""
     assertEquals(expected = expected, actual = sql)
   }

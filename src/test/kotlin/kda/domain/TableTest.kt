@@ -47,7 +47,7 @@ class TableTest {
       mapOf("customer_id" to 1, "first_name" to "Mark", "last_name" to "Stefanovic"),
       mapOf("customer_id" to 2, "first_name" to "Bob", "last_name" to "Smith"),
     )
-    val expectedRows = listOf(
+    val expectedRows = setOf(
       Row(
         mapOf(
           "customer_id" to IntValue(1),
