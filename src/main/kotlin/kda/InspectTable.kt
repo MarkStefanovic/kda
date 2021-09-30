@@ -12,7 +12,7 @@ fun inspectTable(
   table: String,
   primaryKeyFieldNames: List<String>,
   includeFieldNames: Set<String>?,
-  cache: Cache = DbCache(),
+  cache: Cache = sqliteCache,
 ): Result<Table?> = runCatching {
   if ((includeFieldNames != null) && (includeFieldNames.isEmpty())) {
     throw KDAError.InvalidArgument(

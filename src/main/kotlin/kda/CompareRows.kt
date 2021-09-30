@@ -20,7 +20,7 @@ fun compareRows(
   compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
   criteria: Set<Criteria> = emptySet(),
-  cache: Cache = DbCache(),
+  cache: Cache = sqliteCache,
 ): Result<RowDiff> = runCatching {
   val src = datasource(con = srcCon, dialect = srcDialect)
 

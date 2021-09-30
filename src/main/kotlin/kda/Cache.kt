@@ -4,6 +4,7 @@ import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SqliteDb
+import kda.adapter.sqliteDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
 
@@ -25,7 +26,7 @@ interface Cache {
   fun latestTimestamps(schema: String?, table: String): Result<Set<LatestTimestamp>>
 }
 
-class DbCache(private val db: Db = SqliteDb) : Cache {
+class DbCache(private val db: Db) : Cache {
   private val latestTimestampRepo by lazy {
     DbLatestTimestampRepository(db)
   }
@@ -72,3 +73,5 @@ class DbCache(private val db: Db = SqliteDb) : Cache {
     latestTimestampRepo.get(schema = schema, table = table)
   }
 }
+
+val sqliteCache: Cache = DbCache(SqliteDb(sqliteDatasource()))

@@ -29,7 +29,7 @@ fun sync(
   compareFields: Set<String>? = null,
   includeFields: Set<String>? = null,
   criteria: Set<Criteria> = emptySet(),
-  cache: Cache = DbCache(),
+  cache: Cache = sqliteCache,
   timestampFieldNames: Set<String> = setOf(),
 ): Result<SyncResult> = runCatching {
   if (compareFields != null && compareFields.isEmpty()) {

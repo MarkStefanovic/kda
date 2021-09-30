@@ -18,7 +18,7 @@ fun copyTable(
   destTable: String,
   primaryKeyFields: List<String>,
   includeFields: Set<String>? = null,
-  cache: Cache = DbCache(),
+  cache: Cache = sqliteCache,
   ignoreAutoincrement: Boolean = true,
 ): Result<CopyTableResult> = runCatching {
   val srcTableDef = inspectTable(

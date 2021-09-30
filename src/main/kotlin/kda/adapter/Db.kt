@@ -1,5 +1,7 @@
 package kda.adapter
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import kda.domain.DataTypeName
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -7,9 +9,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.`java-time`.CurrentDateTime
 import org.jetbrains.exposed.sql.`java-time`.datetime
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.sql.Connection
 
 abstract class Db {
   abstract fun exec(statement: Transaction.() -> Unit)
@@ -17,18 +17,24 @@ abstract class Db {
   abstract fun <R> fetch(statement: Transaction.() -> R): R
 
   abstract fun createTables()
+
+  abstract fun dropTables()
 }
 
-object SqliteDb : Db() {
-  private val db by lazy {
-    TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
-    Database.connect(url = "jdbc:sqlite:./cache.db", driver = "org.sqlite.JDBC")
-  }
+class SqliteDb(private val ds: HikariDataSource) : Db() {
+  private val db: Database
+    get() = Database.connect(ds)
 
   override fun createTables() {
     transaction(db = db) {
 //      addLogger(StdOutSqlLogger)
       SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
+    }
+  }
+
+  override fun dropTables() {
+    transaction(db = db) {
+      SchemaUtils.drop(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
@@ -42,6 +48,22 @@ object SqliteDb : Db() {
     transaction(db = db) {
       statement()
     }
+}
+
+fun sqliteDatasource(
+  dbPath: String = "./cache.db",
+  driverClassName: String = "org.sqlite.JDBC"
+): HikariDataSource {
+  val config = HikariConfig()
+  config.jdbcUrl = "jdbc:sqlite:$dbPath"
+  config.driverClassName = driverClassName
+  config.maximumPoolSize = 1
+  config.transactionIsolation = "TRANSACTION_SERIALIZABLE"
+  config.connectionTestQuery = "SELECT 1"
+  config.addDataSourceProperty("cachePrepStmts", "true")
+  config.addDataSourceProperty("prepStmtCacheSize", "250")
+  config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
+  return HikariDataSource(config)
 }
 
 object TableDefs : Table("table_def") {

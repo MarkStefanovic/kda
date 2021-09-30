@@ -22,6 +22,8 @@ dependencies {
 
     testImplementation("org.postgresql", "postgresql", "42.2.16")
     implementation("org.xerial:sqlite-jdbc:3.36.0.2")
+
+    implementation("com.zaxxer:HikariCP:5.0.0")
 }
 
 tasks.test {
