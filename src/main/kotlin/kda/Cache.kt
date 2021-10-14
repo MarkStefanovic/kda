@@ -28,11 +28,11 @@ interface Cache {
 
 class DbCache(private val db: Db) : Cache {
   private val latestTimestampRepo by lazy {
-    DbLatestTimestampRepository(db)
+    DbLatestTimestampRepository()
   }
 
   private val tableDefRepo by lazy {
-    DbTableDefRepository(db)
+    DbTableDefRepository()
   }
 
   init {
@@ -40,7 +40,9 @@ class DbCache(private val db: Db) : Cache {
   }
 
   override fun addTableDef(tableDef: Table): Result<Unit> = runCatching {
-    tableDefRepo.add(tableDef)
+    db.exec {
+      tableDefRepo.add(tableDef)
+    }
   }
 
   override fun addLatestTimestamp(
@@ -48,29 +50,39 @@ class DbCache(private val db: Db) : Cache {
     table: String,
     timestamps: Set<LatestTimestamp>,
   ) = runCatching {
-    timestamps.forEach { ts ->
-      latestTimestampRepo.add(
-        schema = schema,
-        table = table,
-        latestTimestamp = ts,
-      )
+    db.exec {
+      timestamps.forEach { ts ->
+        latestTimestampRepo.add(
+          schema = schema,
+          table = table,
+          latestTimestamp = ts,
+        )
+      }
     }
   }
 
   override fun clearTableDef(schema: String?, table: String) = runCatching {
-    tableDefRepo.delete(schema = schema, table = table)
+    db.exec {
+      tableDefRepo.delete(schema = schema, table = table)
+    }
   }
 
   override fun clearLatestTimestamps(schema: String?, table: String) = runCatching {
-    latestTimestampRepo.delete(schema = schema, table = table)
+    db.exec {
+      latestTimestampRepo.delete(schema = schema, table = table)
+    }
   }
 
   override fun tableDef(schema: String?, table: String) = runCatching {
-    tableDefRepo.get(schema = schema, table = table)
+    db.fetch {
+      tableDefRepo.get(schema = schema, table = table)
+    }
   }
 
   override fun latestTimestamps(schema: String?, table: String) = runCatching {
-    latestTimestampRepo.get(schema = schema, table = table)
+    db.fetch {
+      latestTimestampRepo.get(schema = schema, table = table)
+    }
   }
 }
 

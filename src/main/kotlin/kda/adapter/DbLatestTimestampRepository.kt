@@ -7,53 +7,47 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 
-class DbLatestTimestampRepository(private val db: Db) : LatestTimestampRepository {
+class DbLatestTimestampRepository : LatestTimestampRepository {
   override fun add(schema: String?, table: String, latestTimestamp: LatestTimestamp) {
-    db.exec {
-      LatestTimestamps.deleteWhere {
-        if (schema == null) {
-          LatestTimestamps.table eq table
-        } else {
-          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-        }
+    LatestTimestamps.deleteWhere {
+      if (schema == null) {
+        LatestTimestamps.table eq table
+      } else {
+        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
       }
-      LatestTimestamps.insert {
-        it[LatestTimestamps.schema] = schema ?: ""
-        it[LatestTimestamps.table] = table
-        it[LatestTimestamps.fieldName] = latestTimestamp.fieldName
-        it[LatestTimestamps.ts] = latestTimestamp.timestamp
-      }
+    }
+    LatestTimestamps.insert {
+      it[LatestTimestamps.schema] = schema ?: ""
+      it[LatestTimestamps.table] = table
+      it[LatestTimestamps.fieldName] = latestTimestamp.fieldName
+      it[LatestTimestamps.ts] = latestTimestamp.timestamp
     }
   }
 
   override fun delete(schema: String?, table: String) {
-    db.exec {
-      LatestTimestamps.deleteWhere {
-        if (schema == null) {
-          LatestTimestamps.table eq table
-        } else {
-          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-        }
+    LatestTimestamps.deleteWhere {
+      if (schema == null) {
+        LatestTimestamps.table eq table
+      } else {
+        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
       }
     }
   }
 
   override fun get(schema: String?, table: String): Set<LatestTimestamp> =
-    db.fetch {
-      LatestTimestamps
-        .select {
-          if (schema == null) {
-            LatestTimestamps.table eq table
-          } else {
-            (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-          }
+    LatestTimestamps
+      .select {
+        if (schema == null) {
+          LatestTimestamps.table eq table
+        } else {
+          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
         }
-        .map { row ->
-          LatestTimestamp(
-            fieldName = row[LatestTimestamps.fieldName],
-            timestamp = row[LatestTimestamps.ts],
-          )
-        }
-        .toSet()
-    }
+      }
+      .map { row ->
+        LatestTimestamp(
+          fieldName = row[LatestTimestamps.fieldName],
+          timestamp = row[LatestTimestamps.ts],
+        )
+      }
+      .toSet()
 }
