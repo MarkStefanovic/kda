@@ -3,7 +3,7 @@ package kda
 import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
-import kda.adapter.SqliteDb
+import kda.adapter.SQLDb
 import kda.adapter.sqliteDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
@@ -74,4 +74,4 @@ class DbCache(private val db: Db) : Cache {
   }
 }
 
-val sqliteCache: Cache = DbCache(SqliteDb(sqliteDatasource()))
+val sqliteCache: Cache = DbCache(SQLDb(sqliteDatasource()))

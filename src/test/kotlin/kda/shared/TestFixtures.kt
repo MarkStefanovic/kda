@@ -2,13 +2,13 @@ package kda.shared
 
 import kda.Cache
 import kda.DbCache
-import kda.adapter.SqliteDb
+import kda.adapter.SQLDb
 import kda.adapter.sqliteDatasource
 import java.sql.Connection
 import java.sql.DriverManager
 
 fun testDbCache(): Cache {
-  val db = SqliteDb(sqliteDatasource())
+  val db = SQLDb(sqliteDatasource())
   db.dropTables()
   db.createTables()
   return DbCache(db)

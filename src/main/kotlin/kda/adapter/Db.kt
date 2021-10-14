@@ -11,17 +11,17 @@ import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
 
-abstract class Db {
-  abstract fun exec(statement: Transaction.() -> Unit)
+interface Db {
+  fun exec(statement: Transaction.() -> Unit)
 
-  abstract fun <R> fetch(statement: Transaction.() -> R): R
+  fun <R> fetch(statement: Transaction.() -> R): R
 
-  abstract fun createTables()
+  fun createTables()
 
-  abstract fun dropTables()
+  fun dropTables()
 }
 
-class SqliteDb(private val ds: HikariDataSource) : Db() {
+class SQLDb(private val ds: HikariDataSource) : Db {
   private val db: Database
     get() = Database.connect(ds)
 
@@ -66,7 +66,7 @@ fun sqliteDatasource(
   return HikariDataSource(config)
 }
 
-object TableDefs : Table("table_def") {
+object TableDefs : Table("kda_table_def") {
   val schema = text("schema_name")
   val table = text("table_name")
   val column = text("column_name")
@@ -77,23 +77,23 @@ object TableDefs : Table("table_def") {
   val autoincrement = bool("autoincrement").nullable()
   val dateAdded = datetime("date_added").defaultExpression(CurrentDateTime())
 
-  override val primaryKey = PrimaryKey(schema, table, column, name = "pk_table_def")
+  override val primaryKey = PrimaryKey(schema, table, column, name = "pk_kda_table_def")
 }
 
-object PrimaryKeys : Table("pkey") {
+object PrimaryKeys : Table("kda_primary_key") {
   val schema = text("schema_name")
   val table = text("table_name")
   val fieldName = text("field_name")
   val order = integer("order")
 
-  override val primaryKey = PrimaryKey(schema, table, order, name = "pk_pkey")
+  override val primaryKey = PrimaryKey(schema, table, order, name = "pk_kda_primary_key")
 }
 
-object LatestTimestamps : Table("latest_timestamp") {
+object LatestTimestamps : Table("kda_latest_timestamp") {
   val schema = text("schema_name")
   val table = text("table_name")
   val fieldName = text("field_name")
   val ts = datetime("ts").nullable()
 
-  override val primaryKey = PrimaryKey(schema, table, fieldName, name = "pk_latest_timestamp")
+  override val primaryKey = PrimaryKey(schema, table, fieldName, name = "pk_kda_latest_timestamp")
 }
