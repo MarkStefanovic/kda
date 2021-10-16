@@ -22,8 +22,9 @@ interface Db {
 }
 
 class SQLDb(private val ds: HikariDataSource) : Db {
-  private val db: Database
-    get() = Database.connect(ds)
+  private val db: Database by lazy {
+    Database.connect(ds)
+  }
 
   override fun createTables() {
     transaction(db = db) {
