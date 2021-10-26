@@ -5,4 +5,4 @@ import kda.domain.SQLAdapterImplDetails
 
 class HiveSQLAdapter(impl: SQLAdapterImplDetails) : StdSQLAdapter(impl)
 
-val hiveSQLAdapter = HiveSQLAdapter(HiveSQLAdapterImplDetails())
+val hiveSQLAdapter by lazy { HiveSQLAdapter(HiveSQLAdapterImplDetails()) }

@@ -86,4 +86,6 @@ class DbCache(private val db: Db) : Cache {
   }
 }
 
-val sqliteCache: Cache = DbCache(SQLDb(sqliteDatasource()))
+val sqliteCache: Cache by lazy {
+  DbCache(SQLDb(sqliteDatasource()))
+}

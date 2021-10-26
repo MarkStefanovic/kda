@@ -5,4 +5,4 @@ import kda.domain.SQLAdapterImplDetails
 
 class MSSQLAdapter(private val impl: SQLAdapterImplDetails) : StdSQLAdapter(impl)
 
-val msSQLAdapter = MSSQLAdapter(MSSQLAdapterImplDetails())
+val msSQLAdapter by lazy { MSSQLAdapter(MSSQLAdapterImplDetails()) }

@@ -17,12 +17,13 @@ class StandardizeSQLTest {
   fun standardizeSQL_happy_path() {
     val sql = """
       CREATE TABLE sales.customer (
-        customer_id SERIAL PRIMARY KEY,
-        name TEXT 
+        customer_id INT,
+        name TEXT,
+        PRIMARY KEY (customer_id)
       )
     """
     val actual = standardizeSQL(sql)
-    val expected = "CREATE TABLE sales.customer (customer_id SERIAL PRIMARY KEY, name TEXT)"
+    val expected = "CREATE TABLE sales.customer (customer_id INT, name TEXT, PRIMARY KEY (customer_id))"
     assertEquals(expected = expected, actual = actual)
   }
 }

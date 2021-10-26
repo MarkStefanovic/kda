@@ -23,4 +23,4 @@ class PgSQLAdapter(private val impl: SQLAdapterImplDetails) : StdSQLAdapter(impl
   }
 }
 
-val pgSQLAdapter = PgSQLAdapter(PgSQLAdapterImplDetails())
+val pgSQLAdapter by lazy { PgSQLAdapter(PgSQLAdapterImplDetails()) }

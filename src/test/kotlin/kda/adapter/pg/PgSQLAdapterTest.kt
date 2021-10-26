@@ -1,4 +1,4 @@
-package kda.adapter.mssql
+package kda.adapter.pg
 
 import kda.domain.Field
 import kda.domain.IntType
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-class MSSQLAdapterTest {
-  private val adapter = msSQLAdapter
+class PgSQLAdapterTest {
+  private val adapter = pgSQLAdapter
 
   @Test
   fun add() {
@@ -41,8 +41,8 @@ class MSSQLAdapterTest {
     )
     val actualSQL = adapter.add(table = table, rows = rows)
     val expectedSQL =
-      "INSERT INTO [sales].[customer] ([customer_id], [first_name], [last_name]) " +
-        "VALUES (1, 'Mark', 'Stefanovic'), (2, 'Mandie', 'Mandlebrot')"
+      """INSERT INTO "sales"."customer" ("customer_id", "first_name", "last_name") """ +
+        """VALUES (1, 'Mark', 'Stefanovic'), (2, 'Mandie', 'Mandlebrot')"""
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
 
@@ -61,11 +61,11 @@ class MSSQLAdapterTest {
     val actualSQL = adapter.createTable(table)
     val expectedSQL = standardizeSQL(
       """
-      CREATE TABLE [sales].[customer] (
-        [customer_id] INT NOT NULL, 
-        [first_name] TEXT NULL, 
-        [last_name] TEXT NULL, 
-        PRIMARY KEY ([customer_id])
+      CREATE TABLE "sales"."customer" (
+        "customer_id" INT NOT NULL, 
+        "first_name" TEXT NULL, 
+        "last_name" TEXT NULL, 
+        PRIMARY KEY ("customer_id")
       )
     """
     )
@@ -97,21 +97,21 @@ class MSSQLAdapterTest {
       ),
     )
     val actualSQL = adapter.deleteKeys(table = table, primaryKeyValues = rows)
-    val expectedSQL = "DELETE FROM [sales].[customer] WHERE [customer_id] IN (1, 2)"
+    val expectedSQL = """DELETE FROM "sales"."customer" WHERE "customer_id" IN (1, 2)"""
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
 
   @Test
   fun dropTable() {
     val actualSQL = adapter.dropTable(schema = "sales", table = "customer")
-    val expectedSQL = "DROP TABLE [sales].[customer]"
+    val expectedSQL = """DROP TABLE "sales"."customer""""
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
 
   @Test
   fun getRowCount_happy_path() {
     val actualSQL = adapter.getRowCount(schema = "sales", table = "customer")
-    val expectedSQL = "SELECT COUNT(*) AS [rows] FROM [sales].[customer]"
+    val expectedSQL = """SELECT COUNT(*) AS "rows" FROM "sales"."customer""""
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
 
@@ -142,23 +142,10 @@ class MSSQLAdapterTest {
     val actualSQL = adapter.merge(table = table, rows = rows)
     val expectedSQL = standardizeSQL(
       """
-      WITH v AS (
-        SELECT 1 AS [customer_id], 'Mark' AS [first_name], 'Stefanovic' AS [last_name]
-        UNION ALL
-        SELECT 2 AS [customer_id], 'Mandie' AS [first_name], 'Mandlebrot' AS [last_name]
-      )
-      MERGE INTO [sales].[customer] t
-      USING v ON t.[customer_id] = v.[customer_id]
-      WHEN NOT MATCHED
-        INSERT VALUES (
-          v.[customer_id], 
-          v.[first_name], 
-          v.[last_name]
-        )
-      WHEN MATCHED 
-        UPDATE SET
-          [first_name] = v.[first_name], 
-          [last_name] = v.[last_name]
+      INSERT INTO "sales"."customer" ("customer_id", "first_name", "last_name") 
+      VALUES (1, 'Mark', 'Stefanovic'), (2, 'Mandie', 'Mandlebrot') 
+      ON CONFLICT ("customer_id") 
+      DO UPDATE SET "first_name" = EXCLUDED."first_name", "last_name" = EXCLUDED."last_name"
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
@@ -188,8 +175,8 @@ class MSSQLAdapterTest {
     val actualSQL = adapter.select(table = table, criteria = criteria)
     val expectedSQL = standardizeSQL(
       """
-      SELECT [customer_id], [first_name], [last_name] FROM [sales].[customer] 
-      WHERE ([first_name] = 'Bob') OR ([last_name] = 'Smith')
+      SELECT "customer_id", "first_name", "last_name" FROM "sales"."customer" 
+      WHERE ("first_name" = 'Bob') OR ("last_name" = 'Smith')
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
@@ -215,9 +202,9 @@ class MSSQLAdapterTest {
     val actualSQL = adapter.selectKeys(table = table, primaryKeyValues = rows)
     val expectedSQL = standardizeSQL(
       """
-      SELECT [customer_id], [first_name], [last_name] 
-      FROM [sales].[customer] 
-      WHERE [customer_id] IN (1, 2, 3)
+      SELECT "customer_id", "first_name", "last_name" 
+      FROM "sales"."customer" 
+      WHERE "customer_id" IN (1, 2, 3)
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
@@ -235,14 +222,11 @@ class MSSQLAdapterTest {
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
-    val actualSQL = adapter.selectMaxValues(
-      table = table,
-      fieldNames = setOf("date_added", "date_updated"),
-    )
+    val actualSQL = adapter.selectMaxValues(table = table, fieldNames = setOf("date_added", "date_updated"))
     val expectedSQL = standardizeSQL(
       """
-      SELECT MAX([date_added]) AS [date_added], MAX([date_updated]) AS [date_updated] 
-      FROM [sales].[customer]
+      SELECT MAX("date_added") AS "date_added", MAX("date_updated") AS "date_updated" 
+      FROM "sales"."customer"
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
@@ -275,18 +259,17 @@ class MSSQLAdapterTest {
     val actualSQL = adapter.update(table = table, rows = rows)
     val expectedSQL = standardizeSQL(
       """
-      WITH u AS (
-        SELECT 1 AS [customer_id], 'Mark' AS [first_name], 'Stefanovic' AS [last_name] 
-        UNION ALL 
-        SELECT 2 AS [customer_id], 'Mandie' AS [first_name], 'Mandlebrot' AS [last_name]
+      WITH u ("customer_id", "first_name", "last_name") AS (
+        VALUES 
+          (1, 'Mark', 'Stefanovic'), 
+          (2, 'Mandie', 'Mandlebrot')
       ) 
-      UPDATE [sales].[customer] AS t 
+      UPDATE "sales"."customer" AS t 
       SET 
-        [first_name] = u.[first_name], 
-        [last_name] = u.[last_name] 
+        "first_name" = u."first_name", 
+        "last_name" = u."last_name" 
       FROM u 
-      WHERE 
-        t.[customer_id] = u.[customer_id]
+      WHERE t."customer_id" = u."customer_id"
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
