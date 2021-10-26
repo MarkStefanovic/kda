@@ -117,7 +117,7 @@ class JdbcExecutorTest {
           primaryKeyFieldNames = listOf("id"),
         )
       val actual =
-        executor.fetchRows(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
+        executor.fetchRows(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields).toSet()
       val expected =
         setOf(
           Row.of(

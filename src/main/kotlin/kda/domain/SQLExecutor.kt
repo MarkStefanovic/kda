@@ -30,5 +30,5 @@ interface SQLExecutor {
 
   fun fetchRow(sql: String, fields: Set<Field>): Row
 
-  fun fetchRows(sql: String, fields: Set<Field>): Set<Row>
+  fun fetchRows(sql: String, fields: Set<Field>): Sequence<Row>
 }

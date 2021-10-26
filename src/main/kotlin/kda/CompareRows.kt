@@ -90,6 +90,7 @@ private fun fetchLookupTable(
     val srcLkpTable = tableDef.subset(includeFieldNames)
     val includeFields = tableDef.fields.filter { it.name in includeFieldNames }.toSet()
     val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
-    ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
+    val result = ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
+    result.toSet()
   }
 }

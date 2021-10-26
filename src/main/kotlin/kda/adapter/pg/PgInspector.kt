@@ -138,6 +138,6 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       sql = sql,
       fields = setOf(Field("column_name", dataType = StringType(maxLength = null))),
     )
-    return rows.map { row -> row.value("column_name").value as String }
+    return rows.map { row -> row.value("column_name").value as String }.toList()
   }
 }

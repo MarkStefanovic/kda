@@ -1,6 +1,7 @@
 package kda.adapter
 
 import kda.domain.*
+import java.lang.Thread.*
 import java.math.BigDecimal
 import java.sql.*
 import java.time.LocalDate
@@ -12,9 +13,6 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       try {
         createStatement().use { stmt -> stmt.execute(sql) }
       } catch (e: Exception) {
-        //        println("The following error occurred while executing '$sql':")
-        //        e.printStackTrace()
-        //        throw e
         throw Exception(
           "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
         )
@@ -70,21 +68,21 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
       }
     }
 
-  override fun fetchRows(sql: String, fields: Set<Field>): Set<Row> =
-    con.createStatement().use { stmt ->
-      val rows: MutableList<Row> = mutableListOf()
-      try {
-        stmt.executeQuery(sql).use { rs ->
-          while (rs.next()) {
-            rows.add(Row(rs.toMap(fields)))
+  override fun fetchRows(sql: String, fields: Set<Field>): Sequence<Row> =
+    sequence {
+      con.createStatement().use { stmt ->
+        try {
+          stmt.executeQuery(sql).use { rs ->
+            while (rs.next()) {
+              yield(Row(rs.toMap(fields)))
+            }
           }
+        } catch (e: Exception) {
+          throw Exception(
+            "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
+          )
         }
-      } catch (e: Exception) {
-        throw Exception(
-          "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
-        )
       }
-      return rows.toSet()
     }
 
   private inline fun <reified Out : Any?> fetchScalar(sql: String, dataType: DataType<Out>): Out =
@@ -97,11 +95,13 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
           } else {
             val value = rs.getObject(1)
             try {
-              when (value) {
+              val v = when (value) {
                 null ->
-                  if (dataType.nullable) null
-                  else
+                  if (dataType.nullable) {
+                    null
+                  } else {
                     throw KDAError.NullValueError(expectedType = dataType::class.simpleName ?: "Unknown")
+                  }
                 is Out -> value
                 else -> {
                   when (dataType) {
@@ -115,8 +115,8 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
                     is StringType, is NullableStringType -> value as String
                   }
                 }
-              } as
-                Out
+              }
+              v as Out
             } catch (e: ClassCastException) {
               throw KDAError.ValueError(value = value, expectedType = Out::class.simpleName ?: "Unknown")
             }

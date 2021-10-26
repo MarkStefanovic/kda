@@ -97,6 +97,7 @@ class SyncTest {
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
           cache = testDbCache(),
+          chunkSize = 2,
         ).getOrThrow()
 
         val destTable = Table(
@@ -164,6 +165,7 @@ class SyncTest {
           includeFields = null,
           criteria = where { textField("last_name") { eq("Smith") } },
           cache = testDbCache(),
+          chunkSize = 1000,
         ).getOrThrow()
 
         val destTable = Table(

@@ -31,6 +31,7 @@ fun sync(
   criteria: Set<Criteria> = emptySet(),
   cache: Cache = sqliteCache,
   timestampFieldNames: Set<String> = setOf(),
+  chunkSize: Int = 1_000,
 ): Result<SyncResult> = runCatching {
   if (compareFields != null && compareFields.isEmpty()) {
     throw KDAError.InvalidArgument(
@@ -85,11 +86,11 @@ fun sync(
 
   val srcLkpTable = tables.srcTableDef.subset(fieldNames = lkpTableFieldNames)
   val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
-  val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields)
+  val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields).toSet()
 
   val destLkpTable = tables.destTableDef.subset(fieldNames = lkpTableFieldNames)
   val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
-  val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields)
+  val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields).toSet()
 
   val rowDiff: RowDiff =
     compareRows(
@@ -104,6 +105,7 @@ fun sync(
     dest = dest,
     destTableDef = tables.destTableDef,
     deletedRows = rowDiff.deleted,
+    chunkSize = chunkSize,
   ).getOrThrow()
 
   if (fullCriteria.isEmpty()) {
@@ -113,6 +115,7 @@ fun sync(
       srcTableDef = tables.srcTableDef,
       destTableDef = tables.destTableDef,
       addedRows = rowDiff.added,
+      chunkSize = chunkSize,
     ).getOrThrow()
 
     updateRows(
@@ -121,6 +124,7 @@ fun sync(
       srcTableDef = tables.srcTableDef,
       destTableDef = tables.destTableDef,
       updatedRows = rowDiff.updated,
+      chunkSize = chunkSize,
     ).getOrThrow()
 
     if (timestampFieldNames.isNotEmpty()) {
@@ -140,6 +144,7 @@ fun sync(
       destTableDef = tables.destTableDef,
       addedRows = rowDiff.added,
       updatedRows = rowDiff.updated,
+      chunkSize = chunkSize,
     ).getOrThrow()
 
     if (timestampFieldNames.isNotEmpty()) {
@@ -166,14 +171,17 @@ private fun addRows(
   dest: Datasource,
   srcTableDef: Table,
   destTableDef: Table,
-  addedRows: IndexedRows
+  addedRows: IndexedRows,
+  chunkSize: Int,
 ): Result<Int> = runCatching {
   if (addedRows.keys.isNotEmpty()) {
-    val selectSQL: String =
-      src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = addedRows.keys)
-    val newRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
-    val insertSQL: String = dest.adapter.add(table = destTableDef, rows = newRows)
-    dest.executor.execute(sql = insertSQL)
+    addedRows.keys.chunked(chunkSize) { keys ->
+      val selectSQL: String =
+        src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
+      val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
+      val insertSQL: String = dest.adapter.add(table = destTableDef, rows = rows.toSet())
+      dest.executor.execute(sql = insertSQL)
+    }
   }
   addedRows.count()
 }
@@ -181,12 +189,15 @@ private fun addRows(
 private fun deleteRows(
   dest: Datasource,
   destTableDef: Table,
-  deletedRows: IndexedRows
+  deletedRows: IndexedRows,
+  chunkSize: Int,
 ): Result<Int> = runCatching {
   if (deletedRows.keys.isNotEmpty()) {
-    val deleteSQL: String =
-      dest.adapter.deleteKeys(table = destTableDef, primaryKeyValues = deletedRows.keys)
-    dest.executor.execute(sql = deleteSQL)
+    deletedRows.keys.chunked(chunkSize) { keys ->
+      val deleteSQL: String =
+        dest.adapter.deleteKeys(table = destTableDef, primaryKeyValues = keys.toSet())
+      dest.executor.execute(sql = deleteSQL)
+    }
   }
   deletedRows.count()
 }
@@ -198,15 +209,18 @@ private fun upsertRows(
   destTableDef: Table,
   addedRows: IndexedRows,
   updatedRows: IndexedRows,
+  chunkSize: Int,
 ): Result<Int> = runCatching {
   if (addedRows.keys.isNotEmpty()) {
-    val selectSQL: String =
-      src.adapter.selectKeys(
-        table = srcTableDef, primaryKeyValues = addedRows.keys + updatedRows.keys
-      )
-    val newRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
-    val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = newRows)
-    dest.executor.execute(sql = upsertSQL)
+    updatedRows.keys.union(addedRows.keys).chunked(chunkSize) { keys ->
+      val selectSQL: String =
+        src.adapter.selectKeys(
+          table = srcTableDef, primaryKeyValues = keys.toSet()
+        )
+      val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
+      val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = rows)
+      dest.executor.execute(sql = upsertSQL)
+    }
   }
   addedRows.count()
 }
@@ -216,13 +230,16 @@ private fun updateRows(
   dest: Datasource,
   srcTableDef: Table,
   destTableDef: Table,
-  updatedRows: IndexedRows
+  updatedRows: IndexedRows,
+  chunkSize: Int,
 ): Result<Int> = runCatching {
   if (updatedRows.isNotEmpty()) {
-    val selectSQL = src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = updatedRows.keys)
-    val fullRows: Set<Row> = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields)
-    val updateSQL = dest.adapter.update(table = destTableDef, rows = fullRows)
-    dest.executor.execute(sql = updateSQL)
+    updatedRows.keys.chunked(chunkSize) { keys ->
+      val selectSQL = src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
+      val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
+      val updateSQL = dest.adapter.update(table = destTableDef, rows = rows)
+      dest.executor.execute(sql = updateSQL)
+    }
   }
   updatedRows.count()
 }
