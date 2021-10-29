@@ -136,46 +136,38 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
   fields.associate { fld ->
     fld.name to
       when (fld.dataType) {
-        BoolType -> BoolValue(value = getBoolean(fld.name))
-        NullableBoolType -> NullableBoolValue(value = getObject(fld.name) as Boolean?)
+        BoolType ->
+          Value.bool(value = getBoolean(fld.name))
+        NullableBoolType ->
+          Value.nullableBool(value = getObject(fld.name) as Boolean?)
         is DecimalType ->
-          DecimalValue(
-            value = getBigDecimal(fld.name),
-            precision = fld.dataType.precision,
-            scale = fld.dataType.scale
-          )
+          Value.decimal(value = getBigDecimal(fld.name))
         is NullableDecimalType ->
-          NullableDecimalValue(
-            value = getObject(fld.name) as BigDecimal?,
-            precision = fld.dataType.precision,
-            scale = fld.dataType.scale
-          )
+          Value.nullableDecimal(value = getObject(fld.name) as BigDecimal?)
         is FloatType ->
-          FloatValue(value = getFloat(fld.name), maxDigits = fld.dataType.maxDigits)
+          Value.float(value = getFloat(fld.name))
         is NullableFloatType ->
-          NullableFloatValue(
-            value = getObject(fld.name) as? Float?, maxDigits = fld.dataType.maxDigits
-          )
-        is IntType -> IntValue(getLong(fld.name).toInt())
+          Value.nullableFloat(value = getObject(fld.name) as? Float?)
+        is IntType ->
+          Value.int(getLong(fld.name).toInt())
         is NullableIntType -> {
           if (getObject(fld.name) == null) {
-            NullableIntValue(null)
+            Value.nullableInt(null)
           } else {
-            IntValue(getLong(fld.name).toInt())
+            Value.int(getLong(fld.name).toInt())
           }
         }
         LocalDateTimeType ->
-          LocalDateTimeValue(value = getTimestamp(fld.name).toLocalDateTime())
+          Value.datetime(value = getTimestamp(fld.name).toLocalDateTime())
         NullableLocalDateTimeType ->
-          NullableLocalDateTimeValue(value = getTimestamp(fld.name)?.toLocalDateTime())
-        LocalDateType -> LocalDateValue(value = getDate(fld.name).toLocalDate())
+          Value.nullableDatetime(value = getTimestamp(fld.name)?.toLocalDateTime())
+        LocalDateType ->
+          Value.date(value = getDate(fld.name).toLocalDate())
         NullableLocalDateType ->
-          NullableLocalDateValue(value = getDate(fld.name)?.toLocalDate())
+          Value.nullableDate(value = getDate(fld.name)?.toLocalDate())
         is StringType ->
-          StringValue(value = getString(fld.name), maxLength = fld.dataType.maxLength)
+          Value.text(value = getString(fld.name))
         is NullableStringType ->
-          NullableStringValue(
-            value = getObject(fld.name) as? String?, maxLength = fld.dataType.maxLength
-          )
+          Value.nullableText(value = getObject(fld.name) as? String?)
       }
   }

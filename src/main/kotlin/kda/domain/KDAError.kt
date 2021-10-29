@@ -7,15 +7,17 @@ sealed class KDAError : Exception() {
     val fieldName: String,
     val availableFieldNames: Set<String>,
   ) : KDAError() {
-    override val errorMessage = "A field named $fieldName was not found.  " +
-      "Available fields include the following: ${availableFieldNames.joinToString(", ")}"
+    override val errorMessage =
+      "A field named $fieldName was not found.  " +
+        "Available fields include the following: ${availableFieldNames.joinToString(", ")}"
   }
 
   data class SQLError(
     val sql: String,
     val originalError: Exception,
   ) : KDAError() {
-    override val errorMessage = "The following error occurred while executing '$sql': ${originalError.message}"
+    override val errorMessage =
+      "The following error occurred while executing '$sql': ${originalError.message}"
   }
 
   data class InvalidArgument(
@@ -29,11 +31,12 @@ sealed class KDAError : Exception() {
     val table: String,
   ) : KDAError() {
     override val errorMessage by lazy {
-      val fullTableName = if (schema == null) {
-        table
-      } else {
-        "$schema.$table"
-      }
+      val fullTableName =
+        if (schema == null) {
+          table
+        } else {
+          "$schema.$table"
+        }
       "A table named $fullTableName was not found in the database."
     }
   }
@@ -46,8 +49,17 @@ sealed class KDAError : Exception() {
     override val errorMessage = "Expected a $expectedType value, but the value was null."
   }
 
+  data class ValueDataTypeMismatch(
+    val value: Value<*>,
+    val dataType: DataType<*>,
+  ) : KDAError() {
+    override val errorMessage: String =
+      "value is of type ${value::class.simpleName}, but dataType is of type ${dataType::class.simpleName}."
+  }
+
   data class ValueError(val value: Any?, val expectedType: String) : KDAError() {
-    override val errorMessage = "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}."
+    override val errorMessage =
+      "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}."
   }
 }
 

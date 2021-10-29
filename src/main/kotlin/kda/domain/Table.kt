@@ -20,7 +20,14 @@ data class Table(
     require(fields.isNotEmpty()) { "A table must have fields." }
   }
 
-  val sortedFieldNames: List<String> by lazy { fields.map { fld -> fld.name }.sorted() }
+  val sortedFieldNames: List<String> by lazy {
+    fields.map { fld -> fld.name }.sorted()
+  }
+
+  val primaryKeyFields: List<Field> by lazy {
+    val fldLkp = fields.associateBy { it.name }
+    primaryKeyFieldNames.map { fldLkp[it] ?: throw KDAError.FieldNotFound(fieldName = it, availableFieldNames = fldLkp.keys) }
+  }
 
   fun row(vararg keyValuePairs: Pair<String, Any?>): Row {
     val rowMap = keyValuePairs.associate { (fieldName, value) ->

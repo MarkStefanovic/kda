@@ -9,6 +9,6 @@ data class LatestTimestamp(
   fun toPredicate() = Predicate(
     field = Field(name = fieldName, dataType = NullableLocalDateTimeType),
     operator = Operator.GreaterThan,
-    value = NullableLocalDateTimeValue(timestamp),
+    value = Value.nullableDatetime(timestamp),
   )
 }

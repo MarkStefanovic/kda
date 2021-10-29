@@ -6,7 +6,7 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
   override fun add(table: Table, rows: Set<Row>): String {
     val fieldNames = table.sortedFieldNames
     val fieldNameCSV = fieldNames.joinToString(", ") { fldName -> impl.wrapName(fldName) }
-    val valuesCSV = impl.valuesExpression(fieldNames = fieldNames.toSet(), rows = rows)
+    val valuesCSV = impl.valuesExpression(fields = table.fields, rows = rows)
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     return "INSERT INTO $tableName ($fieldNameCSV) VALUES $valuesCSV"
   }
@@ -29,21 +29,17 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
           .joinToString(" AND ") { fld -> "t.$fld = d.$fld" }
       val valuesCTE = impl.valuesCTE(
         cteName = "d",
-        fieldNames = table.primaryKeyFieldNames.toSet(),
+        fields = table.primaryKeyFields.toSet(),
         rows = primaryKeyValues,
       )
       "WITH $valuesCTE DELETE FROM $tableName t USING d WHERE $whereClause"
     } else {
-      val pkCol = impl.wrapName(table.primaryKeyFieldNames.first())
-      val valuesCSV =
-        primaryKeyValues
-          .flatMap { row ->
-            table.primaryKeyFieldNames.map { fld ->
-              impl.wrapValue(row.value(fld))
-            }
-          }
-          .joinToString(", ")
-      "DELETE FROM $tableName WHERE $pkCol IN ($valuesCSV)"
+      val pk = table.primaryKeyFields.first()
+      val pkName = impl.wrapName(pk.name)
+      val valuesCSV = primaryKeyValues.joinToString(", ") { row ->
+        impl.wrapValue(value = row.value(pk.name), dataType = pk.dataType)
+      }
+      "DELETE FROM $tableName WHERE $pkName IN ($valuesCSV)"
     }
   }
 
@@ -67,7 +63,7 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     )
     val valuesCTE = impl.valuesCTE(
       cteName = "v",
-      fieldNames = table.sortedFieldNames.toSet(),
+      fields = table.fields,
       rows = rows,
     )
     return "WITH $valuesCTE " +
@@ -101,7 +97,7 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
           .joinToString(" AND ") { fld -> "t.$fld = v.$fld" }
       val valuesCTE = impl.valuesCTE(
         cteName = "v",
-        fieldNames = pkCols.toSet(),
+        fields = table.primaryKeyFields.toSet(),
         rows = primaryKeyValues,
       )
       "WITH $valuesCTE " +
@@ -109,12 +105,13 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
         "JOIN v ON $joinClause"
     } else {
       val colNameCSV = table.sortedFieldNames.joinToString(", ") { fld -> impl.wrapName(fld) }
-      val pkCol = impl.wrapName(pkCols.first())
+      val pk = table.primaryKeyFields.first()
+      val pkName = impl.wrapName(pkCols.first())
       val valuesCSV =
         primaryKeyValues.joinToString(", ") { row ->
-          impl.wrapValue(row.value(pkCol))
+          impl.wrapValue(value = row.value(pk.name), dataType = pk.dataType)
         }
-      "SELECT $colNameCSV FROM $tableName WHERE $pkCol IN ($valuesCSV)"
+      "SELECT $colNameCSV FROM $tableName WHERE $pkName IN ($valuesCSV)"
     }
   }
 
@@ -125,13 +122,12 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
   }
 
   override fun update(table: Table, rows: Set<Row>): String {
-    val fieldNames = table.sortedFieldNames
     val whereClause = impl.joinFields(table = table, leftTableAlias = "t", rightTableAlias = "u")
     val setClause = impl.setValues(table = table, rightTableAlias = "u")
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val valuesCTE = impl.valuesCTE(
       cteName = "u",
-      fieldNames = fieldNames.toSet(),
+      fields = table.fields,
       rows = rows,
     )
     return "WITH $valuesCTE " +

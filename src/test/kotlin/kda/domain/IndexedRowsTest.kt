@@ -9,47 +9,47 @@ class IndexedRowsTest {
     val rows = listOf(
       Row(
         mapOf(
-          "customer_id" to IntValue(1),
-          "first_name" to NullableStringValue("Mark", null),
-          "last_name" to NullableStringValue("Stefanovic", null),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.nullableText("Mark"),
+          "last_name" to Value.nullableText("Stefanovic"),
         )
       ),
       Row(
         mapOf(
-          "customer_id" to IntValue(2),
-          "first_name" to NullableStringValue("Bob", null),
-          "last_name" to NullableStringValue("Smith", null),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.nullableText("Bob"),
+          "last_name" to Value.nullableText("Smith"),
         )
       ),
       Row(
         mapOf(
-          "customer_id" to IntValue(3),
-          "first_name" to NullableStringValue("Mandie", null),
-          "last_name" to NullableStringValue("Mandlebrot", null),
+          "customer_id" to Value.int(3),
+          "first_name" to Value.nullableText("Mandie"),
+          "last_name" to Value.nullableText("Mandlebrot"),
         )
       ),
     )
     val expected = IndexedRows(
       mapOf(
-        Row(mapOf("customer_id" to IntValue(1))) to Row(
+        Row(mapOf("customer_id" to Value.int(1))) to Row(
           mapOf(
-            "customer_id" to IntValue(1),
-            "first_name" to NullableStringValue("Mark", null),
-            "last_name" to NullableStringValue("Stefanovic", null),
+            "customer_id" to Value.int(1),
+            "first_name" to Value.nullableText("Mark"),
+            "last_name" to Value.nullableText("Stefanovic"),
           )
         ),
-        Row(mapOf("customer_id" to IntValue(2))) to Row(
+        Row(mapOf("customer_id" to Value.int(2))) to Row(
           mapOf(
-            "customer_id" to IntValue(2),
-            "first_name" to NullableStringValue("Bob", null),
-            "last_name" to NullableStringValue("Smith", null),
+            "customer_id" to Value.int(2),
+            "first_name" to Value.nullableText("Bob"),
+            "last_name" to Value.nullableText("Smith"),
           )
         ),
-        Row(mapOf("customer_id" to IntValue(3))) to Row(
+        Row(mapOf("customer_id" to Value.int(3))) to Row(
           mapOf(
-            "customer_id" to IntValue(3),
-            "first_name" to NullableStringValue("Mandie", null),
-            "last_name" to NullableStringValue("Mandlebrot", null),
+            "customer_id" to Value.int(3),
+            "first_name" to Value.nullableText("Mandie"),
+            "last_name" to Value.nullableText("Mandlebrot"),
           )
         ),
       )

@@ -31,28 +31,54 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
             Operator.GreaterThanOrEqualTo -> ">="
             Operator.LessThanOrEqualTo -> "<="
           }
-        "(${wrapName(predicate.field.name)} $operator ${wrapValue(predicate.value)})"
+        "(${wrapName(predicate.field.name)} $operator ${wrapValue(value = predicate.value, dataType = predicate.field.dataType)})"
       }
     }
 
   override fun wrapName(name: String) = "\"${name.lowercase()}\""
 
-  override fun wrapValue(value: Value<*>): String =
+  override fun wrapValue(value: Value<*>, dataType: DataType<*>): String =
     when (value) {
-      is BoolValue -> wrapBoolValue(value.value)
-      is DecimalValue -> wrapDecimalValue(value.value, precision = value.precision, scale = value.scale)
-      is FloatValue -> wrapFloatValue(value.value, maxDigits = value.maxDigits)
-      is IntValue -> wrapIntValue(value.value)
-      is LocalDateValue -> wrapLocalDateValue(value.value)
-      is LocalDateTimeValue -> wrapLocalDateTimeValue(value.value)
-      is StringValue -> wrapStringValue(value.value, maxLength = value.maxLength)
-      is NullableBoolValue -> wrapBoolValue(value.value)
-      is NullableDecimalValue -> wrapDecimalValue(value.value, precision = value.precision, scale = value.scale)
-      is NullableFloatValue -> wrapFloatValue(value.value, maxDigits = value.maxDigits)
-      is NullableIntValue -> wrapIntValue(value.value)
-      is NullableLocalDateValue -> wrapLocalDateValue(value.value)
-      is NullableLocalDateTimeValue -> wrapLocalDateTimeValue(value.value)
-      is NullableStringValue -> wrapStringValue(value = value.value, maxLength = value.maxLength)
+      is Value.bool -> wrapBoolValue(value.value)
+      is Value.decimal -> {
+        if (dataType is DecimalType) {
+          wrapDecimalValue(value.value, precision = dataType.precision, scale = dataType.scale)
+        } else {
+          throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+        }
+      }
+      is Value.float -> if (dataType is FloatType) {
+        wrapFloatValue(value.value, maxDigits = dataType.maxDigits)
+      } else {
+        throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+      }
+      is Value.int -> wrapIntValue(value.value)
+      is Value.date -> wrapLocalDateValue(value.value)
+      is Value.datetime -> wrapLocalDateTimeValue(value.value)
+      is Value.text -> if (dataType is StringType) {
+        wrapStringValue(value.value, maxLength = dataType.maxLength)
+      } else {
+        throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+      }
+      is Value.nullableBool -> wrapBoolValue(value.value)
+      is Value.nullableDecimal -> if (dataType is NullableDecimalType) {
+        wrapDecimalValue(value.value, precision = dataType.precision, scale = dataType.scale)
+      } else {
+        throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+      }
+      is Value.nullableFloat -> if (dataType is NullableFloatType) {
+        wrapFloatValue(value.value, maxDigits = dataType.maxDigits)
+      } else {
+        throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+      }
+      is Value.nullableInt -> wrapIntValue(value.value)
+      is Value.nullableDate -> wrapLocalDateValue(value.value)
+      is Value.nullableDatetime -> wrapLocalDateTimeValue(value.value)
+      is Value.nullableText -> if (dataType is NullableStringType) {
+        wrapStringValue(value = value.value, maxLength = dataType.maxLength)
+      } else {
+        throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
+      }
     }
 
   override fun wrapBoolValue(value: Boolean?): String =
@@ -118,10 +144,20 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
     return "MAX($fldName) AS $fldName"
   }
 
-  override fun valuesExpression(fieldNames: Set<String>, rows: Set<Row>, tableAlias: String?): String {
-    val sortedFieldNames = fieldNames.sorted()
+  override fun valuesExpression(
+    fields: Set<Field>,
+    rows: Set<Row>,
+    tableAlias: String?,
+  ): String {
+    val sortedFieldNames = fields.map { it.name }.sorted()
+    val dataTypes = fields.associate { it.name to it.dataType }
     return rows.joinToString(", ") { row ->
-      rowValuesExpression(sortedFieldNames = sortedFieldNames, row = row, tableAlias = tableAlias)
+      rowValuesExpression(
+        sortedFieldNames = sortedFieldNames,
+        row = row,
+        tableAlias = tableAlias,
+        dataTypes = dataTypes,
+      )
     }
   }
 
@@ -150,10 +186,11 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       leftTableAlias = null,
     )
 
-  override fun valuesCTE(cteName: String, fieldNames: Set<String>, rows: Set<Row>): String {
-    val fieldsCSV = fieldNameCSV(fieldNames = fieldNames.toSet(), tableAlias = null)
+  override fun valuesCTE(cteName: String, fields: Set<Field>, rows: Set<Row>): String {
+    val fieldNames = fields.map { it.name }.toSet()
+    val fieldsCSV = fieldNameCSV(fieldNames = fieldNames, tableAlias = null)
     val valuesExpr = valuesExpression(
-      fieldNames = fieldNames, rows = rows, tableAlias = null
+      fields = fields, rows = rows, tableAlias = null
     )
     return "$cteName ($fieldsCSV) AS (VALUES $valuesExpr)"
   }
@@ -174,12 +211,27 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
         }
       }
 
-  private fun rowValuesExpression(sortedFieldNames: List<String>, row: Row, tableAlias: String? = null): String {
+  private fun rowValuesExpression(
+    sortedFieldNames: List<String>,
+    row: Row,
+    tableAlias: String? = null,
+    dataTypes: Map<String, DataType<*>>,
+  ): String {
     val valueCSV = sortedFieldNames.joinToString(", ") { fldName ->
       if (tableAlias == null) {
-        wrapValue(row.value(fldName))
+        val dataType = dataTypes[fldName]
+        if (dataType == null) {
+          throw KDAError.FieldNotFound(fieldName = fldName, availableFieldNames = dataTypes.keys)
+        } else {
+          wrapValue(value = row.value(fldName), dataType = dataType)
+        }
       } else {
-        "$tableAlias.${wrapValue(row.value(fldName))}"
+        val dataType = dataTypes[fldName]
+        if (dataType == null) {
+          throw KDAError.FieldNotFound(fieldName = fldName, availableFieldNames = dataTypes.keys)
+        } else {
+          "$tableAlias.${wrapValue(value = row.value(fldName), dataType = dataType)}"
+        }
       }
     }
     return "($valueCSV)"

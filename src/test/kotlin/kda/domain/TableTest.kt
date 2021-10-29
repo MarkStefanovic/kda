@@ -23,9 +23,9 @@ class TableTest {
     )
     val expectedRow = Row(
       mapOf(
-        "customer_id" to IntValue(1),
-        "first_name" to NullableStringValue("Mark", null),
-        "last_name" to NullableStringValue("Stefanovic", null),
+        "customer_id" to Value.int(1),
+        "first_name" to Value.nullableText("Mark"),
+        "last_name" to Value.nullableText("Stefanovic"),
       )
     )
     assertEquals(expected = expectedRow, actual = actualRow)
@@ -50,16 +50,16 @@ class TableTest {
     val expectedRows = setOf(
       Row(
         mapOf(
-          "customer_id" to IntValue(1),
-          "first_name" to NullableStringValue("Mark", null),
-          "last_name" to NullableStringValue("Stefanovic", null),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.nullableText("Mark"),
+          "last_name" to Value.nullableText("Stefanovic"),
         )
       ),
       Row(
         mapOf(
-          "customer_id" to IntValue(2),
-          "first_name" to NullableStringValue("Bob", null),
-          "last_name" to NullableStringValue("Smith", null),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.nullableText("Bob"),
+          "last_name" to Value.nullableText("Smith"),
         )
       ),
     )

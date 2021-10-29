@@ -21,7 +21,7 @@ object BoolType : DataType<Boolean>() {
 
   override val name = DataTypeName.Bool
 
-  override fun wrapValue(value: Any?) = BoolValue(value as Boolean)
+  override fun wrapValue(value: Any?) = Value.bool(value as Boolean)
 }
 
 data class IntType(val autoincrement: Boolean) : DataType<Int>() {
@@ -31,8 +31,7 @@ data class IntType(val autoincrement: Boolean) : DataType<Int>() {
 
   override val name = DataTypeName.Int
 
-  override fun wrapValue(value: Any?) =
-    IntValue(value as Int)
+  override fun wrapValue(value: Any?) = Value.int(value as Int)
 }
 
 object LocalDateType : DataType<LocalDate>() {
@@ -42,8 +41,7 @@ object LocalDateType : DataType<LocalDate>() {
 
   override val name = DataTypeName.Date
 
-  override fun wrapValue(value: Any?) =
-    LocalDateValue(value as LocalDate)
+  override fun wrapValue(value: Any?) = Value.date(value as LocalDate)
 }
 
 object LocalDateTimeType : DataType<LocalDateTime>() {
@@ -53,8 +51,7 @@ object LocalDateTimeType : DataType<LocalDateTime>() {
 
   override val name = DataTypeName.DateTime
 
-  override fun wrapValue(value: Any?) =
-    LocalDateTimeValue(value as LocalDateTime)
+  override fun wrapValue(value: Any?) = Value.datetime(value as LocalDateTime)
 }
 
 data class FloatType(val maxDigits: Int) : DataType<Float>() {
@@ -64,8 +61,7 @@ data class FloatType(val maxDigits: Int) : DataType<Float>() {
 
   override val name = DataTypeName.Float
 
-  override fun wrapValue(value: Any?) =
-    FloatValue(value = value as Float, maxDigits = maxDigits)
+  override fun wrapValue(value: Any?) = Value.float(value as Float)
 }
 
 data class DecimalType(val precision: Int, val scale: Int) : DataType<BigDecimal>() {
@@ -75,8 +71,7 @@ data class DecimalType(val precision: Int, val scale: Int) : DataType<BigDecimal
 
   override val name = DataTypeName.Decimal
 
-  override fun wrapValue(value: Any?) =
-    DecimalValue(value = value as BigDecimal, precision = precision, scale = scale)
+  override fun wrapValue(value: Any?) = Value.decimal(value as BigDecimal)
 }
 
 data class StringType(val maxLength: Int?) : DataType<String>() {
@@ -86,8 +81,7 @@ data class StringType(val maxLength: Int?) : DataType<String>() {
 
   override val name = DataTypeName.Text
 
-  override fun wrapValue(value: Any?) =
-    StringValue(value = value as String, maxLength = maxLength)
+  override fun wrapValue(value: Any?) = Value.text(value as String)
 }
 
 object NullableBoolType : DataType<Boolean?>() {
@@ -97,8 +91,7 @@ object NullableBoolType : DataType<Boolean?>() {
 
   override val name = DataTypeName.NullableBool
 
-  override fun wrapValue(value: Any?) =
-    NullableBoolValue(value as Boolean?)
+  override fun wrapValue(value: Any?) = Value.nullableBool(value as Boolean?)
 }
 
 data class NullableIntType(val autoincrement: Boolean) : DataType<Int?>() {
@@ -108,8 +101,7 @@ data class NullableIntType(val autoincrement: Boolean) : DataType<Int?>() {
 
   override val name = DataTypeName.NullableInt
 
-  override fun wrapValue(value: Any?) =
-    NullableIntValue(value as Int?)
+  override fun wrapValue(value: Any?) = Value.nullableInt(value as Int?)
 }
 
 object NullableLocalDateType : DataType<LocalDate?>() {
@@ -119,8 +111,7 @@ object NullableLocalDateType : DataType<LocalDate?>() {
 
   override val name = DataTypeName.NullableDate
 
-  override fun wrapValue(value: Any?) =
-    NullableLocalDateValue(value as LocalDate?)
+  override fun wrapValue(value: Any?) = Value.nullableDate(value as LocalDate?)
 }
 
 object NullableLocalDateTimeType : DataType<LocalDateTime?>() {
@@ -130,8 +121,7 @@ object NullableLocalDateTimeType : DataType<LocalDateTime?>() {
 
   override val name = DataTypeName.NullableDateTime
 
-  override fun wrapValue(value: Any?) =
-    NullableLocalDateTimeValue(value as LocalDateTime?)
+  override fun wrapValue(value: Any?) = Value.nullableDatetime(value as LocalDateTime?)
 }
 
 data class NullableFloatType(val maxDigits: Int) : DataType<Float?>() {
@@ -141,8 +131,7 @@ data class NullableFloatType(val maxDigits: Int) : DataType<Float?>() {
 
   override val name = DataTypeName.NullableFloat
 
-  override fun wrapValue(value: Any?) =
-    NullableFloatValue(value = value as Float?, maxDigits = maxDigits)
+  override fun wrapValue(value: Any?) = Value.nullableFloat(value as Float?)
 }
 
 data class NullableDecimalType(val precision: Int, val scale: Int) : DataType<BigDecimal?>() {
@@ -152,8 +141,7 @@ data class NullableDecimalType(val precision: Int, val scale: Int) : DataType<Bi
 
   override val name = DataTypeName.NullableDecimal
 
-  override fun wrapValue(value: Any?) =
-    NullableDecimalValue(value = value as BigDecimal?, precision = precision, scale = scale)
+  override fun wrapValue(value: Any?) = Value.nullableDecimal(value as BigDecimal?)
 }
 
 data class NullableStringType(val maxLength: Int?) : DataType<String?>() {
@@ -163,6 +151,5 @@ data class NullableStringType(val maxLength: Int?) : DataType<String?>() {
 
   override val name = DataTypeName.NullableText
 
-  override fun wrapValue(value: Any?) =
-    NullableStringValue(value = value as String?, maxLength = maxLength)
+  override fun wrapValue(value: Any?) = Value.nullableText(value as String?)
 }

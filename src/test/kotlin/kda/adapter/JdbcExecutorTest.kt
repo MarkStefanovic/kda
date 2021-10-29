@@ -2,12 +2,11 @@ package kda.adapter
 
 import kda.domain.Field
 import kda.domain.IntType
-import kda.domain.IntValue
 import kda.domain.KDAError
 import kda.domain.Row
 import kda.domain.StringType
-import kda.domain.StringValue
 import kda.domain.Table
+import kda.domain.Value
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -70,9 +69,9 @@ class JdbcExecutorTest {
       val actual = executor.fetchRow(sql = "SELECT * FROM sales.tmp20210707", fields = table.fields)
       val expected =
         Row.of(
-          "id" to IntValue(1),
-          "first_name" to StringValue("Mark", maxLength = 40),
-          "last_name" to StringValue("Stefanovic", maxLength = 40),
+          "id" to Value.int(1),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         )
       assertEquals(expected = expected, actual = actual)
       executor.execute("DROP TABLE sales.tmp20210707")
@@ -121,19 +120,19 @@ class JdbcExecutorTest {
       val expected =
         setOf(
           Row.of(
-            "id" to IntValue(1),
-            "first_name" to StringValue("Mark", maxLength = 40),
-            "last_name" to StringValue("Stefanovic", maxLength = 40),
+            "id" to Value.int(1),
+            "first_name" to Value.text("Mark"),
+            "last_name" to Value.text("Stefanovic"),
           ),
           Row.of(
-            "id" to IntValue(2),
-            "first_name" to StringValue("Bob", maxLength = 40),
-            "last_name" to StringValue("Smith", maxLength = 40),
+            "id" to Value.int(2),
+            "first_name" to Value.text("Bob"),
+            "last_name" to Value.text("Smith"),
           ),
           Row.of(
-            "id" to IntValue(3),
-            "first_name" to StringValue("Olive", maxLength = 40),
-            "last_name" to StringValue("Oil", maxLength = 40),
+            "id" to Value.int(3),
+            "first_name" to Value.text("Olive"),
+            "last_name" to Value.text("Oil"),
           ),
         )
       assertEquals(expected = expected, actual = actual)

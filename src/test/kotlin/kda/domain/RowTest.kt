@@ -9,17 +9,17 @@ class RowTest {
     val row =
       Row(
         mapOf(
-          "customer_id" to IntValue(1),
-          "first_name" to StringValue(value = "Mark", maxLength = 40),
-          "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.text(value = "Mark"),
+          "last_name" to Value.text(value = "Stefanovic"),
         )
       )
     val subset = row.subset(setOf("first_name", "last_name"))
     val expected =
       Row(
         mapOf(
-          "first_name" to StringValue(value = "Mark", maxLength = 40),
-          "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
+          "first_name" to Value.text(value = "Mark"),
+          "last_name" to Value.text(value = "Stefanovic"),
         )
       )
     assertEquals(expected = expected, actual = subset)

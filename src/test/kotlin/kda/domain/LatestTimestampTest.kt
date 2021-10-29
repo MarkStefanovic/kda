@@ -14,7 +14,7 @@ class LatestTimestampTest {
     val actual = latestTimestamp.toPredicate()
     val expected = Predicate(
       field = Field(name = "date_added", dataType = NullableLocalDateTimeType),
-      value = NullableLocalDateTimeValue(null),
+      value = Value.nullableDatetime(null),
       operator = Operator.GreaterThan,
     )
     assertEquals(expected = expected, actual = actual)
@@ -30,7 +30,7 @@ class LatestTimestampTest {
     val actual = latestTimestamp.toPredicate()
     val expected = Predicate(
       field = Field(name = "date_added", dataType = NullableLocalDateTimeType),
-      value = NullableLocalDateTimeValue(ts),
+      value = Value.nullableDatetime(ts),
       operator = Operator.GreaterThan,
     )
     assertEquals(expected = expected, actual = actual)

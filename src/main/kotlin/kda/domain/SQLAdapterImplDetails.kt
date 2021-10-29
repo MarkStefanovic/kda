@@ -21,7 +21,7 @@ interface SQLAdapterImplDetails {
 
   fun wrapName(name: String): String
 
-  fun wrapValue(value: Value<*>): String
+  fun wrapValue(value: Value<*>, dataType: DataType<*>): String
 
   fun wrapBoolValue(value: Boolean?): String
 
@@ -37,7 +37,7 @@ interface SQLAdapterImplDetails {
 
   fun wrapStringValue(value: String?, maxLength: Int?): String
 
-  fun valuesCTE(cteName: String, fieldNames: Set<String>, rows: Set<Row>): String
+  fun valuesCTE(cteName: String, fields: Set<Field>, rows: Set<Row>): String
 
-  fun valuesExpression(fieldNames: Set<String>, rows: Set<Row>, tableAlias: String? = null): String
+  fun valuesExpression(fields: Set<Field>, rows: Set<Row>, tableAlias: String? = null): String
 }

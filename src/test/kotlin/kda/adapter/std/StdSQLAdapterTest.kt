@@ -2,11 +2,10 @@ package kda.adapter.std
 
 import kda.domain.Field
 import kda.domain.IntType
-import kda.domain.IntValue
 import kda.domain.Row
 import kda.domain.StringType
-import kda.domain.StringValue
 import kda.domain.Table
+import kda.domain.Value
 import kda.shared.standardizeSQL
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -38,19 +37,19 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "customer_id" to IntValue(1),
-          "first_name" to StringValue("Mark", maxLength = 40),
-          "last_name" to StringValue("Stefanovic", maxLength = 40),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         ),
         Row.of(
-          "customer_id" to IntValue(2),
-          "first_name" to StringValue("Bob", maxLength = 40),
-          "last_name" to StringValue("Smith", maxLength = 40),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
         ),
         Row.of(
-          "customer_id" to IntValue(3),
-          "first_name" to StringValue("Olive", maxLength = 40),
-          "last_name" to StringValue("Oil", maxLength = 40),
+          "customer_id" to Value.int(3),
+          "first_name" to Value.text("Olive"),
+          "last_name" to Value.text("Oil"),
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).add(table = table, rows = rows)
@@ -117,19 +116,19 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "customer_id" to IntValue(1),
-          "first_name" to StringValue(value = "Mark", maxLength = 40),
-          "last_name" to StringValue(value = "Stefanovic", maxLength = 40),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         ),
         Row.of(
-          "customer_id" to IntValue(2),
-          "first_name" to StringValue(value = "Bob", maxLength = 40),
-          "last_name" to StringValue(value = "Smith", maxLength = 40),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
         ),
         Row.of(
-          "customer_id" to IntValue(3),
-          "first_name" to StringValue(value = "Olive", maxLength = 40),
-          "last_name" to StringValue(value = "Oil", maxLength = 40),
+          "customer_id" to Value.int(3),
+          "first_name" to Value.text("Olive"),
+          "last_name" to Value.text("Oil"),
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).deleteKeys(table = table, primaryKeyValues = rows)
@@ -161,14 +160,14 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "first_name" to StringValue("Mark", 40),
-          "last_name" to StringValue("Stefanovic", 40),
-          "age" to IntValue(99)
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
+          "age" to Value.int(99)
         ),
         Row.of(
-          "first_name" to StringValue("Bob", 40),
-          "last_name" to StringValue("Smith", 40),
-          "age" to IntValue(74)
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
+          "age" to Value.int(74)
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).deleteKeys(table = table, primaryKeyValues = rows)
@@ -216,14 +215,14 @@ class StdSQLAdapterTest {
       table = table,
       rows = setOf(
         Row.of(
-          "first_name" to StringValue("Mark", 40),
-          "last_name" to StringValue("Stefanovic", 40),
-          "age" to IntValue(99)
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
+          "age" to Value.int(99)
         ),
         Row.of(
-          "first_name" to StringValue("Bob", 40),
-          "last_name" to StringValue("Smith", 40),
-          "age" to IntValue(74)
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
+          "age" to Value.int(74)
         ),
       ),
     )
@@ -273,19 +272,19 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "customer_id" to IntValue(1),
-          "first_name" to StringValue("Mark", maxLength = 40),
-          "last_name" to StringValue("Stefanovic", maxLength = 40),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         ),
         Row.of(
-          "customer_id" to IntValue(2),
-          "first_name" to StringValue("Bob", maxLength = 40),
-          "last_name" to StringValue("Smith", maxLength = 40),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
         ),
         Row.of(
-          "customer_id" to IntValue(3),
-          "first_name" to StringValue("Olive", maxLength = 40),
-          "last_name" to StringValue("Oil", maxLength = 40),
+          "customer_id" to Value.int(3),
+          "first_name" to Value.text("Olive"),
+          "last_name" to Value.text("Oil"),
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).selectKeys(table = table, primaryKeyValues = rows)
@@ -325,19 +324,19 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "age" to IntValue(52),
-          "first_name" to StringValue("Mark", maxLength = 40),
-          "last_name" to StringValue("Stefanovic", maxLength = 40),
+          "age" to Value.int(52),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         ),
         Row.of(
-          "age" to IntValue(76),
-          "first_name" to StringValue("Bob", maxLength = 40),
-          "last_name" to StringValue("Smith", maxLength = 40),
+          "age" to Value.int(76),
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
         ),
         Row.of(
-          "age" to IntValue(94),
-          "first_name" to StringValue("Olive", maxLength = 40),
-          "last_name" to StringValue("Oil", maxLength = 40),
+          "age" to Value.int(94),
+          "first_name" to Value.text("Olive"),
+          "last_name" to Value.text("Oil"),
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).selectKeys(table = table, primaryKeyValues = rows)
@@ -388,19 +387,19 @@ class StdSQLAdapterTest {
     val rows =
       setOf(
         Row.of(
-          "customer_id" to IntValue(1),
-          "first_name" to StringValue("Mark", maxLength = 40),
-          "last_name" to StringValue("Stefanovic", maxLength = 40),
+          "customer_id" to Value.int(1),
+          "first_name" to Value.text("Mark"),
+          "last_name" to Value.text("Stefanovic"),
         ),
         Row.of(
-          "customer_id" to IntValue(2),
-          "first_name" to StringValue("Bob", maxLength = 40),
-          "last_name" to StringValue("Smith", maxLength = 40),
+          "customer_id" to Value.int(2),
+          "first_name" to Value.text("Bob"),
+          "last_name" to Value.text("Smith"),
         ),
         Row.of(
-          "customer_id" to IntValue(3),
-          "first_name" to StringValue("Olive", maxLength = 40),
-          "last_name" to StringValue("Oil", maxLength = 40),
+          "customer_id" to Value.int(3),
+          "first_name" to Value.text("Olive"),
+          "last_name" to Value.text("Oil"),
         ),
       )
     val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).update(table = table, rows = rows)
