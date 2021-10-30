@@ -1,10 +1,7 @@
 package kda.adapter.mssql
 
+import kda.domain.DataType
 import kda.domain.Field
-import kda.domain.IntType
-import kda.domain.LocalDateTimeType
-import kda.domain.NullableLocalDateTimeType
-import kda.domain.StringType
 import kda.domain.Table
 import kda.domain.where
 import kda.shared.standardizeSQL
@@ -21,9 +18,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -52,9 +49,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -78,9 +75,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -121,9 +118,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -170,9 +167,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -201,9 +198,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -229,9 +226,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "date_added", dataType = LocalDateTimeType),
-        Field(name = "date_updated", dataType = NullableLocalDateTimeType),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "date_added", dataType = DataType.localDateTime),
+        Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -254,9 +251,9 @@ class MSSQLAdapterTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(true)),
-        Field(name = "first_name", dataType = StringType(null)),
-        Field(name = "last_name", dataType = StringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(true)),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )

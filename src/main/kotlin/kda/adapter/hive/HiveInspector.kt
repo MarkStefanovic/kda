@@ -3,11 +3,6 @@ package kda.adapter.hive
 import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Inspector
-import kda.domain.NullableDecimalType
-import kda.domain.NullableIntType
-import kda.domain.NullableLocalDateTimeType
-import kda.domain.NullableLocalDateType
-import kda.domain.NullableStringType
 import kda.domain.Table
 import java.sql.Connection
 
@@ -43,11 +38,11 @@ class HiveInspector(private val con: Connection) : Inspector {
               parseDecimalDbDataType(dbDataType)
             } else {
               when (dbDataType) {
-                "bigint" -> NullableIntType(false)
-                "int" -> NullableIntType(false)
-                "date" -> NullableLocalDateType
-                "string" -> NullableStringType(null)
-                "timestamp" -> NullableLocalDateTimeType
+                "bigint" -> DataType.nullableInt(false)
+                "int" -> DataType.nullableInt(false)
+                "date" -> DataType.nullableLocalDate
+                "string" -> DataType.nullableText(null)
+                "timestamp" -> DataType.nullableLocalDateTime
                 else -> throw NotImplementedError("dbDataType '$dbDataType' is not recognized.")
               }
             }
@@ -78,20 +73,20 @@ class HiveInspector(private val con: Connection) : Inspector {
   }
 }
 
-private fun parseDecimalDbDataType(dbDataType: String): NullableDecimalType {
+private fun parseDecimalDbDataType(dbDataType: String): DataType.nullableDecimal {
   val pattern = "^decimal\\((\\d+),(\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
-  return NullableDecimalType(precision = match!!.groupValues[1].toInt(), scale = match.groupValues[2].toInt())
+  return DataType.nullableDecimal(precision = match!!.groupValues[1].toInt(), scale = match.groupValues[2].toInt())
 }
 
-private fun parseVarcharDbDataType(dbDataType: String): NullableStringType {
+private fun parseVarcharDbDataType(dbDataType: String): DataType.nullableText {
   val pattern = "^varchar\\((\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
-  return NullableStringType(match?.groupValues?.get(1)?.toInt())
+  return DataType.nullableText(match?.groupValues?.get(1)?.toInt())
 }
 
-private fun parseCharDbDataType(dbDataType: String): NullableStringType {
+private fun parseCharDbDataType(dbDataType: String): DataType.nullableText {
   val pattern = "^char\\((\\d+)\\)$".toRegex()
   val match = pattern.find(dbDataType)
-  return NullableStringType(match?.groupValues?.get(1)?.toInt())
+  return DataType.nullableText(match?.groupValues?.get(1)?.toInt())
 }

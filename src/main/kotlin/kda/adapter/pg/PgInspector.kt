@@ -42,20 +42,20 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
     val rows = sqlExecutor.fetchRows(
       sql,
       setOf(
-        Field(name = "column_name", dataType = StringType(40)),
-        Field(name = "data_type", dataType = StringType(40)),
-        Field(name = "autoincrement_flag", dataType = BoolType),
-        Field(name = "nullable_flag", dataType = BoolType),
-        Field(name = "max_len", dataType = NullableIntType(false)),
-        Field(name = "precision", dataType = NullableIntType(false)),
-        Field(name = "scale", dataType = NullableIntType(false)),
-        Field(name = "is_bool_flag", dataType = BoolType),
-        Field(name = "is_date_flag", dataType = BoolType),
-        Field(name = "is_datetime_flag", dataType = BoolType),
-        Field(name = "is_float_flag", dataType = BoolType),
-        Field(name = "is_decimal_flag", dataType = BoolType),
-        Field(name = "is_int_flag", dataType = BoolType),
-        Field(name = "is_text_flag", dataType = BoolType),
+        Field(name = "column_name", dataType = DataType.text(40)),
+        Field(name = "data_type", dataType = DataType.text(40)),
+        Field(name = "autoincrement_flag", dataType = DataType.bool),
+        Field(name = "nullable_flag", dataType = DataType.bool),
+        Field(name = "max_len", dataType = DataType.nullableInt(false)),
+        Field(name = "precision", dataType = DataType.nullableInt(false)),
+        Field(name = "scale", dataType = DataType.nullableInt(false)),
+        Field(name = "is_bool_flag", dataType = DataType.bool),
+        Field(name = "is_date_flag", dataType = DataType.bool),
+        Field(name = "is_datetime_flag", dataType = DataType.bool),
+        Field(name = "is_float_flag", dataType = DataType.bool),
+        Field(name = "is_decimal_flag", dataType = DataType.bool),
+        Field(name = "is_int_flag", dataType = DataType.bool),
+        Field(name = "is_text_flag", dataType = DataType.bool),
       ),
     )
     val fields = rows.map { row ->
@@ -75,20 +75,20 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       val isString = row.value("is_text_flag").value as Boolean
 
       val dataType = when {
-        isBool && isNullable -> NullableBoolType
-        isBool -> BoolType
-        isDate && isNullable -> NullableLocalDateType
-        isDate -> LocalDateType
-        isDateTime && isNullable -> NullableLocalDateTimeType
-        isDateTime -> LocalDateTimeType
-        isInt && isNullable -> IntType(autoincrement = isAutoincrement)
-        isInt -> IntType(autoincrement = isAutoincrement)
-        isFloat && isNullable -> NullableFloatType(maxDigits = maxFloatDigits)
-        isFloat -> FloatType(4)
-        isDecimal && isNullable -> NullableDecimalType(precision = precision ?: 19, scale = scale ?: 4)
-        isDecimal -> DecimalType(precision = precision ?: 19, scale = scale ?: 4)
-        isString && isNullable -> NullableStringType(maxLength = maxLen)
-        isString -> StringType(maxLength = maxLen)
+        isBool && isNullable -> DataType.nullableBool
+        isBool -> DataType.bool
+        isDate && isNullable -> DataType.nullableLocalDate
+        isDate -> DataType.localDate
+        isDateTime && isNullable -> DataType.nullableLocalDateTime
+        isDateTime -> DataType.localDateTime
+        isInt && isNullable -> DataType.int(autoincrement = isAutoincrement)
+        isInt -> DataType.int(autoincrement = isAutoincrement)
+        isFloat && isNullable -> DataType.nullableFloat(maxDigits = maxFloatDigits)
+        isFloat -> DataType.float(4)
+        isDecimal && isNullable -> DataType.nullableDecimal(precision = precision ?: 19, scale = scale ?: 4)
+        isDecimal -> DataType.decimal(precision = precision ?: 19, scale = scale ?: 4)
+        isString && isNullable -> DataType.nullableText(maxLength = maxLen)
+        isString -> DataType.text(maxLength = maxLen)
         else -> throw NotImplementedError("Could not recognize the data type, '$sqlDataType'.")
       }
       Field(name = fieldName, dataType = dataType)
@@ -136,7 +136,7 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
       """
     val rows = sqlExecutor.fetchRows(
       sql = sql,
-      fields = setOf(Field("column_name", dataType = StringType(maxLength = null))),
+      fields = setOf(Field("column_name", dataType = DataType.text(maxLength = null))),
     )
     return rows.map { row -> row.value("column_name").value as String }.toList()
   }

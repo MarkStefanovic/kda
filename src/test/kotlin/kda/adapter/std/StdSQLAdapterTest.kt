@@ -1,9 +1,8 @@
 package kda.adapter.std
 
+import kda.domain.DataType
 import kda.domain.Field
-import kda.domain.IntType
 import kda.domain.Row
-import kda.domain.StringType
 import kda.domain.Table
 import kda.domain.Value
 import kda.shared.standardizeSQL
@@ -21,15 +20,15 @@ class StdSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -72,15 +71,15 @@ class StdSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -107,9 +106,9 @@ class StdSQLAdapterTest {
         name = "customer",
         fields =
         setOf(
-          Field(name = "customer_id", dataType = IntType(autoincrement = true)),
-          Field(name = "first_name", dataType = StringType(maxLength = 40)),
-          Field(name = "last_name", dataType = StringType(maxLength = 40)),
+          Field(name = "customer_id", dataType = DataType.int(true)),
+          Field(name = "first_name", dataType = DataType.text(40)),
+          Field(name = "last_name", dataType = DataType.text(40)),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
       )
@@ -149,9 +148,9 @@ class StdSQLAdapterTest {
         name = "customer",
         fields =
         setOf(
-          Field(name = "first_name", dataType = StringType(maxLength = 40)),
-          Field(name = "last_name", dataType = StringType(maxLength = 40)),
-          Field(name = "age", dataType = IntType(autoincrement = true)),
+          Field(name = "first_name", dataType = DataType.text(40)),
+          Field(name = "last_name", dataType = DataType.text(40)),
+          Field(name = "age", dataType = DataType.int(true)),
         ),
         primaryKeyFieldNames = listOf("first_name", "last_name"),
       )
@@ -203,9 +202,9 @@ class StdSQLAdapterTest {
         name = "customer",
         fields =
         setOf(
-          Field(name = "first_name", dataType = StringType(maxLength = 40)),
-          Field(name = "last_name", dataType = StringType(maxLength = 40)),
-          Field(name = "age", dataType = IntType(autoincrement = true)),
+          Field(name = "first_name", dataType = DataType.text(40)),
+          Field(name = "last_name", dataType = DataType.text(40)),
+          Field(name = "age", dataType = DataType.int(true)),
         ),
         primaryKeyFieldNames = listOf("first_name", "last_name"),
       )
@@ -256,15 +255,15 @@ class StdSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -308,15 +307,15 @@ class StdSQLAdapterTest {
         setOf(
           Field(
             name = "age",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
         ),
         primaryKeyFieldNames = listOf("first_name", "last_name"),
@@ -371,15 +370,15 @@ class StdSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),

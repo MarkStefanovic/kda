@@ -1,6 +1,15 @@
 package kda.adapter.std
 
-import kda.domain.*
+import kda.domain.Criteria
+import kda.domain.DataType
+import kda.domain.Field
+import kda.domain.KDAError
+import kda.domain.Operator
+import kda.domain.Predicate
+import kda.domain.Row
+import kda.domain.SQLAdapterImplDetails
+import kda.domain.Table
+import kda.domain.Value
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
@@ -41,13 +50,13 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
     when (value) {
       is Value.bool -> wrapBoolValue(value.value)
       is Value.decimal -> {
-        if (dataType is DecimalType) {
+        if (dataType is DataType.decimal) {
           wrapDecimalValue(value.value, precision = dataType.precision, scale = dataType.scale)
         } else {
           throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
         }
       }
-      is Value.float -> if (dataType is FloatType) {
+      is Value.float -> if (dataType is DataType.float) {
         wrapFloatValue(value.value, maxDigits = dataType.maxDigits)
       } else {
         throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
@@ -55,18 +64,18 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       is Value.int -> wrapIntValue(value.value)
       is Value.date -> wrapLocalDateValue(value.value)
       is Value.datetime -> wrapLocalDateTimeValue(value.value)
-      is Value.text -> if (dataType is StringType) {
+      is Value.text -> if (dataType is DataType.text) {
         wrapStringValue(value.value, maxLength = dataType.maxLength)
       } else {
         throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
       }
       is Value.nullableBool -> wrapBoolValue(value.value)
-      is Value.nullableDecimal -> if (dataType is NullableDecimalType) {
+      is Value.nullableDecimal -> if (dataType is DataType.nullableDecimal) {
         wrapDecimalValue(value.value, precision = dataType.precision, scale = dataType.scale)
       } else {
         throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
       }
-      is Value.nullableFloat -> if (dataType is NullableFloatType) {
+      is Value.nullableFloat -> if (dataType is DataType.nullableFloat) {
         wrapFloatValue(value.value, maxDigits = dataType.maxDigits)
       } else {
         throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
@@ -74,7 +83,7 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       is Value.nullableInt -> wrapIntValue(value.value)
       is Value.nullableDate -> wrapLocalDateValue(value.value)
       is Value.nullableDatetime -> wrapLocalDateTimeValue(value.value)
-      is Value.nullableText -> if (dataType is NullableStringType) {
+      is Value.nullableText -> if (dataType is DataType.nullableText) {
         wrapStringValue(value = value.value, maxLength = dataType.maxLength)
       } else {
         throw KDAError.ValueDataTypeMismatch(value = value, dataType = dataType)
@@ -120,21 +129,21 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
     val wrappedFieldName = wrapName(field.name)
     val dataType =
       when (field.dataType) {
-        BoolType -> "BOOL NOT NULL"
-        is DecimalType -> "DECIMAL(${field.dataType.precision}, ${field.dataType.scale}) NOT NULL"
-        is FloatType -> "FLOAT NOT NULL"
-        is IntType -> "INT NOT NULL"
-        LocalDateTimeType -> "TIMESTAMP NOT NULL"
-        LocalDateType -> "DATE NOT NULL"
-        is StringType -> "TEXT NULL"
-        NullableBoolType -> "BOOL NULL"
-        is NullableDecimalType ->
+        DataType.bool -> "BOOL NOT NULL"
+        is DataType.decimal -> "DECIMAL(${field.dataType.precision}, ${field.dataType.scale}) NOT NULL"
+        is DataType.float -> "FLOAT NOT NULL"
+        is DataType.int -> "INT NOT NULL"
+        DataType.localDateTime -> "TIMESTAMP NOT NULL"
+        DataType.localDate -> "DATE NOT NULL"
+        is DataType.text -> "TEXT NULL"
+        DataType.nullableBool -> "BOOL NULL"
+        is DataType.nullableDecimal ->
           "DECIMAL(${field.dataType.precision}, ${field.dataType.scale}) NULL"
-        is NullableFloatType -> "FLOAT NULL"
-        NullableLocalDateTimeType -> "TIMESTAMP NULL"
-        NullableLocalDateType -> "DATE NULL"
-        is NullableIntType -> "INT NULL"
-        is NullableStringType -> "TEXT NULL"
+        is DataType.nullableFloat -> "FLOAT NULL"
+        DataType.nullableLocalDateTime -> "TIMESTAMP NULL"
+        DataType.nullableLocalDate -> "DATE NULL"
+        is DataType.nullableInt -> "INT NULL"
+        is DataType.nullableText -> "TEXT NULL"
       }
     return "$wrappedFieldName $dataType"
   }

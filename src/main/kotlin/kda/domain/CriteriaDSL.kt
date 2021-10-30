@@ -379,7 +379,7 @@ data class BooleanFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Boolean) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = BoolType),
+          field = Field(name = fieldName, dataType = DataType.bool),
           value = Value.bool(value),
           operator = Operator.Equals,
         )
@@ -397,7 +397,7 @@ data class NullableBooleanFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Boolean?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableBoolType),
+          field = Field(name = fieldName, dataType = DataType.nullableBool),
           value = Value.nullableBool(value),
           operator = Operator.Equals,
         )
@@ -418,7 +418,7 @@ data class DecimalFieldPredicate(val predicates: List<Predicate>) {
           field =
           Field(
             name = fieldName,
-            dataType = DecimalType(precision = precision, scale = scale)
+            dataType = DataType.decimal(precision = precision, scale = scale)
           ),
           value = Value.decimal(value),
           operator = Operator.Equals,
@@ -440,7 +440,7 @@ data class NullableDecimalFieldPredicate(val predicates: List<Predicate>) {
           field =
           Field(
             name = fieldName,
-            dataType = NullableDecimalType(precision = precision, scale = scale)
+            dataType = DataType.nullableDecimal(precision = precision, scale = scale)
           ),
           value = Value.nullableDecimal(value),
           operator = Operator.Equals,
@@ -459,7 +459,7 @@ data class FloatFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Float) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = FloatType(maxDigits)),
+          field = Field(name = fieldName, dataType = DataType.float(maxDigits)),
           value = Value.float(value),
           operator = Operator.Equals,
         )
@@ -477,7 +477,7 @@ data class NullableFloatFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Float?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableFloatType(maxDigits)),
+          field = Field(name = fieldName, dataType = DataType.nullableFloat(maxDigits)),
           value = Value.nullableFloat(value),
           operator = Operator.Equals,
         )
@@ -495,7 +495,7 @@ data class IntFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Int) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = IntType(false)),
+          field = Field(name = fieldName, dataType = DataType.int(false)),
           value = Value.int(value),
           operator = Operator.Equals,
         )
@@ -513,7 +513,7 @@ data class NullableIntFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: Int?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableIntType(false)),
+          field = Field(name = fieldName, dataType = DataType.nullableInt(false)),
           value = Value.nullableInt(value),
           operator = Operator.Equals,
         )
@@ -531,7 +531,7 @@ data class LocalDateFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: LocalDate) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = LocalDateType),
+          field = Field(name = fieldName, dataType = DataType.localDate),
           value = Value.date(value),
           operator = Operator.Equals,
         )
@@ -549,7 +549,7 @@ data class NullableLocalDateFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: LocalDate?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableLocalDateType),
+          field = Field(name = fieldName, dataType = DataType.nullableLocalDate),
           value = Value.nullableDate(value),
           operator = Operator.Equals,
         )
@@ -567,7 +567,7 @@ data class LocalDateTimeFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: LocalDateTime) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = LocalDateTimeType),
+          field = Field(name = fieldName, dataType = DataType.localDateTime),
           value = Value.datetime(value),
           operator = Operator.Equals,
         )
@@ -585,7 +585,7 @@ data class NullableLocalDateTimeFieldPredicate(val predicates: List<Predicate>) 
     fun eq(value: LocalDateTime?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableLocalDateTimeType),
+          field = Field(name = fieldName, dataType = DataType.nullableLocalDateTime),
           value = Value.nullableDatetime(value),
           operator = Operator.Equals,
         )
@@ -603,7 +603,7 @@ data class TextFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: String) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = StringType(null)),
+          field = Field(name = fieldName, dataType = DataType.text(null)),
           value = Value.text(value),
           operator = Operator.Equals,
         )
@@ -621,7 +621,7 @@ data class NullableTextFieldPredicate(val predicates: List<Predicate>) {
     fun eq(value: String?) =
       predicates.add(
         Predicate(
-          field = Field(name = fieldName, dataType = NullableStringType(null)),
+          field = Field(name = fieldName, dataType = DataType.nullableText(null)),
           value = Value.nullableText(value),
           operator = Operator.Equals,
         )

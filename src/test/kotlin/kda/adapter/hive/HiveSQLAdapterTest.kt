@@ -1,6 +1,10 @@
 package kda.adapter.hive
 
-import kda.domain.*
+import kda.domain.DataType
+import kda.domain.Field
+import kda.domain.Row
+import kda.domain.Table
+import kda.domain.Value
 import kda.shared.standardizeSQL
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -18,15 +22,15 @@ class HiveSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(autoincrement = true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -62,15 +66,15 @@ class HiveSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(autoincrement = true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -114,9 +118,9 @@ class HiveSQLAdapterTest {
         name = "customer",
         fields =
         setOf(
-          Field(name = "customer_id", dataType = IntType(autoincrement = true)),
-          Field(name = "first_name", dataType = StringType(maxLength = 40)),
-          Field(name = "last_name", dataType = StringType(maxLength = 40)),
+          Field(name = "customer_id", dataType = DataType.int(autoincrement = true)),
+          Field(name = "first_name", dataType = DataType.text(maxLength = 40)),
+          Field(name = "last_name", dataType = DataType.text(maxLength = 40)),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
       )
@@ -151,9 +155,9 @@ class HiveSQLAdapterTest {
         name = "customer",
         fields =
         setOf(
-          Field(name = "first_name", dataType = StringType(maxLength = 40)),
-          Field(name = "last_name", dataType = StringType(maxLength = 40)),
-          Field(name = "age", dataType = IntType(autoincrement = true)),
+          Field(name = "first_name", dataType = DataType.text(maxLength = 40)),
+          Field(name = "last_name", dataType = DataType.text(maxLength = 40)),
+          Field(name = "age", dataType = DataType.int(autoincrement = true)),
         ),
         primaryKeyFieldNames = listOf("first_name", "last_name"),
       )
@@ -199,15 +203,15 @@ class HiveSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(autoincrement = true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -261,15 +265,15 @@ class HiveSQLAdapterTest {
         setOf(
           Field(
             name = "customer_id",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(autoincrement = true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
@@ -313,15 +317,15 @@ class HiveSQLAdapterTest {
         setOf(
           Field(
             name = "age",
-            dataType = IntType(autoincrement = true),
+            dataType = DataType.int(autoincrement = true),
           ),
           Field(
             name = "first_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
           Field(
             name = "last_name",
-            dataType = StringType(maxLength = 40),
+            dataType = DataType.text(maxLength = 40),
           ),
         ),
         primaryKeyFieldNames = listOf("first_name", "last_name"),
@@ -375,19 +379,19 @@ class HiveSQLAdapterTest {
       setOf(
         Field(
           name = "date_added",
-          dataType = LocalDateType,
+          dataType = DataType.localDateTime,
         ),
         Field(
           name = "date_updated",
-          dataType = NullableLocalDateTimeType,
+          dataType = DataType.nullableLocalDateTime,
         ),
         Field(
           name = "first_name",
-          dataType = StringType(maxLength = 40),
+          dataType = DataType.text(maxLength = 40),
         ),
         Field(
           name = "last_name",
-          dataType = StringType(maxLength = 40),
+          dataType = DataType.text(maxLength = 40),
         ),
       ),
       primaryKeyFieldNames = listOf("first_name", "last_name"),

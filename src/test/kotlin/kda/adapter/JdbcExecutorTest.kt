@@ -1,10 +1,9 @@
 package kda.adapter
 
+import kda.domain.DataType
 import kda.domain.Field
-import kda.domain.IntType
 import kda.domain.KDAError
 import kda.domain.Row
-import kda.domain.StringType
 import kda.domain.Table
 import kda.domain.Value
 import kda.shared.testPgConnection
@@ -53,15 +52,15 @@ class JdbcExecutorTest {
           setOf(
             Field(
               name = "id",
-              dataType = IntType(autoincrement = true),
+              dataType = DataType.int(autoincrement = true),
             ),
             Field(
               name = "first_name",
-              dataType = StringType(maxLength = 40),
+              dataType = DataType.text(maxLength = 40),
             ),
             Field(
               name = "last_name",
-              dataType = StringType(maxLength = 40),
+              dataType = DataType.text(maxLength = 40),
             )
           ),
           primaryKeyFieldNames = listOf("id"),
@@ -102,15 +101,15 @@ class JdbcExecutorTest {
           setOf(
             Field(
               name = "id",
-              dataType = IntType(autoincrement = true),
+              dataType = DataType.int(autoincrement = true),
             ),
             Field(
               name = "first_name",
-              dataType = StringType(maxLength = 40),
+              dataType = DataType.text(maxLength = 40),
             ),
             Field(
               name = "last_name",
-              dataType = StringType(maxLength = 40),
+              dataType = DataType.text(maxLength = 40),
             )
           ),
           primaryKeyFieldNames = listOf("id"),

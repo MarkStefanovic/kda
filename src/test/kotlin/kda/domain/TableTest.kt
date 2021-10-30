@@ -10,9 +10,9 @@ class TableTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(false)),
-        Field(name = "first_name", dataType = NullableStringType(null)),
-        Field(name = "last_name", dataType = NullableStringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(false)),
+        Field(name = "first_name", dataType = DataType.nullableText(null)),
+        Field(name = "last_name", dataType = DataType.nullableText(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -37,9 +37,9 @@ class TableTest {
       schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = IntType(false)),
-        Field(name = "first_name", dataType = NullableStringType(null)),
-        Field(name = "last_name", dataType = NullableStringType(null)),
+        Field(name = "customer_id", dataType = DataType.int(false)),
+        Field(name = "first_name", dataType = DataType.nullableText(null)),
+        Field(name = "last_name", dataType = DataType.nullableText(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )

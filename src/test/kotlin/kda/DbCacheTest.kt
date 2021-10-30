@@ -1,9 +1,8 @@
 package kda
 
+import kda.domain.DataType
 import kda.domain.Field
-import kda.domain.IntType
 import kda.domain.LatestTimestamp
-import kda.domain.StringType
 import kda.domain.Table
 import kda.shared.testDbCache
 import org.junit.jupiter.api.Test
@@ -21,8 +20,8 @@ class DbCacheTest {
       schema = null,
       name = "customer",
       fields = setOf(
-        Field("customer_id", IntType(true)),
-        Field("name", StringType(40)),
+        Field("customer_id", DataType.int(true)),
+        Field("name", DataType.text(40)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
@@ -57,8 +56,8 @@ class DbCacheTest {
       schema = null,
       name = "customer",
       fields = setOf(
-        Field("customer_id", IntType(true)),
-        Field("name", StringType(40)),
+        Field("customer_id", DataType.int(true)),
+        Field("name", DataType.text(40)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )

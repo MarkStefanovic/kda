@@ -1,7 +1,9 @@
 package kda.adapter.pg
 
 import kda.adapter.JdbcExecutor
-import kda.domain.*
+import kda.domain.DataType
+import kda.domain.Field
+import kda.domain.Table
 import kda.shared.testPgConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -28,10 +30,10 @@ class PgInspectorTest {
         schema = null,
         name = "tmp20210708",
         fields = setOf(
-          Field(name = "age", dataType = IntType(autoincrement = false)),
-          Field(name = "first_name", dataType = StringType(maxLength = null)),
-          Field(name = "id", dataType = IntType(autoincrement = true)),
-          Field(name = "last_name", dataType = StringType(maxLength = null)),
+          Field(name = "age", dataType = DataType.int(false)),
+          Field(name = "first_name", dataType = DataType.text(null)),
+          Field(name = "id", dataType = DataType.int(true)),
+          Field(name = "last_name", dataType = DataType.text(null)),
         ),
         primaryKeyFieldNames = listOf("id"),
       )

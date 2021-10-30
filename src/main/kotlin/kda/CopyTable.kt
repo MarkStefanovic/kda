@@ -1,10 +1,9 @@
 package kda
 
 import kda.domain.CopyTableResult
+import kda.domain.DataType
 import kda.domain.Dialect
-import kda.domain.IntType
 import kda.domain.KDAError
-import kda.domain.NullableIntType
 import java.sql.Connection
 
 fun copyTable(
@@ -42,7 +41,7 @@ fun copyTable(
   val fields = if (ignoreAutoincrement) {
     includeFieldDefs.map { fld ->
       when (fld.dataType) {
-        is IntType, is NullableIntType -> fld.copy(dataType = IntType(false))
+        is DataType.int, is DataType.nullableInt -> fld.copy(dataType = DataType.int(false))
         else -> fld
       }
     }.toSet()

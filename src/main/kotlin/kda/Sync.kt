@@ -1,13 +1,13 @@
 package kda
 
 import kda.domain.Criteria
+import kda.domain.DataType
 import kda.domain.Datasource
 import kda.domain.Dialect
 import kda.domain.Field
 import kda.domain.IndexedRows
 import kda.domain.KDAError
 import kda.domain.LatestTimestamp
-import kda.domain.NullableLocalDateTimeType
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.SyncResult
@@ -263,7 +263,7 @@ private fun getFullCriteria(
       val sql = ds.adapter.selectMaxValues(table = table, fieldNames = tsFieldNames)
       val tsFields =
         tsFieldNames
-          .map { fld -> Field(name = fld, dataType = NullableLocalDateTimeType) }
+          .map { fld -> Field(name = fld, dataType = DataType.nullableLocalDateTime) }
           .toSet()
       val row = ds.executor.fetchRows(sql = sql, fields = tsFields).first()
       val timestamps: Set<LatestTimestamp> =

@@ -1,21 +1,8 @@
 package kda.adapter
 
-import kda.domain.BoolType
+import kda.domain.DataType
 import kda.domain.DataTypeName
-import kda.domain.DecimalType
 import kda.domain.Field
-import kda.domain.FloatType
-import kda.domain.IntType
-import kda.domain.LocalDateTimeType
-import kda.domain.LocalDateType
-import kda.domain.NullableBoolType
-import kda.domain.NullableDecimalType
-import kda.domain.NullableFloatType
-import kda.domain.NullableIntType
-import kda.domain.NullableLocalDateTimeType
-import kda.domain.NullableLocalDateType
-import kda.domain.NullableStringType
-import kda.domain.StringType
 import kda.domain.Table
 import kda.domain.TableDefRepository
 import org.jetbrains.exposed.sql.SortOrder
@@ -41,32 +28,32 @@ class DbTableDefRepository(private val maxFloatDigits: Int = 5) : TableDefReposi
         it[TableDefs.column] = field.name
         it[TableDefs.dataType] = field.dataType.name
         when (field.dataType) {
-          BoolType -> {}
-          is DecimalType -> {
+          DataType.bool -> {}
+          is DataType.decimal -> {
             it[TableDefs.precision] = field.dataType.precision
             it[TableDefs.scale] = field.dataType.scale
           }
-          is FloatType -> {}
-          is IntType -> {
+          is DataType.float -> {}
+          is DataType.int -> {
             it[TableDefs.autoincrement] = field.dataType.autoincrement
           }
-          LocalDateTimeType -> {}
-          LocalDateType -> {}
-          NullableBoolType -> {}
-          is NullableDecimalType -> {
-            it[TableDefs.precision] = field.dataType.precision
-            it[TableDefs.scale] = field.dataType.scale
-          }
-          is NullableFloatType -> {}
-          is NullableIntType -> {
-            it[TableDefs.autoincrement] = field.dataType.autoincrement
-          }
-          NullableLocalDateTimeType -> {}
-          NullableLocalDateType -> {}
-          is NullableStringType -> {
+          DataType.localDate -> {}
+          is DataType.text -> {
             it[TableDefs.maxLength] = field.dataType.maxLength
           }
-          is StringType -> {
+          DataType.localDateTime -> {}
+          DataType.nullableBool -> {}
+          is DataType.nullableDecimal -> {
+            it[TableDefs.precision] = field.dataType.precision
+            it[TableDefs.scale] = field.dataType.scale
+          }
+          is DataType.nullableFloat -> {}
+          is DataType.nullableInt -> {
+            it[TableDefs.autoincrement] = field.dataType.autoincrement
+          }
+          DataType.nullableLocalDate -> {}
+          DataType.nullableLocalDateTime -> {}
+          is DataType.nullableText -> {
             it[TableDefs.maxLength] = field.dataType.maxLength
           }
         }
@@ -104,31 +91,31 @@ class DbTableDefRepository(private val maxFloatDigits: Int = 5) : TableDefReposi
         .map { row ->
           val dtype =
             when (row[TableDefs.dataType]) {
-              DataTypeName.Bool -> BoolType
+              DataTypeName.Bool -> DataType.bool
               DataTypeName.Decimal ->
-                DecimalType(
+                DataType.decimal(
                   precision = row[TableDefs.precision]
                     ?: error("precision is required"),
                   scale = row[TableDefs.scale] ?: error("scale is required"),
                 )
-              DataTypeName.Float -> FloatType(maxFloatDigits)
-              DataTypeName.Int -> IntType(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
-              DataTypeName.Date -> LocalDateType
-              DataTypeName.DateTime -> LocalDateTimeType
-              DataTypeName.Text -> StringType(row[TableDefs.maxLength])
-              DataTypeName.NullableBool -> NullableBoolType
+              DataTypeName.Float -> DataType.float(maxFloatDigits)
+              DataTypeName.Int -> DataType.int(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
+              DataTypeName.Date -> DataType.localDate
+              DataTypeName.DateTime -> DataType.localDateTime
+              DataTypeName.Text -> DataType.text(row[TableDefs.maxLength])
+              DataTypeName.NullableBool -> DataType.nullableBool
               DataTypeName.NullableDecimal ->
-                NullableDecimalType(
+                DataType.nullableDecimal(
                   precision = row[TableDefs.precision]
                     ?: error("precision is required"),
                   scale = row[TableDefs.scale] ?: error("scale is required"),
                 )
-              DataTypeName.NullableFloat -> NullableFloatType(maxFloatDigits)
+              DataTypeName.NullableFloat -> DataType.nullableFloat(maxFloatDigits)
               DataTypeName.NullableInt ->
-                NullableIntType(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
-              DataTypeName.NullableDate -> NullableLocalDateType
-              DataTypeName.NullableDateTime -> NullableLocalDateTimeType
-              DataTypeName.NullableText -> NullableStringType(row[TableDefs.maxLength])
+                DataType.nullableInt(row[TableDefs.autoincrement] ?: error("autoincrement is required"))
+              DataTypeName.NullableDate -> DataType.nullableLocalDate
+              DataTypeName.NullableDateTime -> DataType.nullableLocalDateTime
+              DataTypeName.NullableText -> DataType.nullableText(row[TableDefs.maxLength])
             }
           Field(name = row[TableDefs.column], dataType = dtype)
         }

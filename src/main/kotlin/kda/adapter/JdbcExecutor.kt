@@ -1,9 +1,16 @@
 package kda.adapter
 
-import kda.domain.*
-import java.lang.Thread.*
+import kda.domain.DataType
+import kda.domain.Field
+import kda.domain.KDAError
+import kda.domain.Row
+import kda.domain.SQLExecutor
+import kda.domain.Value
 import java.math.BigDecimal
-import java.sql.*
+import java.sql.Connection
+import java.sql.Date
+import java.sql.ResultSet
+import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -21,44 +28,44 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
   }
 
   override fun fetchNullableBool(sql: String): Boolean? =
-    fetchScalar(sql = sql, dataType = NullableBoolType)
+    fetchScalar(sql = sql, dataType = DataType.nullableBool)
 
-  override fun fetchBool(sql: String): Boolean = fetchScalar(sql = sql, dataType = BoolType)
+  override fun fetchBool(sql: String): Boolean = fetchScalar(sql = sql, dataType = DataType.bool)
 
   override fun fetchNullableDate(sql: String): LocalDate? =
-    fetchScalar(sql = sql, dataType = NullableLocalDateType)
+    fetchScalar(sql = sql, dataType = DataType.nullableLocalDate)
 
-  override fun fetchDate(sql: String): LocalDate = fetchScalar(sql = sql, dataType = LocalDateType)
+  override fun fetchDate(sql: String): LocalDate = fetchScalar(sql = sql, dataType = DataType.localDate)
 
   override fun fetchNullableDateTime(sql: String): LocalDateTime? =
-    fetchScalar(sql = sql, dataType = NullableLocalDateTimeType)
+    fetchScalar(sql = sql, dataType = DataType.nullableLocalDateTime)
 
   override fun fetchDateTime(sql: String): LocalDateTime =
-    fetchScalar(sql = sql, dataType = LocalDateTimeType)
+    fetchScalar(sql = sql, dataType = DataType.localDateTime)
 
   override fun fetchNullableDecimal(sql: String, precision: Int, scale: Int): BigDecimal? =
-    fetchScalar(sql = sql, dataType = NullableDecimalType(precision = precision, scale = scale))
+    fetchScalar(sql = sql, dataType = DataType.nullableDecimal(precision = precision, scale = scale))
 
   override fun fetchDecimal(sql: String, precision: Int, scale: Int): BigDecimal =
-    fetchScalar(sql = sql, dataType = DecimalType(precision = precision, scale = scale))
+    fetchScalar(sql = sql, dataType = DataType.decimal(precision = precision, scale = scale))
 
   override fun fetchNullableFloat(sql: String, maxDigits: Int): Float? =
-    fetchScalar(sql = sql, dataType = NullableFloatType(maxDigits = maxDigits))
+    fetchScalar(sql = sql, dataType = DataType.nullableFloat(maxDigits = maxDigits))
 
   override fun fetchFloat(sql: String, maxDigits: Int): Float =
-    fetchScalar(sql = sql, dataType = FloatType(maxDigits = maxDigits))
+    fetchScalar(sql = sql, dataType = DataType.float(maxDigits = maxDigits))
 
   override fun fetchNullableInt(sql: String): Int? =
-    fetchScalar(sql = sql, dataType = NullableIntType(autoincrement = false))
+    fetchScalar(sql = sql, dataType = DataType.nullableInt(autoincrement = false))
 
   override fun fetchInt(sql: String): Int =
-    fetchScalar(sql = sql, dataType = IntType(autoincrement = false))
+    fetchScalar(sql = sql, dataType = DataType.int(autoincrement = false))
 
   override fun fetchNullableString(sql: String, maxLength: Int?): String? =
-    fetchScalar(sql = sql, dataType = NullableStringType(maxLength = null))
+    fetchScalar(sql = sql, dataType = DataType.nullableText(maxLength = null))
 
   override fun fetchString(sql: String, maxLength: Int?): String =
-    fetchScalar(sql = sql, dataType = StringType(maxLength = null))
+    fetchScalar(sql = sql, dataType = DataType.text(maxLength = null))
 
   override fun fetchRow(sql: String, fields: Set<Field>): Row =
     con.createStatement().use { stmt ->
@@ -105,14 +112,14 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
                 is Out -> value
                 else -> {
                   when (dataType) {
-                    BoolType, NullableBoolType -> value as Boolean
-                    is DecimalType, is NullableDecimalType -> value as BigDecimal
-                    is FloatType, is NullableFloatType -> (value as Double).toFloat()
-                    is IntType, is NullableIntType -> if (value is Long) value.toInt() else value
-                    LocalDateTimeType, NullableLocalDateTimeType ->
+                    DataType.bool, DataType.nullableBool -> value as Boolean
+                    is DataType.decimal, is DataType.nullableDecimal -> value as BigDecimal
+                    is DataType.float, is DataType.nullableFloat -> (value as Double).toFloat()
+                    is DataType.int, is DataType.nullableInt -> if (value is Long) value.toInt() else value
+                    DataType.localDateTime, DataType.nullableLocalDateTime ->
                       (value as Timestamp).toLocalDateTime()
-                    LocalDateType, NullableLocalDateType -> (value as Date).toLocalDate()
-                    is StringType, is NullableStringType -> value as String
+                    DataType.localDate, DataType.nullableLocalDate -> (value as Date).toLocalDate()
+                    is DataType.text, is DataType.nullableText -> value as String
                   }
                 }
               }
@@ -136,38 +143,38 @@ private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
   fields.associate { fld ->
     fld.name to
       when (fld.dataType) {
-        BoolType ->
+        DataType.bool ->
           Value.bool(value = getBoolean(fld.name))
-        NullableBoolType ->
+        DataType.nullableBool ->
           Value.nullableBool(value = getObject(fld.name) as Boolean?)
-        is DecimalType ->
+        is DataType.decimal ->
           Value.decimal(value = getBigDecimal(fld.name))
-        is NullableDecimalType ->
+        is DataType.nullableDecimal ->
           Value.nullableDecimal(value = getObject(fld.name) as BigDecimal?)
-        is FloatType ->
+        is DataType.float ->
           Value.float(value = getFloat(fld.name))
-        is NullableFloatType ->
+        is DataType.nullableFloat ->
           Value.nullableFloat(value = getObject(fld.name) as? Float?)
-        is IntType ->
+        is DataType.int ->
           Value.int(getLong(fld.name).toInt())
-        is NullableIntType -> {
+        is DataType.nullableInt -> {
           if (getObject(fld.name) == null) {
             Value.nullableInt(null)
           } else {
             Value.int(getLong(fld.name).toInt())
           }
         }
-        LocalDateTimeType ->
+        DataType.localDateTime ->
           Value.datetime(value = getTimestamp(fld.name).toLocalDateTime())
-        NullableLocalDateTimeType ->
+        DataType.nullableLocalDateTime ->
           Value.nullableDatetime(value = getTimestamp(fld.name)?.toLocalDateTime())
-        LocalDateType ->
+        DataType.localDate ->
           Value.date(value = getDate(fld.name).toLocalDate())
-        NullableLocalDateType ->
+        DataType.nullableLocalDate ->
           Value.nullableDate(value = getDate(fld.name)?.toLocalDate())
-        is StringType ->
+        is DataType.text ->
           Value.text(value = getString(fld.name))
-        is NullableStringType ->
+        is DataType.nullableText ->
           Value.nullableText(value = getObject(fld.name) as? String?)
       }
   }
