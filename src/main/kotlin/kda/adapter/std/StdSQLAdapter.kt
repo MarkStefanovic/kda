@@ -75,17 +75,10 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       "UPDATE SET $setValuesCSV"
   }
 
-  override fun select(table: Table, criteria: Set<Criteria>, trustPk: Boolean): String {
+  override fun select(table: Table, criteria: Set<Criteria>): String {
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val colNameCSV = impl.fieldNameCSV(table.sortedFieldNames.toSet(), tableAlias = "t")
-    val selectSQL = if (trustPk) {
-      "SELECT $colNameCSV FROM $tableName t"
-    } else {
-      val t0ColNameCSV = impl.fieldNameCSV(table.sortedFieldNames.toSet(), tableAlias = "t0")
-      val pkCSV = impl.fieldNameCSV(fieldNames = table.primaryKeyFieldNames.toSet(), tableAlias = "t0")
-      val rnSQL = "ROW_NUMBER() OVER (PARTITION BY $pkCSV ORDER BY (SELECT 0)) AS kda_rn"
-      "SELECT $colNameCSV FROM (SELECT t1.* FROM (SELECT $rnSQL, $t0ColNameCSV FROM $tableName t0) t1 WHERE t1.kda_rn = 1) t"
-    }
+    val selectSQL = "SELECT $colNameCSV FROM $tableName t"
     return if (criteria.isEmpty()) {
       selectSQL
     } else {

@@ -91,7 +91,7 @@ fun sync(
       .getOrThrow()
 
   val srcLkpTable = tables.srcTableDef.subset(fieldNames = lkpTableFieldNames)
-  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria, trustPk = trustPk)
+  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
   if (showSQL) {
     println(
       """
@@ -103,7 +103,7 @@ fun sync(
   val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields).toSet()
 
   val destLkpTable = tables.destTableDef.subset(fieldNames = lkpTableFieldNames)
-  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria, trustPk = trustPk)
+  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
   if (showSQL) {
     if (showSQL) {
       println(

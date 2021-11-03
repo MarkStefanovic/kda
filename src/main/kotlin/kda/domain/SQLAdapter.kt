@@ -13,7 +13,7 @@ interface SQLAdapter {
 
   fun merge(table: Table, rows: Set<Row>): String
 
-  fun select(table: Table, criteria: Set<Criteria>, trustPk: Boolean): String
+  fun select(table: Table, criteria: Set<Criteria>): String
 
   fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String
 
