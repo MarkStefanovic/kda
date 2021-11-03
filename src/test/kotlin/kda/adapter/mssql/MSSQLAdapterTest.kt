@@ -186,7 +186,7 @@ class MSSQLAdapterTest {
     val expectedSQL = standardizeSQL(
       """
       SELECT [customer_id], [first_name], [last_name] FROM [sales].[customer] 
-      WHERE ([first_name] = 'Bob') OR ([last_name] = 'Smith')
+      WHERE [first_name] = 'Bob' OR [last_name] = 'Smith'
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)

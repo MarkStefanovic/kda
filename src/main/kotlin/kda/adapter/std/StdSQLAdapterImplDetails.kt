@@ -29,20 +29,51 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       "${wrapName(schema)}.${wrapName(table)}"
     }
 
-  override fun renderCriteria(criteria: Set<Criteria>): String =
-    criteria.sortedBy { it.description }.joinToString(" OR ") { c ->
-      c.predicates.joinToString(" AND ") { predicate: Predicate ->
-        val operator =
-          when (predicate.operator) {
-            Operator.Equals -> "="
-            Operator.GreaterThan -> ">"
-            Operator.LessThan -> "<"
-            Operator.GreaterThanOrEqualTo -> ">="
-            Operator.LessThanOrEqualTo -> "<="
+  override fun renderCriteria(criteria: Set<Criteria>): String? {
+    val orClause = criteria.sortedBy { it.description }.mapNotNull { c ->
+      val andClause = c.predicates.mapNotNull { predicate: Predicate ->
+        val name = wrapName(predicate.field.name)
+        val value = wrapValue(value = predicate.value, dataType = predicate.field.dataType)
+        when (predicate.operator) {
+          Operator.Equals -> if (predicate.value.value == null) {
+            "($name = $value OR $name IS NULL)"
+          } else {
+            "$name = $value"
           }
-        "(${wrapName(predicate.field.name)} $operator ${wrapValue(value = predicate.value, dataType = predicate.field.dataType)})"
+          Operator.GreaterThan -> if (predicate.value.value == null) {
+            null
+          } else {
+            "($name > $value OR $name IS NULL)"
+          }
+          Operator.LessThan -> if (predicate.value.value == null) {
+            null
+          } else {
+            "($name < $value OR $name IS NULL)"
+          }
+          Operator.GreaterThanOrEqualTo -> if (predicate.value.value == null) {
+            null
+          } else {
+            "($name >= $value OR $name IS NULL)"
+          }
+          Operator.LessThanOrEqualTo -> if (predicate.value.value == null) {
+            "$name IS NULL"
+          } else {
+            "($name <= $value OR $name IS NULL)"
+          }
+        }
+      }.joinToString(" AND ")
+      if (andClause == "") {
+        null
+      } else {
+        andClause
       }
+    }.joinToString(" OR ")
+    return if (orClause == "") {
+      null
+    } else {
+      orClause
     }
+  }
 
   override fun wrapName(name: String) = "\"${name.lowercase()}\""
 

@@ -1,6 +1,9 @@
 package kda.domain
 
 data class IndexedRows(private val rows: Map<Row, Row>) : Map<Row, Row> by rows {
+  fun toMap(): Map<Map<String, Any?>, Map<String, Any?>> =
+    rows.entries.associate { entry -> entry.key.toMap() to entry.value.toMap() }
+
   companion object {
     fun empty() = IndexedRows(emptyMap())
 

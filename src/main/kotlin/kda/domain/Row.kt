@@ -24,6 +24,9 @@ value class Row(private val row: Map<String, Value<*>>) {
       Row(subset)
     }
 
+  fun toMap(): Map<String, Any?> =
+    row.entries.associate { entry -> entry.key to entry.value.value }
+
   companion object {
     fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())
   }

@@ -75,9 +75,12 @@ fun compareRows(
   val addedRows = srcRows.filterKeys { key -> destRows[key] == null }
   val deletedRows = destRows.filterKeys { key -> srcRows[key] == null }
   val updatedRows = srcRows.filter { (key, value) ->
-    val oldValue = destRows[key]
-    if (oldValue == null) false
-    else value != oldValue
+    val oldRow = destRows[key]
+    if (oldRow == null) {
+      false
+    } else {
+      value != oldRow
+    }
   }
   RowDiff(
     srcRows = srcRows,
@@ -90,3 +93,6 @@ fun compareRows(
     compareFields = compareFields,
   )
 }
+
+// private fun rowsAreEqual(row: Row, other: Row) =
+//  row.fieldNames.all { key -> row.value(key) == other.value(key) }

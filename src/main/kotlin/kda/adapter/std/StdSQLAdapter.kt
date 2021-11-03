@@ -82,7 +82,12 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     return if (criteria.isEmpty()) {
       selectSQL
     } else {
-      "$selectSQL WHERE ${impl.renderCriteria(criteria)}"
+      val whereClause = impl.renderCriteria(criteria)
+      if (whereClause == null) {
+        selectSQL
+      } else {
+        "$selectSQL WHERE $whereClause"
+      }
     }
   }
 
