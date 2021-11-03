@@ -13,6 +13,7 @@ import kda.domain.RowDiff
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.compareRows
+import kda.domain.distinctOnPK
 import java.sql.Connection
 import java.time.LocalDateTime
 
@@ -33,6 +34,7 @@ fun sync(
   timestampFieldNames: Set<String> = setOf(),
   chunkSize: Int = 1_000,
   showSQL: Boolean = false,
+  trustPk: Boolean = true,
 ): Result<SyncResult> = runCatching {
   if (compareFields != null && compareFields.isEmpty()) {
     throw KDAError.InvalidArgument(
@@ -89,7 +91,7 @@ fun sync(
       .getOrThrow()
 
   val srcLkpTable = tables.srcTableDef.subset(fieldNames = lkpTableFieldNames)
-  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
+  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria, trustPk = trustPk)
   if (showSQL) {
     println(
       """
@@ -101,7 +103,7 @@ fun sync(
   val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields).toSet()
 
   val destLkpTable = tables.destTableDef.subset(fieldNames = lkpTableFieldNames)
-  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
+  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria, trustPk = trustPk)
   if (showSQL) {
     if (showSQL) {
       println(
@@ -175,6 +177,7 @@ fun sync(
       updatedRows = rowDiff.updated,
       chunkSize = chunkSize,
       showSQL = showSQL,
+      trustPk = trustPk,
     )
       .getOrThrow()
 
@@ -269,6 +272,7 @@ private fun upsertRows(
   updatedRows: IndexedRows,
   chunkSize: Int,
   showSQL: Boolean,
+  trustPk: Boolean,
 ): Result<Int> = runCatching {
   updatedRows.keys.union(addedRows.keys).chunked(chunkSize) { keys ->
     val selectSQL: String =
@@ -282,7 +286,12 @@ private fun upsertRows(
       )
     }
     val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
-    val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = rows)
+    val distinctRows = if (trustPk) {
+      rows
+    } else {
+      rows.distinctOnPK(srcTableDef.primaryKeyFieldNames.toSet())
+    }
+    val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = distinctRows)
     if (showSQL) {
       println(
         """

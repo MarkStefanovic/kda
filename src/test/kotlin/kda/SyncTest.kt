@@ -135,9 +135,19 @@ class SyncTest {
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")
           stmt.execute(
+//            """
+//            CREATE TABLE sales.customer (
+//                customer_id SERIAL PRIMARY KEY
+//            ,   first_name TEXT NOT NULL
+//            ,   last_name TEXT NOT NULL
+//            ,   middle_initial TEXT NULL
+//            ,   date_added TIMESTAMP NOT NULL DEFAULT now()
+//            ,   date_updated TIMESTAMP NULL
+//            )
+//            """
             """
             CREATE TABLE sales.customer (
-                customer_id SERIAL PRIMARY KEY
+                customer_id INT NOT NULL
             ,   first_name TEXT NOT NULL
             ,   last_name TEXT NOT NULL
             ,   middle_initial TEXT NULL
@@ -495,6 +505,72 @@ class SyncTest {
         )
 
         assertEquals(expected = emptyMap(), actual = resultAfterDelete.updated.toMap())
+      }
+    }
+  }
+
+  @Test
+  fun given_duplicate_source_keys_sync_just_first_one_of_them() {
+    testPgConnection().use { srcCon ->
+      testPgConnection().use { destCon ->
+        // TEST ADD
+        val customer1 = Customer(
+          customerId = 1,
+          firstName = "Mark",
+          lastName = "Stefanovic",
+          middleInitial = "E",
+          dateAdded = LocalDateTime.of(2010, 1, 2, 3, 4, 5),
+          dateUpdated = null,
+        )
+        val customer2 = Customer(
+          customerId = 2,
+          firstName = "Bob",
+          lastName = "Smith",
+          middleInitial = null,
+          dateAdded = LocalDateTime.of(2011, 2, 3, 4, 5, 6),
+          dateUpdated = LocalDateTime.of(2012, 3, 4, 5, 6, 7),
+        )
+        val customer2dupe = Customer(
+          customerId = 2,
+          firstName = "Bob",
+          lastName = "Smith",
+          middleInitial = "X",
+          dateAdded = LocalDateTime.of(2011, 2, 3, 4, 5, 6),
+          dateUpdated = LocalDateTime.of(2012, 3, 4, 5, 6, 7),
+        )
+        val customer3 = Customer(
+          customerId = 3,
+          firstName = "Mandie",
+          lastName = "Mandlebrot",
+          middleInitial = "M",
+          dateAdded = LocalDateTime.of(2013, 4, 5, 6, 7, 8),
+          dateUpdated = null,
+        )
+
+        addCustomers(con = srcCon, tableName = "customer", customer1, customer2, customer3, customer2dupe)
+
+        val result = sync(
+          srcCon = srcCon,
+          destCon = destCon,
+          srcDialect = Dialect.PostgreSQL,
+          destDialect = Dialect.PostgreSQL,
+          srcSchema = "sales",
+          srcTable = "customer",
+          destSchema = "sales",
+          destTable = "customer2",
+          compareFields = setOf("first_name", "last_name", "middle_initial"),
+          primaryKeyFieldNames = listOf("customer_id"),
+          includeFields = null,
+          cache = testDbCache(),
+          chunkSize = 2,
+          timestampFieldNames = setOf("date_added", "date_updated"),
+          showSQL = true,
+          trustPk = false,
+        ).getOrThrow()
+
+        val actual = fetchCustomers(con = destCon, tableName = "customer2")
+
+        assertEquals(expected = setOf(customer1, customer2dupe, customer3), actual = actual)
       }
     }
   }

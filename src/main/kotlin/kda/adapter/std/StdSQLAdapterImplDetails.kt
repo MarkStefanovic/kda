@@ -29,10 +29,15 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       "${wrapName(schema)}.${wrapName(table)}"
     }
 
-  override fun renderCriteria(criteria: Set<Criteria>): String? {
+  override fun renderCriteria(criteria: Set<Criteria>, tableAlias: String?): String? {
+    val prefix = if (tableAlias == null) {
+      "$tableAlias."
+    } else {
+      ""
+    }
     val orClause = criteria.sortedBy { it.description }.mapNotNull { c ->
       val andClause = c.predicates.mapNotNull { predicate: Predicate ->
-        val name = wrapName(predicate.field.name)
+        val name = prefix + wrapName(predicate.field.name)
         val value = wrapValue(value = predicate.value, dataType = predicate.field.dataType)
         when (predicate.operator) {
           Operator.Equals -> if (predicate.value.value == null) {

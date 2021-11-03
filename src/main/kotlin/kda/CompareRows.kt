@@ -21,6 +21,7 @@ fun compareRows(
   primaryKeyFieldNames: List<String>,
   criteria: Set<Criteria> = emptySet(),
   cache: Cache = sqliteCache,
+  trustPk: Boolean = true,
 ): Result<RowDiff> = runCatching {
   val src = datasource(con = srcCon, dialect = srcDialect)
 
@@ -38,6 +39,7 @@ fun compareRows(
     compareFields = compareFields,
     criteria = criteria,
     cache = cache,
+    trustPk = trustPk,
   ).getOrThrow()
 
   val destRows = fetchLookupTable(
@@ -50,6 +52,7 @@ fun compareRows(
     compareFields = compareFields,
     criteria = criteria,
     cache = cache,
+    trustPk = trustPk,
   ).getOrThrow()
 
   kda.domain.compareRows(
@@ -71,6 +74,7 @@ private fun fetchLookupTable(
   compareFields: Set<String>,
   criteria: Set<Criteria>,
   cache: Cache,
+  trustPk: Boolean,
 ): Result<Set<Row>> = runCatching {
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
 
@@ -89,7 +93,7 @@ private fun fetchLookupTable(
   } else {
     val srcLkpTable = tableDef.subset(includeFieldNames)
     val includeFields = tableDef.fields.filter { it.name in includeFieldNames }.toSet()
-    val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
+    val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria, trustPk = trustPk)
     val result = ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
     result.toSet()
   }

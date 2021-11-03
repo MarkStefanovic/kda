@@ -169,10 +169,11 @@ class PgSQLAdapterTest {
       }
     }
     assertFalse(criteria.isEmpty())
-    val actualSQL = adapter.select(table = table, criteria = criteria)
+    val actualSQL = adapter.select(table = table, criteria = criteria, trustPk = true)
     val expectedSQL = standardizeSQL(
       """
-      SELECT "customer_id", "first_name", "last_name" FROM "sales"."customer" 
+      SELECT t."customer_id", t."first_name", t."last_name" 
+      FROM "sales"."customer" t
       WHERE "first_name" = 'Bob' OR "last_name" = 'Smith'
     """
     )

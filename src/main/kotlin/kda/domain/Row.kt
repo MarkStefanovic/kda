@@ -31,3 +31,10 @@ value class Row(private val row: Map<String, Value<*>>) {
     fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())
   }
 }
+
+fun Set<Row>.distinctOnPK(pkCols: Set<String>): Set<Row> =
+  associateBy { row ->
+    pkCols.map { pk ->
+      row.value(pk)
+    }.toSet()
+  }.values.toSet()

@@ -182,11 +182,12 @@ class MSSQLAdapterTest {
       }
     }
     assertFalse(criteria.isEmpty())
-    val actualSQL = adapter.select(table = table, criteria = criteria)
+    val actualSQL = adapter.select(table = table, criteria = criteria, trustPk = true)
     val expectedSQL = standardizeSQL(
       """
-      SELECT [customer_id], [first_name], [last_name] FROM [sales].[customer] 
-      WHERE [first_name] = 'Bob' OR [last_name] = 'Smith'
+      SELECT t.[customer_id], t.[first_name], t.[last_name] 
+      FROM [sales].[customer] t
+      WHERE t.[first_name] = 'Bob' OR t.[last_name] = 'Smith'
     """
     )
     assertEquals(expected = expectedSQL, actual = actualSQL)
