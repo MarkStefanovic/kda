@@ -74,12 +74,12 @@ fun compareRows(
   val srcRows = src.index(keyFields = primaryKeyFields, includeFields = includeFields)
   val addedRows = srcRows.filterKeys { key -> destRows[key] == null }
   val deletedRows = destRows.filterKeys { key -> srcRows[key] == null }
-  val updatedRows = srcRows.filter { (key, value) ->
+  val updatedRows = srcRows.filter { (key, newRow) ->
     val oldRow = destRows[key]
     if (oldRow == null) {
       false
     } else {
-      value != oldRow
+      newRow.toMap() != oldRow.toMap()
     }
   }
   RowDiff(

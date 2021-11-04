@@ -41,7 +41,8 @@ fun copyTable(
   val fields = if (ignoreAutoincrement) {
     includeFieldDefs.map { fld ->
       when (fld.dataType) {
-        is DataType.int, is DataType.nullableInt -> fld.copy(dataType = DataType.int(false))
+        is DataType.int -> fld.copy(dataType = DataType.int(false))
+        is DataType.nullableInt -> fld.copy(dataType = DataType.nullableInt(false))
         else -> fld
       }
     }.toSet()
