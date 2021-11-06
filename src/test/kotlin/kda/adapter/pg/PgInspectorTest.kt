@@ -4,7 +4,7 @@ import kda.adapter.JdbcExecutor
 import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Table
-import kda.shared.testPgConnection
+import kda.testutil.testPgConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

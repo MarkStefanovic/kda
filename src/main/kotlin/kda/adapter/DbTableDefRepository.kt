@@ -120,6 +120,7 @@ class DbTableDefRepository(private val maxFloatDigits: Int = 5) : TableDefReposi
           Field(name = row[TableDefs.column], dataType = dtype)
         }
         .toSet()
+
     return if (fields.isEmpty()) {
       null
     } else {
@@ -134,6 +135,7 @@ class DbTableDefRepository(private val maxFloatDigits: Int = 5) : TableDefReposi
           }
           .orderBy(PrimaryKeys.order to SortOrder.ASC)
           .map { it[PrimaryKeys.fieldName] }
+
       Table(
         schema = schema,
         name = table,

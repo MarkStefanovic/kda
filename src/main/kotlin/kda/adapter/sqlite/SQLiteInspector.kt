@@ -9,22 +9,6 @@ class SQLiteInspector(private val sqlExecutor: SQLExecutor) : Inspector {
     maxFloatDigits: Int,
     primaryKeyFieldNames: List<String>?,
   ): Table {
-
-    val x = """
-    +---+-------------+-----------+-------+-----------------+--+
-    |cid|name         |type       |notnull|dflt_value       |pk|
-    +---+-------------+-----------+-------+-----------------+--+
-    |0  |schema_name  |TEXT       |1      |NULL             |1 |
-    |1  |table_name   |TEXT       |1      |NULL             |2 |
-    |2  |column_name  |TEXT       |1      |NULL             |3 |
-    |3  |data_type    |VARCHAR(40)|1      |NULL             |0 |
-    |4  |max_length   |INT        |0      |NULL             |0 |
-    |5  |precision    |INT        |0      |NULL             |0 |
-    |6  |scale        |INT        |0      |NULL             |0 |
-    |7  |autoincrement|BOOLEAN    |0      |NULL             |0 |
-    |8  |date_added   |TEXT       |1      |CURRENT_TIMESTAMP|0 |
-    +---+-------------+-----------+-------+-----------------+--+
-    """
     val pragmaRows =
       sqlExecutor
         .fetchRows(
@@ -108,17 +92,25 @@ class SQLiteInspector(private val sqlExecutor: SQLExecutor) : Inspector {
         Field(name = row.columnName, dataType = dataType)
       }
 
-    val pkFields =
+    val dbPKFields =
       pragmaRows
         .filter { it.pkOrder > 0 }
         .sortedBy { it.pkOrder }
         .map { it.columnName }
 
+    val finalPKFields = dbPKFields.ifEmpty {
+      primaryKeyFieldNames
+    }
+
+    if (finalPKFields.isNullOrEmpty()) {
+      throw KDAError.NoPrimaryKeySpecified(table = table)
+    }
+
     return Table(
-      schema = schema,
+      schema = null,
       name = table,
       fields = fields.toSet(),
-      primaryKeyFieldNames = pkFields,
+      primaryKeyFieldNames = finalPKFields,
     )
   }
 

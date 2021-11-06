@@ -1,4 +1,4 @@
-package kda.shared
+package kda.testutil
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

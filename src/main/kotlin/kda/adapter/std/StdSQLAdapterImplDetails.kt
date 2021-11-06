@@ -31,9 +31,9 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
 
   override fun renderCriteria(criteria: Set<Criteria>, tableAlias: String?): String? {
     val prefix = if (tableAlias == null) {
-      "$tableAlias."
-    } else {
       ""
+    } else {
+      "$tableAlias."
     }
     val orClause = criteria.sortedBy { it.description }.mapNotNull { c ->
       val andClause = c.predicates.mapNotNull { predicate: Predicate ->

@@ -5,7 +5,7 @@ import kda.domain.Field
 import kda.domain.Row
 import kda.domain.Table
 import kda.domain.Value
-import kda.shared.standardizeSQL
+import kda.testutil.standardizeSQL
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

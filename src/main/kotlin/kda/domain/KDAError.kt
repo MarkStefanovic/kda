@@ -12,6 +12,11 @@ sealed class KDAError : Exception() {
         "Available fields include the following: ${availableFieldNames.joinToString(", ")}"
   }
 
+  data class NoPrimaryKeySpecified(val table: String) : KDAError() {
+    override val errorMessage =
+      "$table does not have a primary key at the database level, and no primary keys were specified."
+  }
+
   data class SQLError(
     val sql: String,
     val originalError: Exception,

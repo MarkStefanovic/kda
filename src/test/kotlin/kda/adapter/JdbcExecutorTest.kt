@@ -6,7 +6,7 @@ import kda.domain.KDAError
 import kda.domain.Row
 import kda.domain.Table
 import kda.domain.Value
-import kda.shared.testPgConnection
+import kda.testutil.testPgConnection
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate

@@ -4,9 +4,9 @@ import kda.domain.DataType
 import kda.domain.Dialect
 import kda.domain.Field
 import kda.domain.Table
-import kda.shared.tableExists
-import kda.shared.testDbCache
-import kda.shared.testPgConnection
+import kda.testutil.pgTableExists
+import kda.testutil.testDbCache
+import kda.testutil.testPgConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,7 +27,7 @@ class InspectTableTest {
           """.trimIndent()
         )
       }
-      assertTrue(tableExists(con, schema = "sales", table = "customer2"))
+      assertTrue(pgTableExists(con, schema = "sales", table = "customer2"))
 
       val actual = inspectTable(
         con = testPgConnection(),

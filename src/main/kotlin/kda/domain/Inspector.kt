@@ -8,5 +8,8 @@ interface Inspector {
     primaryKeyFieldNames: List<String>?,
   ): Table
 
-  fun tableExists(schema: String?, table: String): Boolean
+  fun tableExists(
+    schema: String?,
+    table: String,
+  ): Boolean
 }

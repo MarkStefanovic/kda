@@ -1,9 +1,9 @@
 package kda
 
 import kda.domain.Dialect
-import kda.shared.tableExists
-import kda.shared.testDbCache
-import kda.shared.testPgConnection
+import kda.testutil.pgTableExists
+import kda.testutil.testDbCache
+import kda.testutil.testPgConnection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -157,7 +157,7 @@ class SyncTest {
             """
           )
         }
-        assertFalse(tableExists(destCon, schema = "sales", table = "customer2"))
+        assertFalse(pgTableExists(destCon, schema = "sales", table = "customer2"))
       }
     }
   }
@@ -549,7 +549,7 @@ class SyncTest {
 
         addCustomers(con = srcCon, tableName = "customer", customer1, customer2, customer3, customer2dupe)
 
-        val result = sync(
+        sync(
           srcCon = srcCon,
           destCon = destCon,
           srcDialect = Dialect.PostgreSQL,

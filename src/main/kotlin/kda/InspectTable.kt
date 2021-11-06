@@ -44,16 +44,27 @@ fun inspectTable(
       } else {
         cachedTableDef
       }
+
     val missingPrimaryKeyFields: Set<String> =
-      primaryKeyFieldNames.toSet().minus(tableDef.sortedFieldNames.toSet())
+      primaryKeyFieldNames
+        .toSet()
+        .minus(tableDef.sortedFieldNames.toSet())
+
     if (missingPrimaryKeyFields.isEmpty()) {
-      val missingIncludeFields: Set<String> = includeFieldNames?.minus(tableDef.sortedFieldNames.toSet()) ?: setOf()
+      val missingIncludeFields: Set<String> =
+        includeFieldNames
+          ?.minus(tableDef.sortedFieldNames.toSet())
+          ?: setOf()
+
       if (missingIncludeFields.isNotEmpty()) {
         val includeFieldsCSV = includeFieldNames?.joinToString(", ") ?: ""
+
         val missingIncludeFieldsCSV = missingPrimaryKeyFields.joinToString(", ")
+
         val errorMessage =
           "The includeFields specified, [$includeFieldsCSV], does not include the " +
             "following primary-key fields: $missingIncludeFieldsCSV."
+
         throw KDAError.InvalidArgument(
           errorMessage = errorMessage,
           argumentName = "includeFieldNames",
@@ -63,18 +74,27 @@ fun inspectTable(
         if (includeFieldNames == null) {
           tableDef
         } else {
-          val finalFields = tableDef.fields.filter { fld -> fld.name in includeFieldNames }.toSet()
+          val finalFields =
+            tableDef
+              .fields
+              .filter { fld -> fld.name in includeFieldNames }
+              .toSet()
+
           tableDef.copy(fields = finalFields)
         }
       }
     } else {
       val pkFieldNamesCSV = primaryKeyFieldNames.joinToString(", ")
+
       val missingFieldsCSV = missingPrimaryKeyFields.joinToString(", ")
+
       val fieldNameCSV = tableDef.sortedFieldNames.joinToString(", ")
+
       val errorMessage =
         "The following primary key field(s) were specified: $pkFieldNamesCSV.  " +
           "However, the table does not include the following fields: $missingFieldsCSV.  " +
           "The table includes the following fields: $fieldNameCSV"
+
       throw KDAError.InvalidArgument(
         errorMessage = errorMessage,
         argumentName = "primaryKeyFieldNames",
