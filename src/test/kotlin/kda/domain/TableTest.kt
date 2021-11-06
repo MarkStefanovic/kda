@@ -65,4 +65,32 @@ class TableTest {
     )
     assertEquals(expected = expectedRows, actual = actualRows)
   }
+
+  @Test
+  fun toString_happy_path() {
+    val table = Table(
+      schema = "sales",
+      name = "customer",
+      fields = setOf(
+        Field(name = "customer_id", dataType = DataType.int(false)),
+        Field(name = "first_name", dataType = DataType.nullableText(null)),
+        Field(name = "last_name", dataType = DataType.nullableText(null)),
+      ),
+      primaryKeyFieldNames = listOf("customer_id"),
+    )
+
+    val expected = """
+      |Table [
+      |  schema: sales
+      |  name: customer
+      |  fields: 
+      |    Field(name=customer_id, dataType=int(autoincrement=false))
+      |    Field(name=first_name, dataType=nullableText(maxLength=null))
+      |    Field(name=last_name, dataType=nullableText(maxLength=null))
+      |  primaryKeyFieldNames: [customer_id]
+      |]
+    """.trimMargin()
+
+    assertEquals(expected = expected, actual = table.toString())
+  }
 }

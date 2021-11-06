@@ -3,9 +3,9 @@ package kda
 import kda.domain.CopyTableResult
 import kda.domain.Dialect
 import kda.testutil.DummyCache
-import kda.testutil.connectToTestDb
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
+import kda.testutil.testSQLiteDbConnection
 import org.junit.jupiter.api.Test
 import java.sql.Connection
 import kotlin.test.assertEquals
@@ -56,7 +56,7 @@ class CopyTableTest {
 
   @Test
   fun given_no_primary_is_enforced_at_db_level() {
-    connectToTestDb().use { con: Connection ->
+    testSQLiteDbConnection().use { con: Connection ->
       con.createStatement().use { stmt ->
         stmt.execute("DROP TABLE IF EXISTS customer")
 

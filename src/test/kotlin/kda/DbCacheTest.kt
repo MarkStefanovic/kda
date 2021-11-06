@@ -4,7 +4,7 @@ import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.LatestTimestamp
 import kda.domain.Table
-import kda.testutil.testDbCache
+import kda.testutil.testSQLiteDbCache
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
@@ -14,7 +14,7 @@ import kotlin.test.assertNull
 class DbCacheTest {
   @Test
   fun addTableDef_happy_path() {
-    val cache = testDbCache()
+    val cache = testSQLiteDbCache()
 
     val tableDef = Table(
       schema = null,
@@ -32,7 +32,7 @@ class DbCacheTest {
 
   @Test
   fun addLatestTimestamp_happy_path() {
-    val cache = testDbCache()
+    val cache = testSQLiteDbCache()
     val ts = LocalDateTime.of(2010, 1, 2, 3, 4, 5)
     cache.addLatestTimestamp(
       schema = null,
@@ -51,7 +51,7 @@ class DbCacheTest {
 
   @Test
   fun clearTableDef_happy_path() {
-    val cache = testDbCache()
+    val cache = testSQLiteDbCache()
     val tableDef = Table(
       schema = null,
       name = "customer",
@@ -69,7 +69,7 @@ class DbCacheTest {
 
   @Test
   fun clearLatestTimestamps_happy_path() {
-    val cache = testDbCache()
+    val cache = testSQLiteDbCache()
     val ts = LocalDateTime.of(2010, 1, 2, 3, 4, 5)
     val latestTimestamps = setOf(LatestTimestamp(fieldName = "date_added", timestamp = ts))
     cache.addLatestTimestamp(schema = null, table = "customer", timestamps = latestTimestamps)

@@ -13,7 +13,7 @@ class DummyCache : Cache {
 
   override fun clearLatestTimestamps(schema: String?, table: String) = Result.success(Unit)
 
-  override fun tableDef(schema: String?, table: String): Result<Table?> = Result.success(null)
+  override fun tableDef(schema: String?, table: String) = Result.success(null)
 
   override fun latestTimestamps(schema: String?, table: String) = Result.success(setOf<LatestTimestamp>())
 }

@@ -5,8 +5,8 @@ import kda.domain.Dialect
 import kda.domain.Field
 import kda.domain.Table
 import kda.testutil.pgTableExists
-import kda.testutil.testDbCache
 import kda.testutil.testPgConnection
+import kda.testutil.testSQLiteDbCache
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,7 +36,7 @@ class InspectTableTest {
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),
         includeFieldNames = null,
-        cache = testDbCache(),
+        cache = testSQLiteDbCache(),
       ).getOrThrow()
       val expected = Table(
         schema = "sales",

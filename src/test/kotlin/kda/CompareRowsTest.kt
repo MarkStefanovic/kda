@@ -2,14 +2,14 @@ package kda
 
 import kda.domain.Dialect
 import kda.testutil.DummyCache
-import kda.testutil.connectToTestDb
+import kda.testutil.testSQLiteDbConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class CompareRowsTest {
   @Test
   fun happy_path() {
-    connectToTestDb().use { con ->
+    testSQLiteDbConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -83,7 +83,7 @@ class CompareRowsTest {
 
   @Test
   fun given_duplicate_dest_rows() {
-    connectToTestDb().use { con ->
+    testSQLiteDbConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -159,7 +159,7 @@ class CompareRowsTest {
 
   @Test
   fun given_duplicate_src_rows() {
-    connectToTestDb().use { con ->
+    testSQLiteDbConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -236,7 +236,7 @@ class CompareRowsTest {
 
   @Test
   fun when_rows_are_added() {
-    connectToTestDb().use { con ->
+    testSQLiteDbConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -309,7 +309,7 @@ class CompareRowsTest {
 
   @Test
   fun when_rows_are_updated() {
-    connectToTestDb().use { con ->
+    testSQLiteDbConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()

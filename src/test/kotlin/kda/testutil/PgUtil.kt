@@ -1,9 +1,5 @@
 package kda.testutil
 
-import kda.Cache
-import kda.DbCache
-import kda.adapter.SQLDb
-import kda.adapter.sqliteHikariDatasource
 import org.junit.jupiter.api.Test
 import java.sql.Connection
 import java.sql.DriverManager
@@ -24,13 +20,6 @@ fun pgTableExists(con: Connection, schema: String, table: String): Boolean =
     }
   }
 
-fun testDbCache(): Cache {
-  val db = SQLDb(sqliteHikariDatasource())
-  db.dropTables()
-  db.createTables()
-  return DbCache(db)
-}
-
 fun testPgConnection(): Connection = DriverManager.getConnection(
   "jdbc:postgresql://localhost:5432/testdb",
   System.getenv("DB_USER"),
@@ -39,7 +28,7 @@ fun testPgConnection(): Connection = DriverManager.getConnection(
 
 class TableExistsUtil {
   @Test
-  fun tableExists_happy_path() {
+  fun given_pg_db_when_table_exists() {
     testPgConnection().use { con ->
       con.prepareStatement("DROP TABLE IF EXISTS sales.customer").executeUpdate()
 

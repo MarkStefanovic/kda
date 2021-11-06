@@ -2,8 +2,8 @@ package kda
 
 import kda.domain.Dialect
 import kda.testutil.pgTableExists
-import kda.testutil.testDbCache
 import kda.testutil.testPgConnection
+import kda.testutil.testSQLiteDbCache
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -207,7 +207,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -263,7 +263,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -302,7 +302,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -374,7 +374,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,
@@ -437,7 +437,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
         ).getOrThrow()
@@ -479,7 +479,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
         ).getOrThrow()
@@ -561,7 +561,7 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testDbCache(),
+          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,

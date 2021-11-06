@@ -1,5 +1,7 @@
 package kda.domain
 
+import kotlin.collections.joinToString
+
 data class Table(
   val schema: String?,
   val name: String,
@@ -20,19 +22,20 @@ data class Table(
     require(fields.isNotEmpty()) { "A table must have fields." }
   }
 
-  val sortedFieldNames: List<String> by lazy {
-    fields.map { fld -> fld.name }.sorted()
-  }
+  val sortedFieldNames: List<String> by lazy { fields.map { fld -> fld.name }.sorted() }
 
   val primaryKeyFields: List<Field> by lazy {
     val fldLkp = fields.associateBy { it.name }
-    primaryKeyFieldNames.map { fldLkp[it] ?: throw KDAError.FieldNotFound(fieldName = it, availableFieldNames = fldLkp.keys) }
+    primaryKeyFieldNames.map {
+      fldLkp[it] ?: throw KDAError.FieldNotFound(fieldName = it, availableFieldNames = fldLkp.keys)
+    }
   }
 
   fun row(vararg keyValuePairs: Pair<String, Any?>): Row {
-    val rowMap = keyValuePairs.associate { (fieldName, value) ->
-      wrapFieldValue(fields = fields, fieldName = fieldName, value = value)
-    }
+    val rowMap =
+      keyValuePairs.associate { (fieldName, value) ->
+        wrapFieldValue(fields = fields, fieldName = fieldName, value = value)
+      }
     return Row(rowMap)
   }
 
@@ -41,6 +44,17 @@ data class Table(
 
   fun subset(fieldNames: Set<String>): Table =
     copy(fields = fields.filter { fld -> fld.name in fieldNames }.toSet())
+
+  override fun toString() =
+    """
+    |Table [
+    |  schema: $schema
+    |  name: $name
+    |  fields: 
+    |    ${fields.joinToString("\n    ")}
+    |  primaryKeyFieldNames: [${primaryKeyFieldNames.joinToString(", ")}]
+    |]
+  """.trimMargin()
 }
 
 private fun wrapFieldValue(
