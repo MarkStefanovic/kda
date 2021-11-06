@@ -115,7 +115,7 @@ class PgInspector(private val sqlExecutor: SQLExecutor) : Inspector {
     return ct == 1
   }
 
-  fun primaryKeyFields(schema: String?, table: String): List<String> {
+  internal fun primaryKeyFields(schema: String?, table: String): List<String> {
     val fullTableName = if (schema == null) table else "$schema.$table"
 
     val sql = """

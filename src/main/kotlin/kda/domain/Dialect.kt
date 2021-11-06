@@ -4,4 +4,5 @@ enum class Dialect {
   HortonworksHive,
   MSSQLServer,
   PostgreSQL,
+  SQLite;
 }

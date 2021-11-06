@@ -4,7 +4,7 @@ import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SQLDb
-import kda.adapter.sqliteDatasource
+import kda.adapter.sqliteHikariDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
 
@@ -87,5 +87,5 @@ class DbCache(private val db: Db) : Cache {
 }
 
 val sqliteCache: Cache by lazy {
-  DbCache(SQLDb(sqliteDatasource()))
+  DbCache(SQLDb(sqliteHikariDatasource()))
 }

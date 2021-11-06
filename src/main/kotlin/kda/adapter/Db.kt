@@ -51,7 +51,7 @@ class SQLDb(private val ds: HikariDataSource) : Db {
     }
 }
 
-fun sqliteDatasource(
+fun sqliteHikariDatasource(
   dbPath: String = "./cache.db",
   driverClassName: String = "org.sqlite.JDBC"
 ): HikariDataSource {
