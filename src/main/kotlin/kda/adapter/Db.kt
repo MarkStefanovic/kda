@@ -3,8 +3,10 @@ package kda.adapter
 import kda.domain.DataTypeName
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -19,28 +21,42 @@ interface Db {
   fun dropTables()
 }
 
-class SQLDb(private val exposedDb: Database) : Db {
+internal class SQLDb(
+  private val exposedDb: Database,
+  private val logToConsole: Boolean,
+) : Db {
   override fun createTables() {
     transaction(db = exposedDb) {
-//      addLogger(StdOutSqlLogger)
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun dropTables() {
     transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       SchemaUtils.drop(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun exec(statement: Transaction.() -> Unit) {
     transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       statement()
     }
   }
 
   override fun <R> fetch(statement: Transaction.() -> R): R =
     transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       statement()
     }
 }
