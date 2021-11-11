@@ -7,6 +7,7 @@ import kda.adapter.SQLDb
 import kda.adapter.sqliteHikariDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
+import org.jetbrains.exposed.sql.Database
 
 interface Cache {
   fun addTableDef(tableDef: Table): Result<Unit>
@@ -87,5 +88,5 @@ class DbCache(private val db: Db) : Cache {
 }
 
 val sqliteCache: Cache by lazy {
-  DbCache(SQLDb(sqliteHikariDatasource()))
+  DbCache(SQLDb(Database.connect(sqliteHikariDatasource())))
 }

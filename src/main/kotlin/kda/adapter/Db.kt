@@ -21,32 +21,28 @@ interface Db {
   fun dropTables()
 }
 
-class SQLDb(private val ds: HikariDataSource) : Db {
-  private val db: Database by lazy {
-    Database.connect(ds)
-  }
-
+class SQLDb(private val exposedDb: Database) : Db {
   override fun createTables() {
-    transaction(db = db) {
+    transaction(db = exposedDb) {
 //      addLogger(StdOutSqlLogger)
       SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun dropTables() {
-    transaction(db = db) {
+    transaction(db = exposedDb) {
       SchemaUtils.drop(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun exec(statement: Transaction.() -> Unit) {
-    transaction(db = db) {
+    transaction(db = exposedDb) {
       statement()
     }
   }
 
   override fun <R> fetch(statement: Transaction.() -> R): R =
-    transaction(db = db) {
+    transaction(db = exposedDb) {
       statement()
     }
 }
