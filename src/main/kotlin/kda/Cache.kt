@@ -4,7 +4,6 @@ import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SQLDb
-import kda.adapter.sqliteHikariDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
 import org.jetbrains.exposed.sql.Database
@@ -88,5 +87,5 @@ class DbCache(private val db: Db) : Cache {
 }
 
 val sqliteCache: Cache by lazy {
-  DbCache(SQLDb(Database.connect(sqliteHikariDatasource())))
+  DbCache(SQLDb(Database.connect(url = "jdbc:sqlite:file:test?mode=memory&cache=shared", driver = "org.sqlite.JDBC")))
 }

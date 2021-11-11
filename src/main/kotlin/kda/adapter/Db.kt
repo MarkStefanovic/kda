@@ -1,7 +1,5 @@
 package kda.adapter
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import kda.domain.DataTypeName
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -45,22 +43,6 @@ class SQLDb(private val exposedDb: Database) : Db {
     transaction(db = exposedDb) {
       statement()
     }
-}
-
-fun sqliteHikariDatasource(
-  dbPath: String = "./cache.db",
-  driverClassName: String = "org.sqlite.JDBC"
-): HikariDataSource {
-  val config = HikariConfig()
-  config.jdbcUrl = "jdbc:sqlite:$dbPath"
-  config.driverClassName = driverClassName
-  config.maximumPoolSize = 1
-  config.transactionIsolation = "TRANSACTION_SERIALIZABLE"
-  config.connectionTestQuery = "SELECT 1"
-  config.addDataSourceProperty("cachePrepStmts", "true")
-  config.addDataSourceProperty("prepStmtCacheSize", "250")
-  config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-  return HikariDataSource(config)
 }
 
 object TableDefs : Table("kda_table_def") {
