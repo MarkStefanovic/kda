@@ -1,12 +1,12 @@
 package kda.adapter
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import kda.domain.DataTypeName
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -21,50 +21,44 @@ interface Db {
   fun dropTables()
 }
 
-class SQLDb(private val ds: HikariDataSource) : Db {
-  private val db: Database by lazy {
-    Database.connect(ds)
-  }
-
+internal class SQLDb(
+  private val exposedDb: Database,
+  private val logToConsole: Boolean,
+) : Db {
   override fun createTables() {
-    transaction(db = db) {
-//      addLogger(StdOutSqlLogger)
+    transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun dropTables() {
-    transaction(db = db) {
+    transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       SchemaUtils.drop(PrimaryKeys, TableDefs, LatestTimestamps)
     }
   }
 
   override fun exec(statement: Transaction.() -> Unit) {
-    transaction(db = db) {
+    transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       statement()
     }
   }
 
   override fun <R> fetch(statement: Transaction.() -> R): R =
-    transaction(db = db) {
+    transaction(db = exposedDb) {
+      if (logToConsole) {
+        addLogger(StdOutSqlLogger)
+      }
       statement()
     }
-}
-
-fun sqliteHikariDatasource(
-  dbPath: String = "./cache.db",
-  driverClassName: String = "org.sqlite.JDBC"
-): HikariDataSource {
-  val config = HikariConfig()
-  config.jdbcUrl = "jdbc:sqlite:$dbPath"
-  config.driverClassName = driverClassName
-  config.maximumPoolSize = 1
-  config.transactionIsolation = "TRANSACTION_SERIALIZABLE"
-  config.connectionTestQuery = "SELECT 1"
-  config.addDataSourceProperty("cachePrepStmts", "true")
-  config.addDataSourceProperty("prepStmtCacheSize", "250")
-  config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-  return HikariDataSource(config)
 }
 
 object TableDefs : Table("kda_table_def") {

@@ -1,12 +1,12 @@
 package kda
 
-import kda.adapter.Db
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
 import kda.adapter.SQLDb
-import kda.adapter.sqliteHikariDatasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
+import org.jetbrains.exposed.sql.Database
+import java.sql.DriverManager
 
 interface Cache {
   fun addTableDef(tableDef: Table): Result<Unit>
@@ -26,7 +26,15 @@ interface Cache {
   fun latestTimestamps(schema: String?, table: String): Result<Set<LatestTimestamp>>
 }
 
-class DbCache(private val db: Db) : Cache {
+class DbCache(
+  private val exposedDb: Database,
+  private val logToConsole: Boolean,
+) : Cache {
+
+  private val db by lazy {
+    SQLDb(exposedDb = exposedDb, logToConsole = logToConsole)
+  }
+
   private val latestTimestampRepo by lazy {
     DbLatestTimestampRepository()
   }
@@ -87,5 +95,10 @@ class DbCache(private val db: Db) : Cache {
 }
 
 val sqliteCache: Cache by lazy {
-  DbCache(SQLDb(sqliteHikariDatasource()))
+  val url = "jdbc:sqlite:file:test?mode=memory&cache=shared"
+  DriverManager.getConnection(url) // needed to keep in-memory database alive
+  DbCache(
+    exposedDb = Database.connect(url = url, driver = "org.sqlite.JDBC"),
+    logToConsole = false,
+  )
 }
