@@ -20,7 +20,7 @@ import java.time.format.DateTimeFormatter
 open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
   private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSSS")
 
   override fun fullTableName(schema: String?, table: String): String =
     if (schema == null) {

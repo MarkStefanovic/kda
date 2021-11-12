@@ -17,7 +17,11 @@ value class Row(private val row: Map<String, Value<*>>) {
     if (fieldNames.toSet() == row.keys) {
       this
     } else {
-      require(fieldNames.all { fldName -> row.containsKey(fldName) })
+      fieldNames.forEach { fldName ->
+        require(row.containsKey(fldName)) {
+          "The row ${row.toMap()} does not contain the field, $fldName."
+        }
+      }
       val subset = fieldNames.associateWith { fieldName ->
         row[fieldName] ?: throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = row.keys)
       }
