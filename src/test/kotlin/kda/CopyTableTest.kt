@@ -2,7 +2,6 @@ package kda
 
 import kda.domain.CopyTableResult
 import kda.domain.Dialect
-import kda.testutil.DummyCache
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
 import kda.testutil.testSQLiteDbConnection
@@ -35,8 +34,10 @@ class CopyTableTest {
           copyTable(
             srcCon = srcCon,
             destCon = destCon,
+            cacheCon = destCon,
             srcDialect = Dialect.PostgreSQL,
             destDialect = Dialect.PostgreSQL,
+            cacheDialect = Dialect.PostgreSQL,
             srcSchema = "sales",
             srcTable = "customer",
             destSchema = "sales",
@@ -77,15 +78,16 @@ class CopyTableTest {
         copyTable(
           srcCon = con,
           destCon = con,
+          cacheCon = con,
           srcDialect = Dialect.SQLite,
           destDialect = Dialect.SQLite,
+          cacheDialect = Dialect.SQLite,
           srcSchema = null,
           srcTable = "customer",
           destSchema = null,
           destTable = "customer2",
           includeFields = setOf("customer_id", "first_name", "last_name"),
           primaryKeyFields = listOf("customer_id"),
-          cache = DummyCache(),
         ).getOrThrow()
 
       assertIs<CopyTableResult>(result)

@@ -1,94 +1,66 @@
 package kda.adapter
 
-import kda.domain.DataTypeName
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.javatime.CurrentDateTime
-import org.jetbrains.exposed.sql.javatime.datetime
-import org.jetbrains.exposed.sql.transactions.transaction
+import kda.domain.DataType
+import kda.domain.Datasource
+import kda.domain.Field
+import kda.domain.Table
 
-interface Db {
-  fun exec(statement: Transaction.() -> Unit)
+fun createTables(ds: Datasource, showSQL: Boolean) {
+  val tables = setOf(tableDefs, primaryKeys, latestTimestamps)
 
-  fun <R> fetch(statement: Transaction.() -> R): R
+  tables.forEach { table ->
+    val tableExistsSQL = ds.inspector.tableExists(schema = null, table = table.name)
 
-  fun createTables()
+    if (!tableExistsSQL) {
+      val sql = ds.adapter.createTable(table)
 
-  fun dropTables()
-}
-
-internal class SQLDb(
-  private val exposedDb: Database,
-  private val logToConsole: Boolean,
-) : Db {
-  override fun createTables() {
-    transaction(db = exposedDb) {
-      if (logToConsole) {
-        addLogger(StdOutSqlLogger)
+      if (showSQL) {
+        println(sql)
       }
-      SchemaUtils.create(PrimaryKeys, TableDefs, LatestTimestamps)
+
+      ds.executor.execute(sql)
     }
   }
-
-  override fun dropTables() {
-    transaction(db = exposedDb) {
-      if (logToConsole) {
-        addLogger(StdOutSqlLogger)
-      }
-      SchemaUtils.drop(PrimaryKeys, TableDefs, LatestTimestamps)
-    }
-  }
-
-  override fun exec(statement: Transaction.() -> Unit) {
-    transaction(db = exposedDb) {
-      if (logToConsole) {
-        addLogger(StdOutSqlLogger)
-      }
-      statement()
-    }
-  }
-
-  override fun <R> fetch(statement: Transaction.() -> R): R =
-    transaction(db = exposedDb) {
-      if (logToConsole) {
-        addLogger(StdOutSqlLogger)
-      }
-      statement()
-    }
 }
 
-object TableDefs : Table("kda_table_def") {
-  val schema = text("schema_name")
-  val table = text("table_name")
-  val column = text("column_name")
-  val dataType = enumerationByName("data_type", 40, DataTypeName::class)
-  val maxLength = integer("max_length").nullable()
-  val precision = integer("precision").nullable()
-  val scale = integer("scale").nullable()
-  val autoincrement = bool("autoincrement").nullable()
-  val dateAdded = datetime("date_added").defaultExpression(CurrentDateTime())
+val tableDefs = Table(
+  schema = null,
+  name = "kda_table_def",
+  fields = setOf(
+    Field(name = "schema_name", dataType = DataType.nullableText(null)),
+    Field(name = "table_name", dataType = DataType.text(null)),
+    Field(name = "field_name", dataType = DataType.text(null)),
+    Field(name = "data_type", dataType = DataType.text(40)),
+    Field(name = "max_length", dataType = DataType.nullableInt(false)),
+    Field(name = "precision", dataType = DataType.nullableInt(false)),
+    Field(name = "scale", dataType = DataType.nullableInt(false)),
+    Field(name = "autoincrement", dataType = DataType.nullableBool),
+    Field(name = "date_added", dataType = DataType.localDateTime),
+  ),
+  primaryKeyFieldNames = listOf("schema_name", "table_name", "field_name"),
+)
 
-  override val primaryKey = PrimaryKey(schema, table, column, name = "pk_kda_table_def")
-}
+val primaryKeys = Table(
+  schema = null,
+  name = "kda_primary_key",
+  fields = setOf(
+    Field(name = "schema_name", dataType = DataType.nullableText(null)),
+    Field(name = "table_name", dataType = DataType.text(null)),
+    Field(name = "field_name", dataType = DataType.text(null)),
+    Field(name = "order", dataType = DataType.int(false)),
+    Field(name = "date_added", dataType = DataType.localDateTime),
+  ),
+  primaryKeyFieldNames = listOf("schema_name", "table_name", "order"),
+)
 
-object PrimaryKeys : Table("kda_primary_key") {
-  val schema = text("schema_name")
-  val table = text("table_name")
-  val fieldName = text("field_name")
-  val order = integer("order")
-
-  override val primaryKey = PrimaryKey(schema, table, order, name = "pk_kda_primary_key")
-}
-
-object LatestTimestamps : Table("kda_latest_timestamp") {
-  val schema = text("schema_name")
-  val table = text("table_name")
-  val fieldName = text("field_name")
-  val ts = datetime("ts").nullable()
-
-  override val primaryKey = PrimaryKey(schema, table, fieldName, name = "pk_kda_latest_timestamp")
-}
+val latestTimestamps = Table(
+  schema = null,
+  name = "kda_latest_timestamp",
+  fields = setOf(
+    Field(name = "schema_name", dataType = DataType.nullableText(null)),
+    Field(name = "table_name", dataType = DataType.text(null)),
+    Field(name = "field_name", dataType = DataType.text(null)),
+    Field(name = "ts", dataType = DataType.nullableLocalDateTime),
+  ),
+  primaryKeyFieldNames = listOf("schema_name", "table_name", "field_name"),
+)

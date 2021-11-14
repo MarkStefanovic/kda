@@ -142,7 +142,7 @@ class HiveSQLAdapterTest {
           "last_name" to Value.text("Oil"),
         ),
       )
-    val sql = adapter.deleteKeys(table = table, primaryKeyValues = rows)
+    val sql = adapter.delete(table = table, rows = rows)
     val expected = "DELETE FROM `sales`.`customer` WHERE `customer_id` IN (1, 2, 3)"
     assertEquals(expected = expected, actual = sql)
   }
@@ -168,26 +168,25 @@ class HiveSQLAdapterTest {
         Row.of(
           "first_name" to Value.text("Mark"),
           "last_name" to Value.text("Stefanovic"),
-          "age" to Value.int(99)
         ),
         Row.of(
           "first_name" to Value.text("Bob"),
           "last_name" to Value.text("Smith"),
-          "age" to Value.int(74)
         ),
       )
-    val sql = adapter.deleteKeys(table = table, primaryKeyValues = rows)
+    val sql = adapter.delete(table = table, rows = rows)
     val expected = standardizeSQL(
       """
-      WITH d (`first_name`, `last_name`) AS (
-        VALUES ('Mark', 'Stefanovic'), 
-        ('Bob', 'Smith')
-      ) 
-      DELETE FROM `sales`.`customer` t 
-      USING d 
-      WHERE 
-        t.`first_name` = d.`first_name` 
-        AND t.`last_name` = d.`last_name`
+        WITH d (`first_name`, `last_name`) AS (
+          VALUES 
+            ('Mark', 'Stefanovic'), 
+            ('Bob', 'Smith')
+        ) 
+        DELETE FROM `sales`.`customer` t 
+        USING d 
+        WHERE 
+          t.`first_name` = d.`first_name` 
+          AND t.`last_name` = d.`last_name`
     """
     )
     assertEquals(expected = expected, actual = sql)

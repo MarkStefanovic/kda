@@ -11,16 +11,17 @@ import java.sql.Connection
 fun compareRows(
   srcCon: Connection,
   destCon: Connection,
+  cacheCon: Connection,
   srcDialect: Dialect,
   destDialect: Dialect,
+  cacheDialect: Dialect,
   srcSchema: String?,
   srcTable: String,
   destSchema: String?,
   destTable: String,
   compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
-  criteria: Set<Criteria> = emptySet(),
-  cache: Cache = sqliteCache,
+  criteria: Criteria = Criteria(emptySet()),
   includeFields: Set<String>? = null,
   showSQL: Boolean = false,
 ): Result<RowDiff> = runCatching {
@@ -34,15 +35,16 @@ fun compareRows(
     copyTable(
       srcCon = srcCon,
       destCon = destCon,
+      cacheCon = cacheCon,
       srcDialect = srcDialect,
       destDialect = destDialect,
+      cacheDialect = cacheDialect,
       srcSchema = srcSchema,
       srcTable = srcTable,
       destSchema = destSchema,
       destTable = destTable,
       includeFields = includeFields,
       primaryKeyFields = primaryKeyFieldNames,
-      cache = cache,
     )
       .getOrThrow()
 
@@ -78,7 +80,7 @@ private fun fetchLookupTable(
   tableDef: Table,
   primaryKeyFieldNames: List<String>,
   compareFields: Set<String>,
-  criteria: Set<Criteria>,
+  criteria: Criteria,
   showSQL: Boolean,
 ): Result<Set<Row>> = runCatching {
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
@@ -91,9 +93,8 @@ private fun fetchLookupTable(
 
   if (showSQL) {
     println(
-      """
-    |Fetching lookup table for table ${tableDef.name}:
-    |  $srcKeysSQL
+      """Fetching lookup table for table ${tableDef.name}:
+      |  $srcKeysSQL
     """.trimMargin()
     )
   }

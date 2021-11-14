@@ -6,6 +6,7 @@ import kda.domain.KDAError
 import kda.domain.Row
 import kda.domain.SQLExecutor
 import kda.domain.Value
+import java.io.Closeable
 import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.Date
@@ -14,16 +15,14 @@ import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class JdbcExecutor(private val con: Connection) : SQLExecutor {
+class JdbcExecutor(private val con: Connection) : SQLExecutor, Closeable {
   override fun execute(sql: String) {
-    with(con) {
-      try {
-        createStatement().use { stmt -> stmt.execute(sql) }
-      } catch (e: Exception) {
-        throw Exception(
-          "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
-        )
-      }
+    try {
+      con.createStatement().use { stmt -> stmt.execute(sql) }
+    } catch (e: Exception) {
+      throw Exception(
+        "The following error occurred while executing '$sql': ${e.stackTraceToString()}"
+      )
     }
   }
 
@@ -137,16 +136,44 @@ class JdbcExecutor(private val con: Connection) : SQLExecutor {
         throw KDAError.SQLError(sql = sql, originalError = e)
       }
     }
+
+  override fun close() {
+    con.close()
+  }
 }
 
 private fun ResultSet.toMap(fields: Set<Field>): Map<String, Value<*>> =
   fields.associate { fld ->
     fld.name to
       when (fld.dataType) {
-        DataType.bool ->
-          Value.bool(value = getBoolean(fld.name))
-        DataType.nullableBool ->
-          Value.nullableBool(value = getObject(fld.name) as Boolean?)
+        DataType.bool -> {
+          val v = getObject(fld.name)
+          if (v is Int) {
+            if (v == 0) {
+              Value.nullableBool(false)
+            } else {
+              Value.nullableBool(true)
+            }
+          } else {
+            Value.nullableBool(v as Boolean)
+          }
+        }
+        DataType.nullableBool -> {
+          val v = getObject(fld.name)
+          if (v == null) {
+            Value.nullableBool(null)
+          } else {
+            if (v is Int) {
+              if (v == 0) {
+                Value.nullableBool(false)
+              } else {
+                Value.nullableBool(true)
+              }
+            } else {
+              Value.nullableBool(v as Boolean)
+            }
+          }
+        }
         is DataType.decimal ->
           Value.decimal(value = getBigDecimal(fld.name))
         is DataType.nullableDecimal ->

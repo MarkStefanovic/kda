@@ -10,9 +10,6 @@ value class Row(private val row: Map<String, Value<*>>) {
   val fieldNames: Set<String>
     get() = row.keys
 
-  fun value(fieldName: String): Value<*> =
-    row[fieldName] ?: throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = row.keys)
-
   fun subset(fieldNames: Set<String>): Row =
     if (fieldNames.toSet() == row.keys) {
       this
@@ -30,6 +27,9 @@ value class Row(private val row: Map<String, Value<*>>) {
 
   fun toMap(): Map<String, Any?> =
     row.entries.associate { entry -> entry.key to entry.value.value }
+
+  fun value(fieldName: String): Value<*> =
+    row[fieldName] ?: throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = row.keys)
 
   companion object {
     fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())

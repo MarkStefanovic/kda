@@ -20,6 +20,13 @@ data class Table(
     }
 
     require(fields.isNotEmpty()) { "A table must have fields." }
+
+    val fieldNames = fields.map { it.name }
+    require(primaryKeyFieldNames.all { fieldNames.contains(it) }) {
+      "primary key fields must correspond to the names of fields specified in the fields parameter, but the " +
+        "primary key fields specified [${primaryKeyFieldNames.joinToString(", ")}] do not correspond to the " +
+        "list of available fields: [${fieldNames.joinToString(", ")}]."
+    }
   }
 
   val sortedFieldNames: List<String> by lazy { fields.map { fld -> fld.name }.sorted() }
@@ -31,9 +38,24 @@ data class Table(
     }
   }
 
+  fun field(fieldName: String): Field =
+    fields.firstOrNull { it.name == fieldName }
+      ?: throw KDAError.FieldNotFound(
+        fieldName = fieldName,
+        availableFieldNames = sortedFieldNames.toSet(),
+      )
+
   fun row(vararg keyValuePairs: Pair<String, Any?>): Row {
     val rowMap =
       keyValuePairs.associate { (fieldName, value) ->
+        wrapFieldValue(fields = fields, fieldName = fieldName, value = value)
+      }
+    return Row(rowMap)
+  }
+
+  fun row(values: Map<String, Any?>): Row {
+    val rowMap =
+      values.entries.associate { (fieldName, value) ->
         wrapFieldValue(fields = fields, fieldName = fieldName, value = value)
       }
     return Row(rowMap)
@@ -46,8 +68,7 @@ data class Table(
     copy(fields = fields.filter { fld -> fld.name in fieldNames }.toSet())
 
   override fun toString() =
-    """
-    |Table [
+    """Table [
     |  schema: $schema
     |  name: $name
     |  fields: 
@@ -69,7 +90,7 @@ private fun wrapFieldValue(
       availableFieldNames = fields.map { it.name }.toSet(),
     )
   } else {
-    val wrappedValue = field.dataType.wrapValue(value)
+    val wrappedValue = field.wrapValue(value)
     return fieldName to wrappedValue
   }
 }

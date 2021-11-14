@@ -3,7 +3,6 @@ package kda
 import kda.domain.Dialect
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
-import kda.testutil.testSQLiteDbCache
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -135,16 +134,6 @@ class SyncTest {
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")
           stmt.execute(
-//            """
-//            CREATE TABLE sales.customer (
-//                customer_id SERIAL PRIMARY KEY
-//            ,   first_name TEXT NOT NULL
-//            ,   last_name TEXT NOT NULL
-//            ,   middle_initial TEXT NULL
-//            ,   date_added TIMESTAMP NOT NULL DEFAULT now()
-//            ,   date_updated TIMESTAMP NULL
-//            )
-//            """
             """
             CREATE TABLE sales.customer (
                 customer_id INT NOT NULL
@@ -198,8 +187,10 @@ class SyncTest {
         val resultAfterAdd = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -207,7 +198,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -254,8 +244,10 @@ class SyncTest {
         val resultAfterUpdate = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -263,7 +255,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -293,8 +284,10 @@ class SyncTest {
         val resultAfterDelete = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -302,7 +295,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
         ).getOrThrow()
 
@@ -365,8 +357,10 @@ class SyncTest {
         val resultAfterAdd = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -374,7 +368,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,
@@ -428,8 +421,10 @@ class SyncTest {
         val resultAfterUpdate = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -437,7 +432,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
         ).getOrThrow()
@@ -446,7 +440,7 @@ class SyncTest {
 
         assertEquals(expected = setOf(customer1, updatedCustomer2, customer3), actual = updatedCustomers)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.updated.toMap())
+        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.added.toMap())
 
         assertEquals(expected = emptyMap(), actual = resultAfterUpdate.deleted.toMap())
 
@@ -461,7 +455,7 @@ class SyncTest {
               "date_updated" to LocalDateTime.of(2020, 1, 2, 3, 4, 5),
             ),
           ),
-          actual = resultAfterUpdate.added.toMap(),
+          actual = resultAfterUpdate.updated.toMap(),
         )
 
         // TEST DELETE
@@ -470,8 +464,10 @@ class SyncTest {
         val resultAfterDelete = sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -479,7 +475,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
         ).getOrThrow()
@@ -552,8 +547,10 @@ class SyncTest {
         sync(
           srcCon = srcCon,
           destCon = destCon,
+          cacheCon = destCon,
           srcDialect = Dialect.PostgreSQL,
           destDialect = Dialect.PostgreSQL,
+          cacheDialect = Dialect.PostgreSQL,
           srcSchema = "sales",
           srcTable = "customer",
           destSchema = "sales",
@@ -561,7 +558,6 @@ class SyncTest {
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          cache = testSQLiteDbCache(),
           chunkSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,

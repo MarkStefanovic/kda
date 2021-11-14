@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "1.5.31"
     id("org.jmailen.kotlinter") version "3.4.5"
@@ -17,10 +15,7 @@ repositories {
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.21")
 
-    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation("org.xerial:sqlite-jdbc:3.36.0.2")
+    testImplementation("org.xerial:sqlite-jdbc:3.36.0.2")
 
     testImplementation("org.postgresql", "postgresql", "42.2.16")
 }

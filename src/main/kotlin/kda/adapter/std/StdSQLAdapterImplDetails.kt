@@ -5,7 +5,6 @@ import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.KDAError
 import kda.domain.Operator
-import kda.domain.Predicate
 import kda.domain.Row
 import kda.domain.SQLAdapterImplDetails
 import kda.domain.Table
@@ -29,14 +28,14 @@ open class StdSQLAdapterImplDetails : SQLAdapterImplDetails {
       "${wrapName(schema)}.${wrapName(table)}"
     }
 
-  override fun renderCriteria(criteria: Set<Criteria>, tableAlias: String?): String? {
+  override fun renderCriteria(criteria: Criteria, tableAlias: String?): String? {
     val prefix = if (tableAlias == null) {
       ""
     } else {
       "$tableAlias."
     }
-    val orClause = criteria.sortedBy { it.description }.mapNotNull { c ->
-      val andClause = c.predicates.mapNotNull { predicate: Predicate ->
+    val orClause = criteria.orClause.mapNotNull { predicates ->
+      val andClause = predicates.sortedBy { it.description }.mapNotNull { predicate ->
         val name = prefix + wrapName(predicate.field.name)
         val value = wrapValue(value = predicate.value, dataType = predicate.field.dataType)
         when (predicate.operator) {

@@ -1,53 +1,96 @@
 package kda.adapter
 
+import kda.domain.Criteria
+import kda.domain.Datasource
 import kda.domain.LatestTimestamp
 import kda.domain.LatestTimestampRepository
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import kda.domain.Operator
+import kda.domain.Predicate
+import java.time.LocalDateTime
 
-class DbLatestTimestampRepository : LatestTimestampRepository {
-  override fun add(schema: String?, table: String, latestTimestamp: LatestTimestamp) {
-    LatestTimestamps.deleteWhere {
-      if (schema == null) {
-        LatestTimestamps.table eq table
-      } else {
-        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-      }
+class DbLatestTimestampRepository(
+  private val ds: Datasource,
+  val showSQL: Boolean,
+) : LatestTimestampRepository {
+
+  override fun add(
+    schema: String?,
+    table: String,
+    latestTimestamp: LatestTimestamp,
+  ) {
+    val sql = ds.adapter.merge(
+      table = latestTimestamps,
+      rows = setOf(
+        latestTimestamps.row(
+          "schema_name" to schema,
+          "table_name" to table,
+          "field_name" to latestTimestamp.fieldName,
+          "ts" to latestTimestamp.timestamp,
+        )
+      )
+    )
+
+    if (showSQL) {
+      println(sql)
     }
-    LatestTimestamps.insert {
-      it[LatestTimestamps.schema] = schema ?: ""
-      it[LatestTimestamps.table] = table
-      it[LatestTimestamps.fieldName] = latestTimestamp.fieldName
-      it[LatestTimestamps.ts] = latestTimestamp.timestamp
-    }
+
+    ds.executor.execute(sql)
   }
 
   override fun delete(schema: String?, table: String) {
-    LatestTimestamps.deleteWhere {
-      if (schema == null) {
-        LatestTimestamps.table eq table
-      } else {
-        (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-      }
+    val sql = ds.adapter.delete(
+      table = latestTimestamps,
+      rows = setOf(
+        latestTimestamps.row(
+          "schema_name" to schema,
+          "table_name" to table,
+        ),
+      )
+    )
+
+    if (showSQL) {
+      println(sql)
     }
+
+    ds.executor.execute(sql)
   }
 
-  override fun get(schema: String?, table: String): Set<LatestTimestamp> =
-    LatestTimestamps
-      .select {
-        if (schema == null) {
-          LatestTimestamps.table eq table
-        } else {
-          (LatestTimestamps.schema eq schema) and (LatestTimestamps.table eq table)
-        }
-      }
+  override fun get(schema: String?, table: String): Set<LatestTimestamp> {
+    val schemaField = latestTimestamps.field("schema_name")
+
+    val tableField = latestTimestamps.field("table_name")
+
+    val criteria = Criteria(
+      setOf(
+        setOf(
+          Predicate(
+            field = schemaField,
+            operator = Operator.Equals,
+            value = schemaField.wrapValue(schema),
+          ),
+          Predicate(
+            field = tableField,
+            operator = Operator.Equals,
+            value = tableField.wrapValue(table),
+          ),
+        ),
+      ),
+    )
+
+    val sql = ds.adapter.select(table = latestTimestamps, criteria = criteria)
+
+    if (showSQL) {
+      println(sql)
+    }
+
+    return ds.executor
+      .fetchRows(sql = sql, fields = latestTimestamps.fields)
       .map { row ->
         LatestTimestamp(
-          fieldName = row[LatestTimestamps.fieldName],
-          timestamp = row[LatestTimestamps.ts],
+          fieldName = row.value("field_name").value as String,
+          timestamp = row.value("ts").value as? LocalDateTime,
         )
       }
       .toSet()
+  }
 }

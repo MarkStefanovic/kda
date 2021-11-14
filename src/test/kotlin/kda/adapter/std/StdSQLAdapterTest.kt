@@ -130,7 +130,7 @@ class StdSQLAdapterTest {
           "last_name" to Value.text("Oil"),
         ),
       )
-    val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).deleteKeys(table = table, primaryKeyValues = rows)
+    val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).delete(table = table, rows = rows)
     val expected = standardizeSQL(
       """
       DELETE FROM "sales"."customer" 
@@ -161,15 +161,13 @@ class StdSQLAdapterTest {
         Row.of(
           "first_name" to Value.text("Mark"),
           "last_name" to Value.text("Stefanovic"),
-          "age" to Value.int(99)
         ),
         Row.of(
           "first_name" to Value.text("Bob"),
           "last_name" to Value.text("Smith"),
-          "age" to Value.int(74)
         ),
       )
-    val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).deleteKeys(table = table, primaryKeyValues = rows)
+    val sql = StdSQLAdapter(StdSQLAdapterImplDetails()).delete(table = table, rows = rows)
     val expected = standardizeSQL(
       """
         WITH d ("first_name", "last_name") AS (

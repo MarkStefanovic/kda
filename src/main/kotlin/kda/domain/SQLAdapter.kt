@@ -5,7 +5,7 @@ interface SQLAdapter {
 
   fun createTable(table: Table): String
 
-  fun deleteKeys(table: Table, primaryKeyValues: Set<Row>): String
+  fun delete(table: Table, rows: Set<Row>): String
 
   fun dropTable(schema: String?, table: String): String
 
@@ -13,7 +13,7 @@ interface SQLAdapter {
 
   fun merge(table: Table, rows: Set<Row>): String
 
-  fun select(table: Table, criteria: Set<Criteria>): String
+  fun select(table: Table, criteria: Criteria): String
 
   fun selectKeys(table: Table, primaryKeyValues: Set<Row>): String
 

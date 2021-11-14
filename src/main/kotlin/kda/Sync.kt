@@ -20,8 +20,10 @@ import java.time.LocalDateTime
 fun sync(
   srcCon: Connection,
   destCon: Connection,
+  cacheCon: Connection,
   srcDialect: Dialect,
   destDialect: Dialect,
+  cacheDialect: Dialect,
   srcSchema: String?,
   srcTable: String,
   destSchema: String?,
@@ -29,8 +31,7 @@ fun sync(
   primaryKeyFieldNames: List<String>,
   compareFields: Set<String>? = null,
   includeFields: Set<String>? = null,
-  criteria: Set<Criteria> = emptySet(),
-  cache: Cache = sqliteCache,
+  criteria: Criteria = Criteria(emptySet()),
   timestampFieldNames: Set<String> = setOf(),
   chunkSize: Int = 1_000,
   showSQL: Boolean = false,
@@ -48,21 +49,29 @@ fun sync(
 
   val dest = datasource(con = destCon, dialect = destDialect)
 
+  val cacheDs = datasource(con = cacheCon, dialect = cacheDialect)
+
+  val cache = DbCache(
+    ds = cacheDs,
+    showSQL = false,
+    maxFloatDigits = 5,
+  )
+
   val tables =
     copyTable(
       srcCon = srcCon,
       destCon = destCon,
+      cacheCon = cacheCon,
       srcDialect = srcDialect,
       destDialect = destDialect,
+      cacheDialect = cacheDialect,
       srcSchema = srcSchema,
       srcTable = srcTable,
       destSchema = destSchema,
       destTable = destTable,
       includeFields = includeFields,
       primaryKeyFields = primaryKeyFieldNames,
-      cache = cache,
-    )
-      .getOrThrow()
+    ).getOrThrow()
 
   val fieldNames = tables.srcTableDef.fields.map { it.name }.toSet()
 
@@ -94,8 +103,7 @@ fun sync(
   val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
   if (showSQL) {
     println(
-      """
-      |Fetch source keys SQL:
+      """Fetch source keys SQL:
       |  $srcKeysSQL
     """.trimMargin()
     )
@@ -107,8 +115,7 @@ fun sync(
   if (showSQL) {
     if (showSQL) {
       println(
-        """
-      |Fetch dest keys SQL:
+        """Fetch dest keys SQL:
       |  $destKeysSQL
     """.trimMargin()
       )
@@ -134,7 +141,7 @@ fun sync(
   )
     .getOrThrow()
 
-  if (fullCriteria.isEmpty()) {
+  if (fullCriteria.orClause.isEmpty()) {
     addRows(
       src = src,
       dest = dest,
@@ -216,8 +223,7 @@ private fun addRows(
         src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
       if (showSQL) {
         println(
-          """
-          |addRows select SQL:
+          """addRows select SQL:
           |  $selectSQL
         """.trimMargin()
         )
@@ -226,8 +232,7 @@ private fun addRows(
       val insertSQL: String = dest.adapter.add(table = destTableDef, rows = rows.toSet())
       if (showSQL) {
         println(
-          """
-          |addRows insert SQL:
+          """addRows insert SQL:
           |  $insertSQL
         """.trimMargin()
         )
@@ -248,11 +253,10 @@ private fun deleteRows(
   if (deletedRows.keys.isNotEmpty()) {
     deletedRows.keys.chunked(chunkSize) { keys ->
       val deleteSQL: String =
-        dest.adapter.deleteKeys(table = destTableDef, primaryKeyValues = keys.toSet())
+        dest.adapter.delete(table = destTableDef, rows = keys.toSet())
       if (showSQL) {
         println(
-          """
-          |deleteRows SQL:
+          """deleteRows SQL:
           |  $deleteSQL
         """.trimMargin()
         )
@@ -279,8 +283,7 @@ private fun upsertRows(
       src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
     if (showSQL) {
       println(
-        """
-        |upsert rows select SQL:
+        """upsert rows select SQL:
         |  $selectSQL
       """.trimMargin()
       )
@@ -294,8 +297,7 @@ private fun upsertRows(
     val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = distinctRows)
     if (showSQL) {
       println(
-        """
-        |upsert rows upsert SQL:
+        """upsert rows upsert SQL:
         |  $upsertSQL
       """.trimMargin()
       )
@@ -346,8 +348,8 @@ private fun getFullCriteria(
   table: Table,
   tsFieldNames: Set<String>,
   cache: Cache,
-  criteria: Set<Criteria>,
-): Result<Set<Criteria>> = runCatching {
+  criteria: Criteria,
+): Result<Criteria> = runCatching {
   if (tsFieldNames.isEmpty()) {
     criteria
   } else {
@@ -380,11 +382,11 @@ private fun getFullCriteria(
           table = table.name,
           timestamps = timestamps,
         )
-        timestamps.map { Criteria(setOf(it.toPredicate())) }.toSet()
+        timestamps.map { setOf(it.toPredicate()) }.toSet()
       } else {
         setOf()
       }
-    criteria + tsCriteria
+    Criteria(criteria.orClause + tsCriteria)
   }
 }
 

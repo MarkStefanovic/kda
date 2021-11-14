@@ -1,7 +1,6 @@
 package kda
 
 import kda.domain.Dialect
-import kda.testutil.DummyCache
 import kda.testutil.testSQLiteDbConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -63,15 +62,16 @@ class CompareRowsTest {
       val result = compareRows(
         srcCon = con,
         destCon = con,
+        cacheCon = con,
         srcDialect = Dialect.SQLite,
         destDialect = Dialect.SQLite,
+        cacheDialect = Dialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
         destSchema = null,
         destTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
-        cache = DummyCache(),
         showSQL = true,
       ).getOrThrow()
 
@@ -139,15 +139,16 @@ class CompareRowsTest {
       val result = compareRows(
         srcCon = con,
         destCon = con,
+        cacheCon = con,
         srcDialect = Dialect.SQLite,
         destDialect = Dialect.SQLite,
+        cacheDialect = Dialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
         destSchema = null,
         destTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
-        cache = DummyCache(),
         showSQL = true,
       ).getOrThrow()
 
@@ -216,15 +217,16 @@ class CompareRowsTest {
       val result = compareRows(
         srcCon = con,
         destCon = con,
+        cacheCon = con,
         srcDialect = Dialect.SQLite,
         destDialect = Dialect.SQLite,
+        cacheDialect = Dialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
         destSchema = null,
         destTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
-        cache = DummyCache(),
         showSQL = true,
       ).getOrThrow()
 
@@ -289,15 +291,16 @@ class CompareRowsTest {
       val result = compareRows(
         srcCon = con,
         destCon = con,
+        cacheCon = con,
         srcDialect = Dialect.SQLite,
         destDialect = Dialect.SQLite,
+        cacheDialect = Dialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
         destSchema = null,
         destTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
-        cache = DummyCache(),
         showSQL = true,
       ).getOrThrow()
 
@@ -363,15 +366,16 @@ class CompareRowsTest {
       val result = compareRows(
         srcCon = con,
         destCon = con,
+        cacheCon = con,
         srcDialect = Dialect.SQLite,
         destDialect = Dialect.SQLite,
+        cacheDialect = Dialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
         destSchema = null,
         destTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
-        cache = DummyCache(),
         showSQL = true,
       ).getOrThrow()
 

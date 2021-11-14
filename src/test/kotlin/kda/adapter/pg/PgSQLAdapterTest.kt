@@ -1,9 +1,11 @@
 package kda.adapter.pg
 
+import kda.domain.Criteria
 import kda.domain.DataType
 import kda.domain.Field
+import kda.domain.Operator
+import kda.domain.Predicate
 import kda.domain.Table
-import kda.domain.where
 import kda.testutil.standardizeSQL
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -93,7 +95,7 @@ class PgSQLAdapterTest {
         "last_name" to "Mandlebrot",
       ),
     )
-    val actualSQL = adapter.deleteKeys(table = table, primaryKeyValues = rows)
+    val actualSQL = adapter.delete(table = table, rows = rows)
     val expectedSQL = """DELETE FROM "sales"."customer" WHERE "customer_id" IN (1, 2)"""
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
@@ -160,16 +162,29 @@ class PgSQLAdapterTest {
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
-    val criteria = where {
-      textField("first_name") {
-        eq("Bob")
-      }
-      textField("last_name") {
-        eq("Smith")
-      }
-    }
-    assertFalse(criteria.isEmpty())
+    val criteria = Criteria(
+      setOf(
+        setOf(
+          Predicate(
+            field = table.field("first_name"),
+            value = table.field("first_name").wrapValue("Bob"),
+            operator = Operator.Equals,
+          )
+        ),
+        setOf(
+          Predicate(
+            field = table.field("last_name"),
+            value = table.field("last_name").wrapValue("Smith"),
+            operator = Operator.Equals,
+          )
+        ),
+      )
+    )
+
+    assertFalse(criteria.orClause.isEmpty())
+
     val actualSQL = adapter.select(table = table, criteria = criteria)
+
     val expectedSQL = standardizeSQL(
       """
       SELECT 
@@ -182,6 +197,7 @@ class PgSQLAdapterTest {
         OR t."last_name" = 'Smith'
     """
     )
+
     assertEquals(expected = expectedSQL, actual = actualSQL)
   }
 

@@ -2,11 +2,10 @@ package kda
 
 import kda.adapter.DbLatestTimestampRepository
 import kda.adapter.DbTableDefRepository
-import kda.adapter.SQLDb
+import kda.adapter.createTables
+import kda.domain.Datasource
 import kda.domain.LatestTimestamp
 import kda.domain.Table
-import org.jetbrains.exposed.sql.Database
-import java.sql.DriverManager
 
 interface Cache {
   fun addTableDef(tableDef: Table): Result<Unit>
@@ -27,30 +26,32 @@ interface Cache {
 }
 
 class DbCache(
-  private val exposedDb: Database,
-  private val logToConsole: Boolean,
+  private val ds: Datasource,
+  private val showSQL: Boolean,
+  private val maxFloatDigits: Int = 5,
 ) : Cache {
 
-  private val db by lazy {
-    SQLDb(exposedDb = exposedDb, logToConsole = logToConsole)
-  }
-
   private val latestTimestampRepo by lazy {
-    DbLatestTimestampRepository()
+    DbLatestTimestampRepository(
+      ds = ds,
+      showSQL = showSQL,
+    )
   }
 
   private val tableDefRepo by lazy {
-    DbTableDefRepository()
+    DbTableDefRepository(
+      ds = ds,
+      showSQL = showSQL,
+      maxFloatDigits = maxFloatDigits,
+    )
   }
 
   init {
-    db.createTables()
+    createTables(ds = ds, showSQL = showSQL)
   }
 
   override fun addTableDef(tableDef: Table): Result<Unit> = runCatching {
-    db.exec {
-      tableDefRepo.add(tableDef)
-    }
+    tableDefRepo.add(tableDef)
   }
 
   override fun addLatestTimestamp(
@@ -58,47 +59,28 @@ class DbCache(
     table: String,
     timestamps: Set<LatestTimestamp>,
   ) = runCatching {
-    db.exec {
-      timestamps.forEach { ts ->
-        latestTimestampRepo.add(
-          schema = schema,
-          table = table,
-          latestTimestamp = ts,
-        )
-      }
+    timestamps.forEach { ts ->
+      latestTimestampRepo.add(
+        schema = schema,
+        table = table,
+        latestTimestamp = ts,
+      )
     }
   }
 
   override fun clearTableDef(schema: String?, table: String) = runCatching {
-    db.exec {
-      tableDefRepo.delete(schema = schema, table = table)
-    }
+    tableDefRepo.delete(schema = schema, table = table)
   }
 
   override fun clearLatestTimestamps(schema: String?, table: String) = runCatching {
-    db.exec {
-      latestTimestampRepo.delete(schema = schema, table = table)
-    }
+    latestTimestampRepo.delete(schema = schema, table = table)
   }
 
   override fun tableDef(schema: String?, table: String) = runCatching {
-    db.fetch {
-      tableDefRepo.get(schema = schema, table = table)
-    }
+    tableDefRepo.get(schema = schema, table = table)
   }
 
   override fun latestTimestamps(schema: String?, table: String) = runCatching {
-    db.fetch {
-      latestTimestampRepo.get(schema = schema, table = table)
-    }
+    latestTimestampRepo.get(schema = schema, table = table)
   }
-}
-
-val sqliteCache: Cache by lazy {
-  val url = "jdbc:sqlite:file:test?mode=memory&cache=shared"
-  DriverManager.getConnection(url) // needed to keep in-memory database alive
-  DbCache(
-    exposedDb = Database.connect(url = url, driver = "org.sqlite.JDBC"),
-    logToConsole = false,
-  )
 }

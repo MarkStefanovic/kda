@@ -94,7 +94,7 @@ class JdbcExecutorTest {
       )
 
       val table =
-        kda.domain.Table(
+        Table(
           schema = "sales",
           name = "tmp20210707",
           fields =

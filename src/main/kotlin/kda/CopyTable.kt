@@ -9,25 +9,28 @@ import java.sql.Connection
 fun copyTable(
   srcCon: Connection,
   destCon: Connection,
+  cacheCon: Connection,
   srcDialect: Dialect,
   destDialect: Dialect,
+  cacheDialect: Dialect,
   srcSchema: String?,
   srcTable: String,
   destSchema: String?,
   destTable: String,
   primaryKeyFields: List<String>,
   includeFields: Set<String>? = null,
-  cache: Cache = sqliteCache,
   ignoreAutoincrement: Boolean = true,
 ): Result<CopyTableResult> = runCatching {
+
   val srcTableDef = inspectTable(
     con = srcCon,
+    cacheCon = cacheCon,
     dialect = srcDialect,
+    cacheDialect = cacheDialect,
     schema = srcSchema,
     table = srcTable,
     primaryKeyFieldNames = primaryKeyFields,
     includeFieldNames = includeFields,
-    cache = cache,
   ).getOrThrow() ?: throw KDAError.TableNotFound(schema = srcSchema, table = srcTable)
 
   val includeFieldDefs = if (includeFields == null) {

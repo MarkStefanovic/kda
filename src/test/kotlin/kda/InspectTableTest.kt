@@ -6,7 +6,6 @@ import kda.domain.Field
 import kda.domain.Table
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
-import kda.testutil.testSQLiteDbCache
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,17 +26,19 @@ class InspectTableTest {
           """.trimIndent()
         )
       }
-      assertTrue(pgTableExists(con, schema = "sales", table = "customer2"))
+      assertTrue(pgTableExists(con, schema = "sales", table = "customer"))
 
       val actual = inspectTable(
-        con = testPgConnection(),
+        con = con,
+        cacheCon = con,
         dialect = Dialect.PostgreSQL,
+        cacheDialect = Dialect.PostgreSQL,
         schema = "sales",
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),
         includeFieldNames = null,
-        cache = testSQLiteDbCache(),
       ).getOrThrow()
+
       val expected = Table(
         schema = "sales",
         name = "customer",

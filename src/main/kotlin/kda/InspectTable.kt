@@ -7,12 +7,15 @@ import java.sql.Connection
 
 fun inspectTable(
   con: Connection,
+  cacheCon: Connection,
   dialect: Dialect,
+  cacheDialect: Dialect,
   schema: String?,
   table: String,
   primaryKeyFieldNames: List<String>,
   includeFieldNames: Set<String>?,
-  cache: Cache = sqliteCache,
+  showSQL: Boolean = false,
+  maxFloatDigits: Int = 5,
 ): Result<Table?> = runCatching {
   if ((includeFieldNames != null) && (includeFieldNames.isEmpty())) {
     throw KDAError.InvalidArgument(
@@ -27,9 +30,13 @@ fun inspectTable(
       argumentValue = primaryKeyFieldNames,
     )
   } else {
-    val ds = datasource(con = con, dialect = dialect)
+    val cacheDs = datasource(con = cacheCon, dialect = cacheDialect)
+
+    val cache = DbCache(ds = cacheDs, showSQL = showSQL, maxFloatDigits = maxFloatDigits)
 
     val cachedTableDef = cache.tableDef(schema = schema ?: "", table = table).getOrThrow()
+
+    val ds = datasource(con = con, dialect = dialect)
 
     val tableDef =
       if (cachedTableDef == null) {

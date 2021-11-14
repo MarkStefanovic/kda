@@ -20,11 +20,19 @@ fun pgTableExists(con: Connection, schema: String, table: String): Boolean =
     }
   }
 
-fun testPgConnection(): Connection = DriverManager.getConnection(
-  "jdbc:postgresql://localhost:5432/testdb",
-  System.getenv("DB_USER"),
-  System.getenv("DB_PASS")
-)
+fun testPgConnection(): Connection {
+  val con = DriverManager.getConnection(
+    "jdbc:postgresql://localhost:5432/testdb",
+    System.getenv("DB_USER"),
+    System.getenv("DB_PASS")
+  )
+  con.createStatement().use { statement ->
+    statement.execute("DROP TABLE IF EXISTS kda_primary_key")
+    statement.execute("DROP TABLE IF EXISTS kda_table_def")
+    statement.execute("DROP TABLE IF EXISTS kda_latest_timestamp")
+  }
+  return con
+}
 
 class TableExistsUtil {
   @Test

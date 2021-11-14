@@ -19,27 +19,50 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
     return "CREATE TABLE $tableName ($colDefCSV, PRIMARY KEY ($pkCSV))"
   }
 
-  override fun deleteKeys(table: Table, primaryKeyValues: Set<Row>): String {
+  override fun delete(table: Table, rows: Set<Row>): String {
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
 
-    return if (table.primaryKeyFieldNames.count() > 1) {
-      val whereClause =
-        table.primaryKeyFieldNames //
-          .map { fld -> impl.wrapName(fld) }
-          .joinToString(" AND ") { fld -> "t.$fld = d.$fld" }
-      val valuesCTE = impl.valuesCTE(
-        cteName = "d",
-        fields = table.primaryKeyFields.toSet(),
-        rows = primaryKeyValues,
-      )
-      "WITH $valuesCTE DELETE FROM $tableName t USING d WHERE $whereClause"
+    return if (rows.isEmpty()) {
+      ""
     } else {
-      val pk = table.primaryKeyFields.first()
-      val pkName = impl.wrapName(pk.name)
-      val valuesCSV = primaryKeyValues.joinToString(", ") { row ->
-        impl.wrapValue(value = row.value(pk.name), dataType = pk.dataType)
+      val sortedFields =
+        rows
+          .first()
+          .fieldNames
+          .sorted()
+          .map { table.field(it) }
+
+      if (table.primaryKeyFieldNames.count() > 1) {
+        val whereClause =
+          sortedFields
+            .joinToString(" AND ") { fld ->
+              val fieldName = impl.wrapName(fld.name)
+
+              if (fld.nullable) {
+                "(t.$fieldName = d.$fieldName OR (t.$fieldName IS NULL AND d.$fieldName IS NULL))"
+              } else {
+                "t.$fieldName = d.$fieldName"
+              }
+            }
+
+        val valuesCTE = impl.valuesCTE(
+          cteName = "d",
+          fields = sortedFields.toSet(),
+          rows = rows,
+        )
+
+        "WITH $valuesCTE DELETE FROM $tableName t USING d WHERE $whereClause"
+      } else {
+        val pk = sortedFields.first()
+
+        val pkName = impl.wrapName(pk.name)
+
+        val valuesCSV = rows.joinToString(", ") { row ->
+          impl.wrapValue(value = row.value(pk.name), dataType = pk.dataType)
+        }
+
+        "DELETE FROM $tableName WHERE $pkName IN ($valuesCSV)"
       }
-      "DELETE FROM $tableName WHERE $pkName IN ($valuesCSV)"
     }
   }
 
@@ -75,11 +98,11 @@ open class StdSQLAdapter(private val impl: SQLAdapterImplDetails) : SQLAdapter {
       "UPDATE SET $setValuesCSV"
   }
 
-  override fun select(table: Table, criteria: Set<Criteria>): String {
+  override fun select(table: Table, criteria: Criteria): String {
     val tableName = impl.fullTableName(schema = table.schema, table = table.name)
     val colNameCSV = impl.fieldNameCSV(table.sortedFieldNames.toSet(), tableAlias = "t")
     val selectSQL = "SELECT $colNameCSV FROM $tableName t"
-    return if (criteria.isEmpty()) {
+    return if (criteria.orClause.isEmpty()) {
       selectSQL
     } else {
       val whereClause = impl.renderCriteria(criteria = criteria, tableAlias = "t")
