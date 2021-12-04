@@ -1,42 +1,48 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package kda
 
+import kda.adapter.selectAdapter
+import kda.adapter.sqlite.SQLiteCache
+import kda.adapter.where
+import kda.domain.Adapter
+import kda.domain.Cache
+import kda.domain.CopyTableResult
 import kda.domain.Criteria
-import kda.domain.DataType
-import kda.domain.Datasource
-import kda.domain.Dialect
+import kda.domain.DbDialect
 import kda.domain.Field
-import kda.domain.IndexedRows
 import kda.domain.KDAError
-import kda.domain.LatestTimestamp
+import kda.domain.Operator
+import kda.domain.Predicate
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.compareRows
-import kda.domain.distinctOnPK
 import java.sql.Connection
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
+@ExperimentalStdlibApi
 fun sync(
   srcCon: Connection,
-  destCon: Connection,
+  dstCon: Connection,
   cacheCon: Connection,
-  srcDialect: Dialect,
-  destDialect: Dialect,
-  cacheDialect: Dialect,
+  srcDialect: DbDialect,
+  dstDialect: DbDialect,
+  cacheDialect: DbDialect,
   srcSchema: String?,
   srcTable: String,
-  destSchema: String?,
-  destTable: String,
+  dstSchema: String?,
+  dstTable: String,
   primaryKeyFieldNames: List<String>,
+  criteria: Criteria? = null,
   compareFields: Set<String>? = null,
   includeFields: Set<String>? = null,
-  criteria: Criteria = Criteria(emptySet()),
   timestampFieldNames: Set<String> = setOf(),
-  chunkSize: Int = 1_000,
+  batchSize: Int = 1_000,
   showSQL: Boolean = false,
-  trustPk: Boolean = true,
-): Result<SyncResult> = runCatching {
+): SyncResult {
   if (compareFields != null && compareFields.isEmpty()) {
     throw KDAError.InvalidArgument(
       errorMessage = "If a value is provided, then it must contain at least one field name.",
@@ -45,39 +51,37 @@ fun sync(
     )
   }
 
-  val src = datasource(con = srcCon, dialect = srcDialect)
+  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL)
 
-  val dest = datasource(con = destCon, dialect = destDialect)
+  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
 
-  val cacheDs = datasource(con = cacheCon, dialect = cacheDialect)
+  val cache: Cache = when (cacheDialect) {
+    DbDialect.HH -> TODO()
+    DbDialect.MSSQL -> TODO()
+    DbDialect.PostgreSQL -> TODO()
+    DbDialect.SQLite -> SQLiteCache(con = cacheCon, showSQL = showSQL)
+  }
 
-  val cache = DbCache(
-    ds = cacheDs,
-    showSQL = false,
-    maxFloatDigits = 5,
-  )
-
-  val tables =
+  val tables: CopyTableResult =
     copyTable(
       srcCon = srcCon,
-      destCon = destCon,
+      dstCon = dstCon,
       cacheCon = cacheCon,
-      srcDialect = srcDialect,
-      destDialect = destDialect,
+      dstDialect = dstDialect,
       cacheDialect = cacheDialect,
       srcSchema = srcSchema,
       srcTable = srcTable,
-      destSchema = destSchema,
-      destTable = destTable,
+      dstSchema = dstSchema,
+      dstTable = dstTable,
       includeFields = includeFields,
-      primaryKeyFields = primaryKeyFieldNames,
-    ).getOrThrow()
+      primaryKeyFieldNames = primaryKeyFieldNames,
+    )
 
   val fieldNames = tables.srcTableDef.fields.map { it.name }.toSet()
 
   val compareFieldNamesFinal: Set<String> =
     if (compareFields == null) {
-      fieldNames.minus(tables.srcTableDef.primaryKeyFieldNames)
+      fieldNames.minus(tables.srcTableDef.primaryKeyFieldNames.toSet())
     } else {
       fieldNames.filter { fldName -> fldName in compareFields }.toSet()
     }
@@ -89,327 +93,227 @@ fun sync(
   val lkpTableFields =
     tables.srcTableDef.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
-  val fullCriteria =
-    getFullCriteria(
-      ds = dest,
-      table = tables.destTableDef,
-      tsFieldNames = timestampFieldNames,
-      cache = cache,
-      criteria = criteria,
-    )
-      .getOrThrow()
+  val fullCriteria = getFullCriteria(
+    dstDialect = dstDialect,
+    dstSchema = dstSchema,
+    dstTable = tables.dstTableDef,
+    tsFieldNames = timestampFieldNames,
+    cache = cache,
+    criteria = criteria,
+  )
 
-  val srcLkpTable = tables.srcTableDef.subset(fieldNames = lkpTableFieldNames)
-  val srcKeysSQL = src.adapter.select(table = srcLkpTable, criteria = fullCriteria)
-  if (showSQL) {
-    println(
-      """Fetch source keys SQL:
-      |  $srcKeysSQL
-    """.trimMargin()
-    )
-  }
-  val srcLkpRows = src.executor.fetchRows(sql = srcKeysSQL, fields = lkpTableFields).toSet()
+  val srcLkpRows: Set<Row> = srcAdapter.select(
+    fields = lkpTableFields,
+    schema = srcSchema,
+    table = srcTable,
+    batchSize = batchSize,
+    criteria = fullCriteria,
+    limit = null,
+    orderBy = listOf(),
+  ).toSet()
 
-  val destLkpTable = tables.destTableDef.subset(fieldNames = lkpTableFieldNames)
-  val destKeysSQL = dest.adapter.select(table = destLkpTable, criteria = fullCriteria)
-  if (showSQL) {
-    if (showSQL) {
-      println(
-        """Fetch dest keys SQL:
-      |  $destKeysSQL
-    """.trimMargin()
-      )
-    }
-  }
-  val destLkpRows = dest.executor.fetchRows(sql = destKeysSQL, fields = lkpTableFields).toSet()
+  val dstLkpRows: Set<Row> = dstAdapter.select(
+    fields = lkpTableFields,
+    schema = dstSchema,
+    table = dstTable,
+    batchSize = batchSize,
+    criteria = fullCriteria,
+    limit = null,
+    orderBy = listOf(),
+  ).toSet()
 
   val rowDiff: RowDiff =
     compareRows(
-      dest = destLkpRows,
-      src = srcLkpRows,
-      primaryKeyFields = pkFields,
-      compareFields = compareFieldNamesFinal,
-      includeFields = lkpTableFieldNames,
+      dstRows = dstLkpRows,
+      srcRows = srcLkpRows,
+      primaryKeyFieldNames = pkFields,
     )
+
+  val deleteKeys: Set<Row> =
+    rowDiff
+      .deleted
+      .map { it.subset(tables.dstTableDef.primaryKeyFieldNames.toSet()) }
+      .toSet()
 
   deleteRows(
-    dest = dest,
-    destTableDef = tables.destTableDef,
-    deletedRows = rowDiff.deleted,
-    chunkSize = chunkSize,
-    showSQL = showSQL,
+    dstAdapter = dstAdapter,
+    dstSchema = dstSchema,
+    dstTable = tables.dstTableDef,
+    deletedRows = deleteKeys,
+    fields = tables.dstTableDef.primaryKeyFields.toSet(),
+    chunkSize = batchSize,
   )
-    .getOrThrow()
 
-  if (fullCriteria.orClause.isEmpty()) {
-    addRows(
-      src = src,
-      dest = dest,
-      srcTableDef = tables.srcTableDef,
-      destTableDef = tables.destTableDef,
-      addedRows = rowDiff.added,
-      chunkSize = chunkSize,
-      showSQL = showSQL,
-    )
-      .getOrThrow()
-
-    updateRows(
-      src = src,
-      dest = dest,
-      srcTableDef = tables.srcTableDef,
-      destTableDef = tables.destTableDef,
-      updatedRows = rowDiff.updated,
-      chunkSize = chunkSize,
-      showSQL = showSQL,
-    )
-      .getOrThrow()
-
-    if (timestampFieldNames.isNotEmpty()) {
-      updateLatestTimestamps(
-        timestampFieldNames = timestampFieldNames,
-        destRows = destLkpRows,
-        destSchema = destSchema,
-        destTable = destTable,
-        cache = cache,
-      )
-        .getOrThrow()
-    }
-  } else {
-    upsertRows(
-      src = src,
-      dest = dest,
-      srcTableDef = tables.srcTableDef,
-      destTableDef = tables.destTableDef,
-      addedRows = rowDiff.added,
-      updatedRows = rowDiff.updated,
-      chunkSize = chunkSize,
-      showSQL = showSQL,
-      trustPk = trustPk,
-    )
-      .getOrThrow()
-
-    if (timestampFieldNames.isNotEmpty()) {
-      updateLatestTimestamps(
-        timestampFieldNames = timestampFieldNames,
-        destRows = destLkpRows,
-        destSchema = destSchema,
-        destTable = destTable,
-        cache = cache,
-      )
-        .getOrThrow()
-    }
-  }
-  SyncResult(
-    srcTableDef = tables.srcTableDef,
-    destTableDef = tables.destTableDef,
-    added = rowDiff.added,
-    deleted = rowDiff.deleted,
-    updated = rowDiff.updated,
+  upsertRows(
+    srcAdapter = srcAdapter,
+    dstAdapter = dstAdapter,
+    srcSchema = srcSchema,
+    dstSchema = dstSchema,
+    srcTable = tables.srcTableDef,
+    dstTable = tables.dstTableDef,
+    primaryKeyFieldNames = tables.dstTableDef.primaryKeyFieldNames.toSet(),
+    addedRows = rowDiff.added,
+    updatedRows = rowDiff.updated,
+    batchSize = batchSize,
   )
-}
 
-private fun addRows(
-  src: Datasource,
-  dest: Datasource,
-  srcTableDef: Table,
-  destTableDef: Table,
-  addedRows: IndexedRows,
-  chunkSize: Int,
-  showSQL: Boolean,
-): Result<Int> = runCatching {
-  if (addedRows.keys.isNotEmpty()) {
-    addedRows.keys.chunked(chunkSize) { keys ->
-      val selectSQL: String =
-        src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
-      if (showSQL) {
-        println(
-          """addRows select SQL:
-          |  $selectSQL
-        """.trimMargin()
-        )
-      }
-      val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
-      val insertSQL: String = dest.adapter.add(table = destTableDef, rows = rows.toSet())
-      if (showSQL) {
-        println(
-          """addRows insert SQL:
-          |  $insertSQL
-        """.trimMargin()
-        )
-      }
-      dest.executor.execute(sql = insertSQL)
-    }
+  if (timestampFieldNames.isNotEmpty()) {
+    updateLatestTimestamps(
+      timestampFieldNames = timestampFieldNames,
+      addedKeys = rowDiff.added,
+      updatedKeys = rowDiff.updated,
+      dstSchema = dstSchema,
+      dstTable = dstTable,
+      cache = cache,
+    )
   }
-  addedRows.count()
+
+  return SyncResult(
+    deleted = rowDiff.deleted.count(),
+    upserted = rowDiff.added.count() + rowDiff.updated.count(),
+  )
 }
 
 private fun deleteRows(
-  dest: Datasource,
-  destTableDef: Table,
-  deletedRows: IndexedRows,
+  dstAdapter: Adapter,
+  dstTable: Table,
+  dstSchema: String?,
+  fields: Set<Field<*>>,
+  deletedRows: Set<Row>,
   chunkSize: Int,
-  showSQL: Boolean,
-): Result<Int> = runCatching {
-  if (deletedRows.keys.isNotEmpty()) {
-    deletedRows.keys.chunked(chunkSize) { keys ->
-      val deleteSQL: String =
-        dest.adapter.delete(table = destTableDef, rows = keys.toSet())
-      if (showSQL) {
-        println(
-          """deleteRows SQL:
-          |  $deleteSQL
-        """.trimMargin()
-        )
-      }
-      dest.executor.execute(sql = deleteSQL)
+) {
+  if (deletedRows.isNotEmpty()) {
+    deletedRows.chunked(chunkSize) { keys ->
+      dstAdapter.deleteRows(
+        schema = dstSchema,
+        table = dstTable.name,
+        fields = fields,
+        keys = keys.toSet(),
+      )
     }
   }
-  deletedRows.count()
 }
 
 private fun upsertRows(
-  src: Datasource,
-  dest: Datasource,
-  srcTableDef: Table,
-  destTableDef: Table,
-  addedRows: IndexedRows,
-  updatedRows: IndexedRows,
-  chunkSize: Int,
-  showSQL: Boolean,
-  trustPk: Boolean,
-): Result<Int> = runCatching {
-  updatedRows.keys.union(addedRows.keys).chunked(chunkSize) { keys ->
-    val selectSQL: String =
-      src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
-    if (showSQL) {
-      println(
-        """upsert rows select SQL:
-        |  $selectSQL
-      """.trimMargin()
-      )
-    }
-    val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
-    val distinctRows = if (trustPk) {
-      rows
-    } else {
-      rows.distinctOnPK(srcTableDef.primaryKeyFieldNames.toSet())
-    }
-    val upsertSQL: String = dest.adapter.merge(table = destTableDef, rows = distinctRows)
-    if (showSQL) {
-      println(
-        """upsert rows upsert SQL:
-        |  $upsertSQL
-      """.trimMargin()
-      )
-    }
-    dest.executor.execute(sql = upsertSQL)
+  srcAdapter: Adapter,
+  dstAdapter: Adapter,
+  srcSchema: String?,
+  dstSchema: String?,
+  srcTable: Table,
+  dstTable: Table,
+  addedRows: Set<Row>,
+  updatedRows: Set<Row>,
+  batchSize: Int,
+  primaryKeyFieldNames: Set<String>,
+) {
+  updatedRows.union(addedRows).chunked(batchSize) { keys ->
+    val fullRows = srcAdapter.selectRows(
+      schema = srcSchema,
+      table = srcTable.name,
+      keys = keys.toSet(),
+      fields = srcTable.fields,
+      batchSize = batchSize,
+      orderBy = emptyList(),
+    ).toSet()
+
+    val primaryKeyFields: Set<Field<*>> =
+      primaryKeyFieldNames.map { dstTable.field(it) }.toSet()
+
+    val valueFields: Set<Field<*>> =
+      dstTable.fields - primaryKeyFields
+
+    dstAdapter.upsertRows(
+      schema = dstSchema,
+      table = dstTable.name,
+      rows = fullRows,
+      keyFields = primaryKeyFields,
+      valueFields = valueFields,
+    )
   }
-  addedRows.count()
 }
 
-private fun updateRows(
-  src: Datasource,
-  dest: Datasource,
-  srcTableDef: Table,
-  destTableDef: Table,
-  updatedRows: IndexedRows,
-  chunkSize: Int,
-  showSQL: Boolean,
-): Result<Int> = runCatching {
-  if (updatedRows.isNotEmpty()) {
-    updatedRows.keys.chunked(chunkSize) { keys ->
-      val selectSQL = src.adapter.selectKeys(table = srcTableDef, primaryKeyValues = keys.toSet())
-      if (showSQL) {
-        println(
-          """
-          |update rows select SQL:
-          |  $selectSQL
-        """.trimMargin()
-        )
-      }
-      val rows = src.executor.fetchRows(sql = selectSQL, fields = srcTableDef.fields).toSet()
-      val updateSQL = dest.adapter.update(table = destTableDef, rows = rows)
-      if (showSQL) {
-        println(
-          """
-          |upsert rows update SQL:
-          |  $updateSQL
-        """.trimMargin()
-        )
-      }
-      dest.executor.execute(sql = updateSQL)
-    }
-  }
-  updatedRows.count()
-}
-
-private fun getFullCriteria(
-  ds: Datasource,
-  table: Table,
+@ExperimentalStdlibApi
+internal fun getFullCriteria(
+  dstDialect: DbDialect,
+  dstSchema: String?,
+  dstTable: Table,
   tsFieldNames: Set<String>,
   cache: Cache,
-  criteria: Criteria,
-): Result<Criteria> = runCatching {
+  criteria: Criteria?,
+): Criteria? =
   if (tsFieldNames.isEmpty()) {
     criteria
   } else {
-    val cachedTimestamps =
-      cache
-        .latestTimestamps(
-          schema = table.schema ?: "",
-          table = table.name,
-        )
-        .getOrThrow()
+    val cachedTimestamps: Map<String, LocalDateTime?> =
+      tsFieldNames
+        .associateWith { fieldName ->
+          cache.getTimestamp(schema = dstSchema, table = dstTable.name, fieldName = fieldName)
+        }
 
-    val tsCriteria =
-      if (cachedTimestamps.isEmpty()) {
-        val sql = ds.adapter.selectMaxValues(table = table, fieldNames = tsFieldNames)
-        val tsFields =
-          tsFieldNames
-            .map { fld -> Field(name = fld, dataType = DataType.nullableLocalDateTime) }
-            .toSet()
-        val row = ds.executor.fetchRows(sql = sql, fields = tsFields).first()
-        val timestamps: Set<LatestTimestamp> =
-          tsFieldNames
-            .map { fld ->
-              LatestTimestamp(
-                fieldName = fld, timestamp = row.value(fld).value as LocalDateTime?
-              )
-            }
-            .toSet()
-        cache.addLatestTimestamp(
-          schema = table.schema ?: "",
-          table = table.name,
-          timestamps = timestamps,
-        )
-        timestamps.map { setOf(it.toPredicate()) }.toSet()
-      } else {
-        setOf()
-      }
-    Criteria(criteria.orClause + tsCriteria)
-  }
-}
-
-private fun updateLatestTimestamps(
-  timestampFieldNames: Set<String>,
-  destRows: Set<Row>,
-  destSchema: String?,
-  destTable: String,
-  cache: Cache,
-): Result<Unit> = runCatching {
-  if (timestampFieldNames.isNotEmpty()) {
-    val latestTimestamps =
-      timestampFieldNames
-        .map { fld ->
-          val latestTimestamp =
-            destRows.mapNotNull { it.value(fld).value as LocalDateTime? }.maxOrNull()
-          LatestTimestamp(fieldName = fld, timestamp = latestTimestamp)
+    val tsFields: Set<Field<*>> =
+      tsFieldNames
+        .map { fieldName ->
+          dstTable.field(fieldName)
         }
         .toSet()
-    cache.addLatestTimestamp(
-      schema = destSchema ?: "",
-      table = destTable,
-      timestamps = latestTimestamps,
-    )
+
+    var tsCriteria: Criteria = where(dstDialect)
+    tsFields.forEach { field ->
+      val ts = cachedTimestamps[field.name]
+      if (ts != null) {
+        tsCriteria = tsCriteria.or(Predicate(field = field, operator = Operator.GreaterThan, value = ts))
+      }
+    }
+
+    if (tsCriteria.isEmpty) {
+      criteria
+    } else {
+      criteria?.and(tsCriteria) ?: tsCriteria
+    }
+  }
+
+private fun updateLatestTimestamps(
+  cache: Cache,
+  dstSchema: String?,
+  dstTable: String,
+  timestampFieldNames: Set<String>,
+  addedKeys: Set<Row>,
+  updatedKeys: Set<Row>,
+) {
+  if (timestampFieldNames.isNotEmpty()) {
+    timestampFieldNames.forEach { fieldName ->
+      if (addedKeys.isNotEmpty()) {
+        if (!addedKeys.first().value.containsKey(fieldName)) {
+          throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = addedKeys.first().value.keys)
+        }
+      }
+
+      if (updatedKeys.isNotEmpty()) {
+        if (!updatedKeys.first().value.containsKey(fieldName)) {
+          throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = updatedKeys.first().value.keys)
+        }
+      }
+    }
+
+    val allKeys = addedKeys + updatedKeys
+
+    timestampFieldNames.forEach { timestampFieldName ->
+      val ts: LocalDateTime? =
+        allKeys
+          .maxByOrNull { row ->
+            (row.value[timestampFieldName] as LocalDateTime?)
+              ?.toEpochSecond(ZoneOffset.UTC)
+              ?: LocalDateTime.MIN.toEpochSecond(ZoneOffset.UTC)
+          }
+          ?.value
+          ?.get(timestampFieldName) as LocalDateTime?
+
+      cache.addTimestamp(
+        schema = dstSchema,
+        table = dstTable,
+        fieldName = timestampFieldName,
+        ts = ts,
+      )
+    }
   }
 }

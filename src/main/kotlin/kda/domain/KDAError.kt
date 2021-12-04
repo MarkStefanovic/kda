@@ -1,5 +1,7 @@
 package kda.domain
 
+import java.sql.JDBCType
+
 sealed class KDAError : Exception() {
   abstract val errorMessage: String
 
@@ -50,27 +52,33 @@ sealed class KDAError : Exception() {
     override val errorMessage = "The following query returned no results: $sql"
   }
 
-  data class NullValueError(val expectedType: String) : KDAError() {
-    override val errorMessage = "Expected a $expectedType value, but the value was null."
-  }
-
-  data class ValueDataTypeMismatch(
-    val value: Value<*>,
-    val dataType: DataType<*>,
+  data class PrimaryKeyFieldNotFound(
+    val fieldName: String,
+    val availableFields: List<String>,
   ) : KDAError() {
     override val errorMessage: String =
-      "value is of type ${value::class.simpleName}, but dataType is of type ${dataType::class.simpleName}."
+      "Primary key field, $fieldName, was not found.  Available fields include the following: " +
+        "${availableFields.joinToString(", ")}."
   }
 
-  data class ValueError(val value: Any?, val expectedType: String) : KDAError() {
-    override val errorMessage =
-      "Expected a $expectedType value, but got '$value' of type ${value?.javaClass?.simpleName ?: "null"}."
+  data class TableMissingAPrimaryKey(val schema: String?, val table: String) : KDAError() {
+    override val errorMessage: String by lazy {
+      val fullTableName = if (schema == null) {
+        table
+      } else {
+        "$schema.$table"
+      }
+      "The table, $fullTableName, does not have a primary key."
+    }
+  }
+
+  data class UnrecognizeDataType(val dataTypeName: String) : KDAError() {
+    override val errorMessage: String =
+      "The dataType, $dataTypeName, is not recognized.  Recognized dataTypes include bigint, " +
+        "decimal, int, date, datetime, text."
+
+    constructor(dataType: DataType<*>) : this(dataTypeName = dataType.description)
+
+    constructor(jdbcType: JDBCType) : this(dataTypeName = jdbcType.name)
   }
 }
-
-private fun fullTableName(schema: String?, table: String) =
-  if (schema == null) {
-    table
-  } else {
-    "$schema.$table"
-  }

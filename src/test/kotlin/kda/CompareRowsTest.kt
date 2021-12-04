@@ -1,14 +1,16 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package kda
 
-import kda.domain.Dialect
-import kda.testutil.testSQLiteDbConnection
+import kda.domain.DbDialect
+import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class CompareRowsTest {
   @Test
   fun happy_path() {
-    testSQLiteDbConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -61,19 +63,20 @@ class CompareRowsTest {
 
       val result = compareRows(
         srcCon = con,
-        destCon = con,
+        dstCon = con,
         cacheCon = con,
-        srcDialect = Dialect.SQLite,
-        destDialect = Dialect.SQLite,
-        cacheDialect = Dialect.SQLite,
+        srcDialect = DbDialect.SQLite,
+        dstDialect = DbDialect.SQLite,
+        cacheDialect = DbDialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
-        destSchema = null,
-        destTable = "customer2",
+        dstSchema = null,
+        dstTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-      ).getOrThrow()
+        criteria = null,
+      )
 
       assertEquals(expected = 0, actual = result.added.count())
       assertEquals(expected = 0, actual = result.deleted.count())
@@ -83,7 +86,7 @@ class CompareRowsTest {
 
   @Test
   fun given_duplicate_dest_rows() {
-    testSQLiteDbConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -138,19 +141,19 @@ class CompareRowsTest {
 
       val result = compareRows(
         srcCon = con,
-        destCon = con,
+        dstCon = con,
         cacheCon = con,
-        srcDialect = Dialect.SQLite,
-        destDialect = Dialect.SQLite,
-        cacheDialect = Dialect.SQLite,
+        srcDialect = DbDialect.SQLite,
+        dstDialect = DbDialect.SQLite,
+        cacheDialect = DbDialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
-        destSchema = null,
-        destTable = "customer2",
+        dstSchema = null,
+        dstTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-      ).getOrThrow()
+      )
 
       assertEquals(expected = 0, actual = result.added.count())
       assertEquals(expected = 0, actual = result.deleted.count())
@@ -160,7 +163,7 @@ class CompareRowsTest {
 
   @Test
   fun given_duplicate_src_rows() {
-    testSQLiteDbConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -216,19 +219,19 @@ class CompareRowsTest {
 
       val result = compareRows(
         srcCon = con,
-        destCon = con,
+        dstCon = con,
         cacheCon = con,
-        srcDialect = Dialect.SQLite,
-        destDialect = Dialect.SQLite,
-        cacheDialect = Dialect.SQLite,
+        srcDialect = DbDialect.SQLite,
+        dstDialect = DbDialect.SQLite,
+        cacheDialect = DbDialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
-        destSchema = null,
-        destTable = "customer2",
+        dstSchema = null,
+        dstTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-      ).getOrThrow()
+      )
 
       assertEquals(expected = 0, actual = result.added.count())
       assertEquals(expected = 0, actual = result.deleted.count())
@@ -238,7 +241,7 @@ class CompareRowsTest {
 
   @Test
   fun when_rows_are_added() {
-    testSQLiteDbConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -290,19 +293,19 @@ class CompareRowsTest {
 
       val result = compareRows(
         srcCon = con,
-        destCon = con,
+        dstCon = con,
         cacheCon = con,
-        srcDialect = Dialect.SQLite,
-        destDialect = Dialect.SQLite,
-        cacheDialect = Dialect.SQLite,
+        srcDialect = DbDialect.SQLite,
+        dstDialect = DbDialect.SQLite,
+        cacheDialect = DbDialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
-        destSchema = null,
-        destTable = "customer2",
+        dstSchema = null,
+        dstTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-      ).getOrThrow()
+      )
 
       assertEquals(expected = 1, actual = result.added.count())
       assertEquals(expected = 0, actual = result.deleted.count())
@@ -312,7 +315,7 @@ class CompareRowsTest {
 
   @Test
   fun when_rows_are_updated() {
-    testSQLiteDbConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.prepareStatement(
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
@@ -365,19 +368,19 @@ class CompareRowsTest {
 
       val result = compareRows(
         srcCon = con,
-        destCon = con,
+        dstCon = con,
         cacheCon = con,
-        srcDialect = Dialect.SQLite,
-        destDialect = Dialect.SQLite,
-        cacheDialect = Dialect.SQLite,
+        srcDialect = DbDialect.SQLite,
+        dstDialect = DbDialect.SQLite,
+        cacheDialect = DbDialect.SQLite,
         srcSchema = null,
         srcTable = "customer",
-        destSchema = null,
-        destTable = "customer2",
+        dstSchema = null,
+        dstTable = "customer2",
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-      ).getOrThrow()
+      )
 
       assertEquals(expected = 0, actual = result.added.count())
       assertEquals(expected = 0, actual = result.deleted.count())

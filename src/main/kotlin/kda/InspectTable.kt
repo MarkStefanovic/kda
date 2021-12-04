@@ -1,6 +1,7 @@
 package kda
 
-import kda.domain.Dialect
+import kda.adapter.sqlite.SQLiteCache
+import kda.domain.DbDialect
 import kda.domain.KDAError
 import kda.domain.Table
 import java.sql.Connection
@@ -8,15 +9,13 @@ import java.sql.Connection
 fun inspectTable(
   con: Connection,
   cacheCon: Connection,
-  dialect: Dialect,
-  cacheDialect: Dialect,
+  cacheDialect: DbDialect,
   schema: String?,
   table: String,
   primaryKeyFieldNames: List<String>,
   includeFieldNames: Set<String>?,
   showSQL: Boolean = false,
-  maxFloatDigits: Int = 5,
-): Result<Table?> = runCatching {
+): Table {
   if ((includeFieldNames != null) && (includeFieldNames.isEmpty())) {
     throw KDAError.InvalidArgument(
       errorMessage = "If includeFieldNames is not null, then it must have at least 1 field.",
@@ -30,37 +29,42 @@ fun inspectTable(
       argumentValue = primaryKeyFieldNames,
     )
   } else {
-    val cacheDs = datasource(con = cacheCon, dialect = cacheDialect)
+    val cache = when (cacheDialect) {
+      DbDialect.HH -> TODO()
+      DbDialect.MSSQL -> TODO()
+      DbDialect.PostgreSQL -> TODO()
+      DbDialect.SQLite -> SQLiteCache(con = cacheCon, showSQL = showSQL)
+    }
 
-    val cache = DbCache(ds = cacheDs, showSQL = showSQL, maxFloatDigits = maxFloatDigits)
-
-    val cachedTableDef = cache.tableDef(schema = schema ?: "", table = table).getOrThrow()
-
-    val ds = datasource(con = con, dialect = dialect)
+    val cachedTable = cache.getTable(schema = schema, table = table)
 
     val tableDef =
-      if (cachedTableDef == null) {
-        val def = ds.inspector.inspectTable(
+      if (cachedTable == null) {
+        val def = kda.adapter.inspectTable(
+          con = con,
           schema = schema,
           table = table,
-          maxFloatDigits = 5,
-          primaryKeyFieldNames = primaryKeyFieldNames,
+          hardCodedPrimaryKeyFieldNames = primaryKeyFieldNames,
         )
-        cache.addTableDef(def).getOrThrow()
+        if (def == null) {
+          throw KDAError.TableNotFound(schema = schema, table = table)
+        } else {
+          cache.addTable(schema = schema, table = def)
+        }
         def
       } else {
-        cachedTableDef
+        cachedTable
       }
 
     val missingPrimaryKeyFields: Set<String> =
       primaryKeyFieldNames
         .toSet()
-        .minus(tableDef.sortedFieldNames.toSet())
+        .minus(tableDef.fields.map { it.name }.toSet())
 
-    if (missingPrimaryKeyFields.isEmpty()) {
+    return if (missingPrimaryKeyFields.isEmpty()) {
       val missingIncludeFields: Set<String> =
         includeFieldNames
-          ?.minus(tableDef.sortedFieldNames.toSet())
+          ?.minus(tableDef.fields.map { it.name }.toSet())
           ?: setOf()
 
       if (missingIncludeFields.isNotEmpty()) {
@@ -95,7 +99,7 @@ fun inspectTable(
 
       val missingFieldsCSV = missingPrimaryKeyFields.joinToString(", ")
 
-      val fieldNameCSV = tableDef.sortedFieldNames.joinToString(", ")
+      val fieldNameCSV = tableDef.fields.map { it.name }.sorted().joinToString(", ")
 
       val errorMessage =
         "The following primary key field(s) were specified: $pkFieldNamesCSV.  " +

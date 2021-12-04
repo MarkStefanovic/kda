@@ -1,8 +1,20 @@
+@file:OptIn(ExperimentalStdlibApi::class, ExperimentalStdlibApi::class)
+
 package kda
 
-import kda.domain.Dialect
+import kda.adapter.sqlite.SQLiteCache
+import kda.adapter.where
+import kda.domain.BoundParameter
+import kda.domain.Criteria
+import kda.domain.DataType
+import kda.domain.DbDialect
+import kda.domain.Field
+import kda.domain.Parameter
+import kda.domain.Table
+import kda.domain.eq
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
+import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -11,6 +23,8 @@ import java.sql.Types
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 data class Customer(
   val customerId: Int,
@@ -23,10 +37,17 @@ data class Customer(
 
 fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
   val sql = """
-    SELECT customer_id, first_name, last_name, middle_initial, date_added, date_updated
-    FROM sales.$tableName 
-    ORDER BY customer_id
-  """
+    |  SELECT customer_id, first_name, last_name, middle_initial, date_added, date_updated
+    |  FROM sales.$tableName 
+    |  ORDER BY customer_id
+  """.trimMargin()
+  println(
+    """
+    |SyncTest.fetchCustomers SQL:
+    |$sql
+  """.trimMargin()
+  )
+
   val customers = mutableListOf<Customer>()
   con.createStatement().use { stmt ->
     stmt.executeQuery(sql).use { rs ->
@@ -56,9 +77,19 @@ fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
 fun addCustomers(con: Connection, tableName: String, vararg customers: Customer) {
   for (customer in customers) {
     val sql = """
-      INSERT INTO sales.$tableName (customer_id, first_name, last_name, middle_initial, date_added, date_updated)
-      VALUES (?, ?, ?, ?, ?, ?)
-    """
+      |    INSERT INTO sales.$tableName (customer_id, first_name, last_name, middle_initial, date_added, date_updated)
+      |    VALUES (?, ?, ?, ?, ?, ?)
+    """.trimMargin()
+    println(
+      """
+      |SyncTest.addCustomers:
+      |  SQL:
+      |$sql
+      |  Parameters:
+      |    ${customers.joinToString("\n    ")}
+    """.trimMargin()
+    )
+
     con.prepareStatement(sql).use { stmt ->
       stmt.setInt(1, customer.customerId)
       stmt.setString(2, customer.firstName)
@@ -128,33 +159,32 @@ fun updateCustomer(
 class SyncTest {
   @BeforeEach
   fun setup() {
-    testPgConnection().use { srcCon ->
-      testPgConnection().use { destCon ->
-        srcCon.createStatement().use { stmt ->
-          stmt.execute("DROP TABLE IF EXISTS sales.customer")
-          stmt.execute("DROP TABLE IF EXISTS sales.customer2")
-          stmt.execute(
-            """
-            CREATE TABLE sales.customer (
-                customer_id INT NOT NULL
-            ,   first_name TEXT NOT NULL
-            ,   last_name TEXT NOT NULL
-            ,   middle_initial TEXT NULL
-            ,   date_added TIMESTAMP NOT NULL DEFAULT now()
-            ,   date_updated TIMESTAMP NULL
-            )
-            """
+    testPgConnection().use { con ->
+      con.createStatement().use { stmt ->
+        stmt.execute("DROP TABLE IF EXISTS sales.customer")
+        stmt.execute("DROP TABLE IF EXISTS sales.customer2")
+        stmt.execute(
+          """
+          CREATE TABLE sales.customer (
+              customer_id INT NOT NULL
+          ,   first_name TEXT NOT NULL
+          ,   last_name TEXT NOT NULL
+          ,   middle_initial TEXT NULL
+          ,   date_added TIMESTAMP NOT NULL DEFAULT now()
+          ,   date_updated TIMESTAMP NULL
           )
-        }
-        assertFalse(pgTableExists(destCon, schema = "sales", table = "customer2"))
+          """
+        )
       }
+      assertFalse(pgTableExists(con, schema = "sales", table = "customer2"))
     }
   }
 
   @Test
   fun given_no_timestamps_used() {
-    testPgConnection().use { srcCon ->
-      testPgConnection().use { destCon ->
+    testPgConnection().use { con ->
+      testSQLiteConnection().use { cacheCon ->
+
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -182,149 +212,99 @@ class SyncTest {
         )
         val customers = setOf(customer1, customer2, customer3)
 
-        addCustomers(con = srcCon, tableName = "customer", customer1, customer2, customer3)
+        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
 
         val resultAfterAdd = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
-        ).getOrThrow()
+          batchSize = 2,
+          showSQL = true,
+          criteria = null,
+        )
 
-        val actual = fetchCustomers(con = destCon, tableName = "customer2")
+        val actual = fetchCustomers(con = con, tableName = "customer2")
 
         assertEquals(expected = customers, actual = actual)
 
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 1) to mapOf(
-              "customer_id" to 1,
-              "first_name" to "Mark",
-              "last_name" to "Stefanovic",
-              "middle_initial" to "E",
-            ),
-            mapOf("customer_id" to 2) to mapOf(
-              "customer_id" to 2,
-              "first_name" to "Bob",
-              "last_name" to "Smith",
-              "middle_initial" to null,
-            ),
-            mapOf("customer_id" to 3) to mapOf(
-              "customer_id" to 3,
-              "first_name" to "Mandie",
-              "last_name" to "Mandlebrot",
-              "middle_initial" to "M",
-            ),
-          ),
-          actual = resultAfterAdd.added.toMap(),
-        )
+        assertEquals(expected = 0, actual = resultAfterAdd.deleted)
+        assertEquals(expected = 3, actual = resultAfterAdd.upserted)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterAdd.deleted.toMap())
-
-        assertEquals(expected = emptyMap(), actual = resultAfterAdd.updated.toMap())
-
-        val updatedCustomer2 = customer2.copy(
-          dateUpdated = LocalDateTime.of(2020, 1, 2, 3, 4, 5),
-          middleInitial = "Z"
-        )
+        val updatedCustomer2 = customer2.copy(dateUpdated = LocalDateTime.of(2020, 1, 2, 3, 4, 5), middleInitial = "Z")
 
         // TEST UPDATE
-        updateCustomer(con = srcCon, tableName = "customer", customer = updatedCustomer2)
+        updateCustomer(con = con, tableName = "customer", customer = updatedCustomer2)
 
         val resultAfterUpdate = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
-        ).getOrThrow()
+          batchSize = 2,
+          showSQL = true,
+        )
 
-        val updatedCustomers = fetchCustomers(con = destCon, tableName = "customer2")
+        val updatedCustomers = fetchCustomers(con = con, tableName = "customer2")
 
         assertEquals(expected = setOf(customer1, updatedCustomer2, customer3), actual = updatedCustomers)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.added.toMap())
-
-        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.deleted.toMap())
-
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 2) to mapOf(
-              "customer_id" to 2,
-              "first_name" to "Bob",
-              "last_name" to "Smith",
-              "middle_initial" to "Z",
-            ),
-          ),
-          actual = resultAfterUpdate.updated.toMap(),
-        )
+        assertEquals(expected = 0, actual = resultAfterUpdate.deleted)
+        assertEquals(expected = 1, actual = resultAfterUpdate.upserted)
 
         // TEST DELETE
-        deleteCustomer(con = srcCon, tableName = "customer", customerId = 3)
+        deleteCustomer(con = con, tableName = "customer", customerId = 3)
 
         val resultAfterDelete = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
-        ).getOrThrow()
+          batchSize = 2,
+          showSQL = true,
+        )
 
-        val customersAfterDelete = fetchCustomers(con = destCon, tableName = "customer2")
+        val customersAfterDelete = fetchCustomers(con = con, tableName = "customer2")
 
         assertEquals(expected = setOf(customer1, updatedCustomer2), actual = customersAfterDelete)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterDelete.added.toMap())
-
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 3) to mapOf(
-              "customer_id" to 3,
-              "first_name" to "Mandie",
-              "last_name" to "Mandlebrot",
-              "middle_initial" to "M",
-            ),
-          ),
-          actual = resultAfterDelete.deleted.toMap(),
-        )
-
-        assertEquals(expected = emptyMap(), actual = resultAfterDelete.updated.toMap())
+        assertEquals(expected = 1, actual = resultAfterDelete.deleted)
+        assertEquals(expected = 0, actual = resultAfterDelete.upserted)
       }
     }
   }
 
   @Test
-  fun given_timestamps_used() {
-    testPgConnection().use { srcCon ->
-      testPgConnection().use { destCon ->
+  fun given_timestamps_used_and_empty_inital_cache() {
+    testPgConnection().use { con ->
+      testSQLiteConnection().use { cacheCon ->
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -352,162 +332,110 @@ class SyncTest {
         )
         val customers = setOf(customer1, customer2, customer3)
 
-        addCustomers(con = srcCon, tableName = "customer", customer1, customer2, customer3)
+        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
 
         val resultAfterAdd = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
+          batchSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,
-        ).getOrThrow()
+        )
 
-        val actual = fetchCustomers(con = destCon, tableName = "customer2")
+        val actual = fetchCustomers(con = con, tableName = "customer2")
 
         assertEquals(expected = customers, actual = actual)
 
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 1) to mapOf(
-              "customer_id" to 1,
-              "first_name" to "Mark",
-              "last_name" to "Stefanovic",
-              "middle_initial" to "E",
-              "date_added" to LocalDateTime.of(2010, 1, 2, 3, 4, 5),
-              "date_updated" to null,
-            ),
-            mapOf("customer_id" to 2) to mapOf(
-              "customer_id" to 2,
-              "first_name" to "Bob",
-              "last_name" to "Smith",
-              "middle_initial" to null,
-              "date_added" to LocalDateTime.of(2011, 2, 3, 4, 5, 6),
-              "date_updated" to LocalDateTime.of(2012, 3, 4, 5, 6, 7),
-            ),
-            mapOf("customer_id" to 3) to mapOf(
-              "customer_id" to 3,
-              "first_name" to "Mandie",
-              "last_name" to "Mandlebrot",
-              "middle_initial" to "M",
-              "date_added" to LocalDateTime.of(2013, 4, 5, 6, 7, 8),
-              "date_updated" to null,
-            ),
-          ),
-          actual = resultAfterAdd.added.toMap(),
-        )
-
-        assertEquals(expected = emptyMap(), actual = resultAfterAdd.deleted.toMap())
-
-        assertEquals(expected = emptyMap(), actual = resultAfterAdd.updated.toMap())
+        assertEquals(expected = 0, actual = resultAfterAdd.deleted)
+        assertEquals(expected = 3, actual = resultAfterAdd.upserted)
 
         // TEST UPDATE
         val updatedCustomer2 = customer2.copy(
           dateUpdated = LocalDateTime.of(2020, 1, 2, 3, 4, 5),
           middleInitial = "Z"
         )
-        updateCustomer(con = srcCon, tableName = "customer", customer = updatedCustomer2)
+        updateCustomer(con = con, tableName = "customer", customer = updatedCustomer2)
 
         val resultAfterUpdate = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
+          batchSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
-        ).getOrThrow()
+          showSQL = true,
+        )
 
-        val updatedCustomers = fetchCustomers(con = destCon, tableName = "customer2")
+        val updatedCustomers = fetchCustomers(con = con, tableName = "customer2")
+
+        assertEquals(expected = 3, actual = updatedCustomers.count())
 
         assertEquals(expected = setOf(customer1, updatedCustomer2, customer3), actual = updatedCustomers)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.added.toMap())
-
-        assertEquals(expected = emptyMap(), actual = resultAfterUpdate.deleted.toMap())
-
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 2) to mapOf(
-              "customer_id" to 2,
-              "first_name" to "Bob",
-              "last_name" to "Smith",
-              "middle_initial" to "Z",
-              "date_added" to LocalDateTime.of(2011, 2, 3, 4, 5, 6),
-              "date_updated" to LocalDateTime.of(2020, 1, 2, 3, 4, 5),
-            ),
-          ),
-          actual = resultAfterUpdate.updated.toMap(),
-        )
+        assertEquals(expected = 0, actual = resultAfterUpdate.deleted)
+        assertEquals(expected = 1, actual = resultAfterUpdate.upserted)
 
         // TEST DELETE
-        deleteCustomer(con = srcCon, tableName = "customer", customerId = 3)
+        deleteCustomer(con = con, tableName = "customer", customerId = 3)
+
+        assertEquals(expected = 2, fetchCustomers(con = con, tableName = "customer").count())
 
         val resultAfterDelete = sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
+          batchSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
-        ).getOrThrow()
+          showSQL = true,
+        )
 
-        val customersAfterDelete = fetchCustomers(con = destCon, tableName = "customer2")
+        val customersAfterDelete = fetchCustomers(con = con, tableName = "customer2")
+
+        assertEquals(expected = 2, actual = customersAfterDelete.count())
 
         assertEquals(expected = setOf(customer1, updatedCustomer2), actual = customersAfterDelete)
 
-        assertEquals(expected = emptyMap(), actual = resultAfterDelete.added.toMap())
+        assertEquals(expected = 1, actual = resultAfterDelete.deleted)
 
-        assertEquals(
-          expected = mapOf<Map<String, Any?>, Map<String, Any?>>(
-            mapOf("customer_id" to 3) to mapOf(
-              "customer_id" to 3,
-              "first_name" to "Mandie",
-              "last_name" to "Mandlebrot",
-              "middle_initial" to "M",
-              "date_added" to LocalDateTime.of(2013, 4, 5, 6, 7, 8),
-              "date_updated" to null,
-            ),
-          ),
-          actual = resultAfterDelete.deleted.toMap(),
-        )
-
-        assertEquals(expected = emptyMap(), actual = resultAfterDelete.updated.toMap())
+        assertEquals(expected = 0, actual = resultAfterDelete.upserted)
       }
     }
   }
 
   @Test
   fun given_duplicate_source_keys_sync_just_first_one_of_them() {
-    testPgConnection().use { srcCon ->
-      testPgConnection().use { destCon ->
+    testPgConnection().use { con ->
+      testSQLiteConnection().use { cacheCon ->
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -542,32 +470,227 @@ class SyncTest {
           dateUpdated = null,
         )
 
-        addCustomers(con = srcCon, tableName = "customer", customer1, customer2, customer3, customer2dupe)
+        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3, customer2dupe)
 
         sync(
-          srcCon = srcCon,
-          destCon = destCon,
-          cacheCon = destCon,
-          srcDialect = Dialect.PostgreSQL,
-          destDialect = Dialect.PostgreSQL,
-          cacheDialect = Dialect.PostgreSQL,
+          srcCon = con,
+          dstCon = con,
+          cacheCon = cacheCon,
+          srcDialect = DbDialect.PostgreSQL,
+          dstDialect = DbDialect.PostgreSQL,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = "sales",
           srcTable = "customer",
-          destSchema = "sales",
-          destTable = "customer2",
+          dstSchema = "sales",
+          dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
           primaryKeyFieldNames = listOf("customer_id"),
           includeFields = null,
-          chunkSize = 2,
+          batchSize = 2,
           timestampFieldNames = setOf("date_added", "date_updated"),
           showSQL = true,
-          trustPk = false,
-        ).getOrThrow()
+        )
 
-        val actual = fetchCustomers(con = destCon, tableName = "customer2")
+        val actual = fetchCustomers(con = con, tableName = "customer2")
 
         assertEquals(expected = setOf(customer1, customer2dupe, customer3), actual = actual)
       }
+    }
+  }
+}
+
+class GetFullCriteriaTest {
+  @Test
+  fun given_cache_empty_and_no_initial_criteria() {
+    testSQLiteConnection().use { con ->
+      val cache = SQLiteCache(con = con, showSQL = false)
+
+      val tbl = Table(
+        name = "customer",
+        fields = setOf(
+          Field(name = "customer_id", dataType = DataType.int),
+          Field(name = "first_name", dataType = DataType.nullableText(null)),
+          Field(name = "last_name", dataType = DataType.nullableText(null)),
+          Field(name = "date_added", dataType = DataType.localDateTime),
+          Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
+        ),
+        primaryKeyFieldNames = listOf("customer_id"),
+      )
+
+      val actual = getFullCriteria(
+        dstDialect = DbDialect.SQLite,
+        dstSchema = null,
+        dstTable = tbl,
+        tsFieldNames = setOf("date_added", "date_updated"),
+        cache = cache,
+        criteria = null,
+      )
+
+      assertNull(actual)
+    }
+  }
+
+  @Test
+  fun given_cache_not_empty_and_no_initial_criteria() {
+    testSQLiteConnection().use { con ->
+      val cache = SQLiteCache(con = con, showSQL = false)
+
+      val ts = LocalDateTime.of(2010, 1, 2, 3, 4, 5)
+
+      cache.addTimestamp(
+        schema = null,
+        table = "customer",
+        fieldName = "date_added",
+        ts = ts,
+      )
+
+      val tbl = Table(
+        name = "customer",
+        fields = setOf(
+          Field(name = "customer_id", dataType = DataType.int),
+          Field(name = "first_name", dataType = DataType.nullableText(null)),
+          Field(name = "last_name", dataType = DataType.nullableText(null)),
+          Field(name = "date_added", dataType = DataType.localDateTime),
+          Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
+        ),
+        primaryKeyFieldNames = listOf("customer_id"),
+      )
+
+      val actual = getFullCriteria(
+        dstDialect = DbDialect.SQLite,
+        dstSchema = null,
+        dstTable = tbl,
+        tsFieldNames = setOf("date_added", "date_updated"),
+        cache = cache,
+        criteria = null,
+      )
+
+      val expectedSQL = """"date_added" > ?"""
+
+      val expected = Criteria(
+        dialect = DbDialect.SQLite,
+        sql = expectedSQL,
+        boundParameters = listOf(
+          BoundParameter(
+            parameter = Parameter(
+              name = "date_added",
+              dataType = DataType.localDateTime,
+              sql = """"date_added" > ?""",
+            ),
+            value = ts,
+          ),
+        )
+      )
+
+      assertNotNull(actual)
+
+      assertEquals(expected = expectedSQL, actual = actual.sql)
+
+      assertEquals(expected = expected, actual = actual)
+    }
+  }
+
+  @Test
+  fun given_cache_empty_and_simple_initial_criteria() {
+    testSQLiteConnection().use { con ->
+      val cache = SQLiteCache(con = con, showSQL = false)
+
+      val tbl = Table(
+        name = "customer",
+        fields = setOf(
+          Field(name = "customer_id", dataType = DataType.int),
+          Field(name = "first_name", dataType = DataType.nullableText(null)),
+          Field(name = "last_name", dataType = DataType.nullableText(null)),
+          Field(name = "date_added", dataType = DataType.localDateTime),
+          Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
+        ),
+        primaryKeyFieldNames = listOf("customer_id"),
+      )
+
+      val initialCriteria = where(DbDialect.SQLite).and(Field(name = "customer_id", dataType = DataType.int) eq 1)
+
+      val actual = getFullCriteria(
+        dstDialect = DbDialect.SQLite,
+        dstSchema = null,
+        dstTable = tbl,
+        tsFieldNames = setOf("date_added", "date_updated"),
+        cache = cache,
+        criteria = initialCriteria,
+      )
+
+      val expectedSQL = """"customer_id" = ?"""
+
+      val expected = Criteria(
+        dialect = DbDialect.SQLite,
+        sql = expectedSQL,
+        boundParameters = listOf(
+          BoundParameter(
+            parameter = Parameter(
+              name = "customer_id",
+              dataType = DataType.int,
+              sql = """"customer_id" = ?""",
+            ),
+            value = 1,
+          ),
+        )
+      )
+
+      assertNotNull(actual)
+
+      assertEquals(expected = expectedSQL, actual = actual.sql)
+
+      assertEquals(expected = expected, actual = actual)
+    }
+  }
+
+  @Test
+  fun given_cache_not_empty_and_simple_initial_criteria() {
+    testSQLiteConnection().use { con ->
+      val cache = SQLiteCache(con = con, showSQL = false)
+
+      val ts = LocalDateTime.of(2010, 1, 2, 3, 4, 5)
+
+      cache.addTimestamp(schema = null, table = "customer", fieldName = "date_added", ts = ts)
+
+      val tbl = Table(
+        name = "customer",
+        fields = setOf(
+          Field(name = "customer_id", dataType = DataType.int),
+          Field(name = "first_name", dataType = DataType.nullableText(null)),
+          Field(name = "last_name", dataType = DataType.nullableText(null)),
+          Field(name = "date_added", dataType = DataType.localDateTime),
+          Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
+        ),
+        primaryKeyFieldNames = listOf("customer_id"),
+      )
+
+      val initialCriteria = where(DbDialect.SQLite).and(Field(name = "customer_id", dataType = DataType.int) eq 1)
+
+      val actual = getFullCriteria(
+        dstDialect = DbDialect.SQLite,
+        dstSchema = null,
+        dstTable = tbl,
+        tsFieldNames = setOf("date_added", "date_updated"),
+        cache = cache,
+        criteria = initialCriteria,
+      )
+
+      val expectedSQL = """("customer_id" = ?) AND ("date_added" > ?)"""
+
+      val expected = Criteria(
+        dialect = DbDialect.SQLite,
+        sql = expectedSQL,
+        boundParameters = listOf(
+          BoundParameter(parameter = Parameter(name = "customer_id", dataType = DataType.int, sql = """"customer_id" = ?"""), value = 1),
+          BoundParameter(parameter = Parameter(name = "date_added", dataType = DataType.localDateTime, sql = """"date_added" > ?"""), value = ts),
+        )
+      )
+
+      assertNotNull(actual)
+
+      assertEquals(expected = expectedSQL, actual = actual.sql)
+
+      assertEquals(expected = expected, actual = actual)
     }
   }
 }

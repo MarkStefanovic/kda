@@ -1,4 +1,4 @@
-package kda.adapter.sqlite
+package kda.adapter.pg
 
 import kda.adapter.std.StdAdapter
 import kda.domain.Adapter
@@ -11,12 +11,12 @@ import kda.domain.Table
 import java.sql.Connection
 
 @ExperimentalStdlibApi
-class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
+class PgAdapter(con: Connection, showSQL: Boolean) : Adapter {
   private val stdAdapter = StdAdapter(
     con = con,
     showSQL = showSQL,
-    details = SQLiteAdapterDetails,
-    dialect = DbDialect.SQLite,
+    details = PgAdapterDetails,
+    dialect = DbDialect.PostgreSQL,
   )
 
   override fun createTable(schema: String?, table: Table) =
@@ -47,15 +47,16 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     batchSize: Int,
     limit: Int?,
     orderBy: List<OrderBy>
-  ): Sequence<Row> = stdAdapter.select(
-    schema = schema,
-    table = table,
-    fields = fields,
-    criteria = criteria,
-    batchSize = batchSize,
-    orderBy = orderBy,
-    limit = limit,
-  )
+  ): Sequence<Row> =
+    stdAdapter.select(
+      schema = schema,
+      table = table,
+      fields = fields,
+      criteria = criteria,
+      orderBy = orderBy,
+      limit = limit,
+      batchSize = batchSize,
+    )
 
   override fun selectAll(
     schema: String?,
@@ -63,13 +64,14 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     fields: Set<Field<*>>,
     batchSize: Int,
     orderBy: List<OrderBy>
-  ): Sequence<Row> = stdAdapter.selectAll(
-    schema = schema,
-    table = table,
-    fields = fields,
-    batchSize = batchSize,
-    orderBy = orderBy,
-  )
+  ): Sequence<Row> =
+    stdAdapter.selectAll(
+      schema = schema,
+      table = table,
+      fields = fields,
+      batchSize = batchSize,
+      orderBy = orderBy,
+    )
 
   override fun selectRows(
     schema: String?,

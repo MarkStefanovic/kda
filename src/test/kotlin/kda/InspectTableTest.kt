@@ -1,49 +1,44 @@
 package kda
 
 import kda.domain.DataType
-import kda.domain.Dialect
+import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.Table
-import kda.testutil.pgTableExists
-import kda.testutil.testPgConnection
+import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class InspectTableTest {
   @Test
   fun inspectTable_happy_path() {
-    testPgConnection().use { con ->
+    testSQLiteConnection().use { con ->
       con.createStatement().use { stmt ->
-        stmt.execute("DROP TABLE IF EXISTS sales.customer")
+        stmt.execute("DROP TABLE IF EXISTS customer")
         stmt.execute(
           """
-            CREATE TABLE sales.customer (
-                customer_id SERIAL PRIMARY KEY
-            ,   first_name TEXT
-            ,   last_name TEXT
-            )
-          """.trimIndent()
+            |CREATE TABLE customer (
+            |    customer_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
+            |,   first_name TEXT NULL
+            |,   last_name TEXT NULL
+            |)
+          """.trimMargin()
         )
       }
-      assertTrue(pgTableExists(con, schema = "sales", table = "customer"))
 
       val actual = inspectTable(
         con = con,
         cacheCon = con,
-        dialect = Dialect.PostgreSQL,
-        cacheDialect = Dialect.PostgreSQL,
-        schema = "sales",
+        cacheDialect = DbDialect.SQLite,
+        schema = null,
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),
         includeFieldNames = null,
-      ).getOrThrow()
+      )
 
       val expected = Table(
-        schema = "sales",
         name = "customer",
         fields = setOf(
-          Field(name = "customer_id", dataType = DataType.int(true)),
+          Field(name = "customer_id", dataType = DataType.int),
           Field(name = "first_name", dataType = DataType.nullableText(null)),
           Field(name = "last_name", dataType = DataType.nullableText(null)),
         ),

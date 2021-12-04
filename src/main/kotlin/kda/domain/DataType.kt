@@ -1,155 +1,40 @@
+@file:Suppress("ClassName")
+
 package kda.domain
 
 import java.math.BigDecimal
+import java.sql.JDBCType
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-sealed class DataType<T : Any?> {
-  abstract val nullable: Boolean
+sealed class DataType<out T : Any?>(
+  open val description: String,
+  open val jdbcType: JDBCType,
+  open val nullable: Boolean,
+  open val name: String,
+) {
 
-  abstract val zeroValue: T
+  object bool : DataType<Boolean>(description = "bool", jdbcType = JDBCType.BOOLEAN, nullable = false, name = "bool")
+  object nullableBool : DataType<Boolean?>(description = "nullableBool", jdbcType = JDBCType.BOOLEAN, nullable = true, name = "nullableBool")
 
-  abstract val name: DataTypeName
+  object bigInt : DataType<Int>(description = "bigInt", jdbcType = JDBCType.BIGINT, nullable = false, name = "bigInt")
+  object nullableBigInt : DataType<Boolean?>(description = "nullableBigInt", jdbcType = JDBCType.BIGINT, nullable = true, name = "nullableBigInt")
 
-  abstract fun wrapValue(value: Any?): Value<T>
+  data class decimal(val precision: Int, val scale: Int) : DataType<BigDecimal>(description = "decimal [ precision: $precision, scale: $scale ]", jdbcType = JDBCType.DECIMAL, nullable = false, name = "decimal")
+  data class nullableDecimal(val precision: Int, val scale: Int) : DataType<BigDecimal?>(description = "nullableDecimal [ precision: $precision, scale: $scale ]", jdbcType = JDBCType.DECIMAL, nullable = true, name = "nullableDecimal")
 
-  object bool : DataType<Boolean>() {
-    override val nullable: Boolean = false
+  object float : DataType<Float>(description = "float", jdbcType = JDBCType.FLOAT, nullable = false, name = "float")
+  object nullableFloat : DataType<Float?>(description = "nullableFloat", jdbcType = JDBCType.FLOAT, nullable = true, name = "nullableFloat")
 
-    override val zeroValue: Boolean = false
+  object int : DataType<Int>(description = "int", jdbcType = JDBCType.INTEGER, nullable = false, name = "int")
+  object nullableInt : DataType<Int?>(description = "nullableInt", jdbcType = JDBCType.INTEGER, nullable = true, name = "nullableInt")
 
-    override val name = DataTypeName.Bool
+  object localDate : DataType<LocalDate>(description = "localDate", jdbcType = JDBCType.DATE, nullable = false, name = "localDate")
+  object nullableLocalDate : DataType<LocalDate?>(description = "nullableLocalDate", jdbcType = JDBCType.DATE, nullable = true, name = "nullableLocalDate")
 
-    override fun wrapValue(value: Any?) = Value.bool(value as Boolean)
-  }
+  object localDateTime : DataType<LocalDateTime>(description = "localDateTime", jdbcType = JDBCType.TIMESTAMP, nullable = false, name = "localDateTime")
+  object nullableLocalDateTime : DataType<LocalDateTime?>(description = "nullableLocalDateTime", jdbcType = JDBCType.TIMESTAMP, nullable = true, name = "nullableLocalDateTime")
 
-  data class int(val autoincrement: Boolean) : DataType<Int>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: Int = 0
-
-    override val name = DataTypeName.Int
-
-    override fun wrapValue(value: Any?) = Value.int(value as Int)
-  }
-
-  object localDate : DataType<LocalDate>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: LocalDate = LocalDate.MIN
-
-    override val name = DataTypeName.Date
-
-    override fun wrapValue(value: Any?) = Value.date(value as LocalDate)
-  }
-
-  object localDateTime : DataType<LocalDateTime>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: LocalDateTime = LocalDateTime.MIN
-
-    override val name = DataTypeName.DateTime
-
-    override fun wrapValue(value: Any?) = Value.datetime(value as LocalDateTime)
-  }
-
-  data class float(val maxDigits: Int) : DataType<Float>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: Float = Float.MIN_VALUE
-
-    override val name = DataTypeName.Float
-
-    override fun wrapValue(value: Any?) = Value.float(value as Float)
-  }
-
-  data class decimal(val precision: Int, val scale: Int) : DataType<BigDecimal>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: BigDecimal = BigDecimal.ZERO
-
-    override val name = DataTypeName.Decimal
-
-    override fun wrapValue(value: Any?) = Value.decimal(value as BigDecimal)
-  }
-
-  data class text(val maxLength: Int?) : DataType<String>() {
-    override val nullable: Boolean = false
-
-    override val zeroValue: String = ""
-
-    override val name = DataTypeName.Text
-
-    override fun wrapValue(value: Any?) = Value.text(value as String)
-  }
-
-  object nullableBool : DataType<Boolean?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: Boolean? = null
-
-    override val name = DataTypeName.NullableBool
-
-    override fun wrapValue(value: Any?) = Value.nullableBool(value as Boolean?)
-  }
-
-  data class nullableInt(val autoincrement: Boolean) : DataType<Int?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: Int? = null
-
-    override val name = DataTypeName.NullableInt
-
-    override fun wrapValue(value: Any?) = Value.nullableInt(value as Int?)
-  }
-
-  object nullableLocalDate : DataType<LocalDate?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: LocalDate? = LocalDate.MIN
-
-    override val name = DataTypeName.NullableDate
-
-    override fun wrapValue(value: Any?) = Value.nullableDate(value as LocalDate?)
-  }
-
-  object nullableLocalDateTime : DataType<LocalDateTime?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: LocalDateTime? = null
-
-    override val name = DataTypeName.NullableDateTime
-
-    override fun wrapValue(value: Any?) = Value.nullableDatetime(value as LocalDateTime?)
-  }
-
-  data class nullableFloat(val maxDigits: Int) : DataType<Float?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: Float? = null
-
-    override val name = DataTypeName.NullableFloat
-
-    override fun wrapValue(value: Any?) = Value.nullableFloat(value as Float?)
-  }
-
-  data class nullableDecimal(val precision: Int, val scale: Int) : DataType<BigDecimal?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: BigDecimal? = null
-
-    override val name = DataTypeName.NullableDecimal
-
-    override fun wrapValue(value: Any?) = Value.nullableDecimal(value as BigDecimal?)
-  }
-
-  data class nullableText(val maxLength: Int?) : DataType<String?>() {
-    override val nullable: Boolean = true
-
-    override val zeroValue: String? = null
-
-    override val name = DataTypeName.NullableText
-
-    override fun wrapValue(value: Any?) = Value.nullableText(value as String?)
-  }
+  data class text(val maxLength: Int? = null) : DataType<String>(description = "text [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = false, name = "text")
+  data class nullableText(val maxLength: Int? = null) : DataType<String?>(description = "nullableText [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = true, name = "nullableText")
 }

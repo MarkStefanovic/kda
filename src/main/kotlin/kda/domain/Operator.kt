@@ -5,5 +5,5 @@ enum class Operator {
   GreaterThan,
   GreaterThanOrEqualTo,
   LessThan,
-  LessThanOrEqualTo,
+  LessThanOrEqualTo;
 }

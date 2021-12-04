@@ -5,89 +5,39 @@ import kotlin.test.assertEquals
 
 class TableTest {
   @Test
-  fun row_happy_path() {
-    val table = Table(
-      schema = "sales",
-      name = "customer",
-      fields = setOf(
-        Field(name = "customer_id", dataType = DataType.int(false)),
-        Field(name = "first_name", dataType = DataType.nullableText(null)),
-        Field(name = "last_name", dataType = DataType.nullableText(null)),
-      ),
-      primaryKeyFieldNames = listOf("customer_id"),
-    )
-    val actualRow = table.row(
+  fun row_of_happy_path() {
+    val actualRow = Row.of(
       "customer_id" to 1,
       "first_name" to "Mark",
       "last_name" to "Stefanovic",
     )
     val expectedRow = Row(
       mapOf(
-        "customer_id" to Value.int(1),
-        "first_name" to Value.nullableText("Mark"),
-        "last_name" to Value.nullableText("Stefanovic"),
+        "customer_id" to 1,
+        "first_name" to "Mark",
+        "last_name" to "Stefanovic",
       )
     )
     assertEquals(expected = expectedRow, actual = actualRow)
   }
 
   @Test
-  fun rows_happy_path() {
-    val table = Table(
-      schema = "sales",
-      name = "customer",
-      fields = setOf(
-        Field(name = "customer_id", dataType = DataType.int(false)),
-        Field(name = "first_name", dataType = DataType.nullableText(null)),
-        Field(name = "last_name", dataType = DataType.nullableText(null)),
-      ),
-      primaryKeyFieldNames = listOf("customer_id"),
-    )
-    val actualRows = table.rows(
-      mapOf("customer_id" to 1, "first_name" to "Mark", "last_name" to "Stefanovic"),
-      mapOf("customer_id" to 2, "first_name" to "Bob", "last_name" to "Smith"),
-    )
-    val expectedRows = setOf(
-      Row(
-        mapOf(
-          "customer_id" to Value.int(1),
-          "first_name" to Value.nullableText("Mark"),
-          "last_name" to Value.nullableText("Stefanovic"),
-        )
-      ),
-      Row(
-        mapOf(
-          "customer_id" to Value.int(2),
-          "first_name" to Value.nullableText("Bob"),
-          "last_name" to Value.nullableText("Smith"),
-        )
-      ),
-    )
-    assertEquals(expected = expectedRows, actual = actualRows)
-  }
-
-  @Test
   fun toString_happy_path() {
     val table = Table(
-      schema = "sales",
       name = "customer",
       fields = setOf(
-        Field(name = "customer_id", dataType = DataType.int(false)),
-        Field(name = "first_name", dataType = DataType.nullableText(null)),
-        Field(name = "last_name", dataType = DataType.nullableText(null)),
+        Field(name = "customer_id", dataType = DataType.int),
+        Field(name = "first_name", dataType = DataType.text(null)),
+        Field(name = "last_name", dataType = DataType.text(null)),
       ),
       primaryKeyFieldNames = listOf("customer_id"),
     )
 
     val expected = """
       |Table [
-      |  schema: sales
       |  name: customer
-      |  fields: 
-      |    Field(name=customer_id, dataType=int(autoincrement=false))
-      |    Field(name=first_name, dataType=nullableText(maxLength=null))
-      |    Field(name=last_name, dataType=nullableText(maxLength=null))
-      |  primaryKeyFieldNames: [customer_id]
+      |  fields: Field [ name: customer_id, dataType: int ], Field [ name: first_name, dataType: text [ maxLength: null ] ], Field [ name: last_name, dataType: text [ maxLength: null ] ]
+      |  primaryKeyFieldNames: customer_id
       |]
     """.trimMargin()
 

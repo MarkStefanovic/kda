@@ -1,23 +1,16 @@
+@file:Suppress("ClassName", "unused")
+
 package kda.domain
 
-data class Field(val name: String, val dataType: DataType<*>) {
-  fun wrapValue(value: Any?) = dataType.wrapValue(value)
+data class Field<out T : Any?> (val name: String, val dataType: DataType<T>) {
+  @Suppress("UNCHECKED_CAST")
+  fun value(row: Map<Field<*>, *>): T = row[this] as T
 
-  val nullable: Boolean
-    get() = when (dataType) {
-      DataType.bool -> false
-      is DataType.decimal -> false
-      is DataType.float -> false
-      is DataType.int -> false
-      DataType.localDate -> false
-      DataType.localDateTime -> false
-      is DataType.text -> false
-      DataType.nullableBool -> true
-      is DataType.nullableDecimal -> true
-      is DataType.nullableFloat -> true
-      is DataType.nullableInt -> true
-      DataType.nullableLocalDate -> true
-      DataType.nullableLocalDateTime -> true
-      is DataType.nullableText -> true
-    }
+  override fun toString() = "Field [ name: $name, dataType: ${dataType.description} ]"
 }
+
+infix fun <T : Any?> Field<T>.eq(value: T) = Predicate(field = this, operator = Operator.Equals, value = value)
+infix fun <T : Any?> Field<T>.ge(value: T) = Predicate(field = this, operator = Operator.GreaterThan, value = value)
+infix fun <T : Any?> Field<T>.geq(value: T) = Predicate(field = this, operator = Operator.GreaterThanOrEqualTo, value = value)
+infix fun <T : Any?> Field<T>.le(value: T) = Predicate(field = this, operator = Operator.LessThan, value = value)
+infix fun <T : Any?> Field<T>.leq(value: T) = Predicate(field = this, operator = Operator.LessThanOrEqualTo, value = value)

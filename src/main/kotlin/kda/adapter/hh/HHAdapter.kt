@@ -1,4 +1,4 @@
-package kda.adapter.sqlite
+package kda.adapter.hh
 
 import kda.adapter.std.StdAdapter
 import kda.domain.Adapter
@@ -11,12 +11,12 @@ import kda.domain.Table
 import java.sql.Connection
 
 @ExperimentalStdlibApi
-class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
+class HHAdapter(con: Connection, showSQL: Boolean) : Adapter {
   private val stdAdapter = StdAdapter(
     con = con,
     showSQL = showSQL,
-    details = SQLiteAdapterDetails,
-    dialect = DbDialect.SQLite,
+    details = HHAdapterDetails,
+    dialect = DbDialect.HH,
   )
 
   override fun createTable(schema: String?, table: Table) =
@@ -46,7 +46,7 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     criteria: Criteria?,
     batchSize: Int,
     limit: Int?,
-    orderBy: List<OrderBy>
+    orderBy: List<OrderBy>,
   ): Sequence<Row> = stdAdapter.select(
     schema = schema,
     table = table,
@@ -62,14 +62,15 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     table: String,
     fields: Set<Field<*>>,
     batchSize: Int,
-    orderBy: List<OrderBy>
-  ): Sequence<Row> = stdAdapter.selectAll(
-    schema = schema,
-    table = table,
-    fields = fields,
-    batchSize = batchSize,
-    orderBy = orderBy,
-  )
+    orderBy: List<OrderBy>,
+  ): Sequence<Row> =
+    stdAdapter.selectAll(
+      schema = schema,
+      table = table,
+      fields = fields,
+      batchSize = batchSize,
+      orderBy = orderBy,
+    )
 
   override fun selectRows(
     schema: String?,
@@ -77,7 +78,7 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     fields: Set<Field<*>>,
     keys: Set<Row>,
     batchSize: Int,
-    orderBy: List<OrderBy>
+    orderBy: List<OrderBy>,
   ): Sequence<Row> =
     stdAdapter.selectRows(
       schema = schema,
@@ -93,14 +94,12 @@ class SQLiteAdapter(con: Connection, showSQL: Boolean) : Adapter {
     table: String,
     rows: Set<Row>,
     keyFields: Set<Field<*>>,
-    valueFields: Set<Field<*>>
-  ) {
-    stdAdapter.upsertRows(
-      schema = schema,
-      table = table,
-      rows = rows,
-      keyFields = keyFields,
-      valueFields = valueFields,
-    )
-  }
+    valueFields: Set<Field<*>>,
+  ) = stdAdapter.upsertRows(
+    schema = schema,
+    table = table,
+    rows = rows,
+    keyFields = keyFields,
+    valueFields = valueFields,
+  )
 }

@@ -1,10 +1,12 @@
+@file:OptIn(ExperimentalStdlibApi::class)
+
 package kda
 
 import kda.domain.CopyTableResult
-import kda.domain.Dialect
+import kda.domain.DbDialect
 import kda.testutil.pgTableExists
 import kda.testutil.testPgConnection
-import kda.testutil.testSQLiteDbConnection
+import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
 import java.sql.Connection
 import kotlin.test.assertEquals
@@ -13,9 +15,9 @@ import kotlin.test.assertIs
 class CopyTableTest {
   @Test
   fun given_dest_does_not_exist_then_it_should_be_created() {
-    testPgConnection().use { srcCon: Connection ->
-      testPgConnection().use { destCon: Connection ->
-        destCon.createStatement().use { stmt ->
+    testPgConnection().use { con: Connection ->
+      testSQLiteConnection().use { cacheCon: Connection ->
+        con.createStatement().use { stmt ->
           stmt.execute("DROP TABLE IF EXISTS sales.customer")
           stmt.execute("DROP TABLE IF EXISTS sales.customer2")
           stmt.execute(
@@ -28,36 +30,35 @@ class CopyTableTest {
             """
           )
         }
-        assert(!pgTableExists(destCon, "sales", "customer2"))
+        assert(!pgTableExists(con, "sales", "customer2"))
 
         val result =
           copyTable(
-            srcCon = srcCon,
-            destCon = destCon,
-            cacheCon = destCon,
-            srcDialect = Dialect.PostgreSQL,
-            destDialect = Dialect.PostgreSQL,
-            cacheDialect = Dialect.PostgreSQL,
+            srcCon = con,
+            dstCon = con,
+            cacheCon = cacheCon,
+            dstDialect = DbDialect.PostgreSQL,
+            cacheDialect = DbDialect.SQLite,
             srcSchema = "sales",
             srcTable = "customer",
-            destSchema = "sales",
-            destTable = "customer2",
+            dstSchema = "sales",
+            dstTable = "customer2",
             includeFields = setOf("customer_id", "first_name", "last_name"),
-            primaryKeyFields = listOf("customer_id"),
-          ).getOrThrow()
+            primaryKeyFieldNames = listOf("customer_id"),
+          )
         assertIs<CopyTableResult>(result)
         assertEquals(
           expected = setOf("customer_id", "first_name", "last_name"),
           actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()
         )
-        assert(pgTableExists(destCon, "sales", "customer2"))
+        assert(pgTableExists(con, "sales", "customer2"))
       }
     }
   }
 
   @Test
   fun given_no_primary_is_enforced_at_db_level() {
-    testSQLiteDbConnection().use { con: Connection ->
+    testSQLiteConnection().use { con: Connection ->
       con.createStatement().use { stmt ->
         stmt.execute("DROP TABLE IF EXISTS customer")
 
@@ -77,18 +78,17 @@ class CopyTableTest {
       val result =
         copyTable(
           srcCon = con,
-          destCon = con,
+          dstCon = con,
           cacheCon = con,
-          srcDialect = Dialect.SQLite,
-          destDialect = Dialect.SQLite,
-          cacheDialect = Dialect.SQLite,
+          dstDialect = DbDialect.SQLite,
+          cacheDialect = DbDialect.SQLite,
           srcSchema = null,
           srcTable = "customer",
-          destSchema = null,
-          destTable = "customer2",
+          dstSchema = null,
+          dstTable = "customer2",
           includeFields = setOf("customer_id", "first_name", "last_name"),
-          primaryKeyFields = listOf("customer_id"),
-        ).getOrThrow()
+          primaryKeyFieldNames = listOf("customer_id"),
+        )
 
       assertIs<CopyTableResult>(result)
 

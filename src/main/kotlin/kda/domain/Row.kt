@@ -1,44 +1,35 @@
 package kda.domain
 
 @JvmInline
-value class Row(private val row: Map<String, Value<*>>) {
-  init {
-    require(row.isNotEmpty())
-    require(row.keys.all { fld -> fld.isNotEmpty() })
-  }
+value class Row(val value: Map<String, Any?>) {
+  val fields: Set<String>
+    get() = value.keys
 
-  val fieldNames: Set<String>
-    get() = row.keys
+  val fieldsSorted: List<String>
+    get() = value.keys.sorted()
 
-  fun subset(fieldNames: Set<String>): Row =
-    if (fieldNames.toSet() == row.keys) {
-      this
-    } else {
-      fieldNames.forEach { fldName ->
-        require(row.containsKey(fldName)) {
-          "The row ${row.toMap()} does not contain the field, $fldName."
-        }
-      }
-      val subset = fieldNames.associateWith { fieldName ->
-        row[fieldName] ?: throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = row.keys)
-      }
-      Row(subset)
+  fun split(keyFieldNames: Set<String>): Pair<Row, Row> {
+    val valueFieldNames = value.keys.subtract(keyFieldNames)
+
+    val keyMap: Map<String, Any?> = value.filter { (field, _) ->
+      keyFieldNames.contains(field)
     }
 
-  fun toMap(): Map<String, Any?> =
-    row.entries.associate { entry -> entry.key to entry.value.value }
+    val valueMap: Map<String, Any?> = value.filter { (field, _) ->
+      valueFieldNames.contains(field)
+    }
 
-  fun value(fieldName: String): Value<*> =
-    row[fieldName] ?: throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = row.keys)
+    return Row(keyMap) to Row(valueMap)
+  }
+
+  fun merge(other: Row): Row =
+    Row(value + other.value)
+
+  fun subset(fieldNames: Set<String>): Row =
+    Row(value.filterKeys { it in fieldNames })
 
   companion object {
-    fun of(vararg keyValuePairs: Pair<String, Value<*>>): Row = Row(keyValuePairs.toMap())
+    fun of(vararg keyValuePair: Pair<String, Any?>): Row =
+      Row(keyValuePair.toMap())
   }
 }
-
-fun Set<Row>.distinctOnPK(pkCols: Set<String>): Set<Row> =
-  associateBy { row ->
-    pkCols.map { pk ->
-      row.value(pk)
-    }.toSet()
-  }.values.toSet()

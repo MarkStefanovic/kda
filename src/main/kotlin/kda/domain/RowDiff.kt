@@ -2,25 +2,22 @@ package kda.domain
 
 @Suppress("MemberVisibilityCanBePrivate")
 data class RowDiff(
-  val srcRows: IndexedRows,
-  val destRows: IndexedRows,
-  val added: IndexedRows,
-  val deleted: IndexedRows,
-  val updated: IndexedRows,
-  val primaryKeyFields: Set<String>,
-  val includeFields: Set<String>,
-  val compareFields: Set<String>,
+  val srcRowCount: Int,
+  val dstRowCount: Int,
+  val added: Set<Row>,
+  val deleted: Set<Row>,
+  val updated: Set<Row>,
 ) {
   val absVariance: Int
     get() = extraRows + missingRows + staleRows
 
   val absVariancePct: Float
-    get() = if ((srcRows.isEmpty()) && (destRows.isEmpty())) {
+    get() = if ((srcRowCount == 0) && (dstRowCount == 0)) {
       0F
-    } else if (srcRows.isEmpty()) {
+    } else if (srcRowCount == 0) {
       1F
     } else {
-      absVariance / srcRows.count().toFloat()
+      absVariance / srcRowCount.toFloat()
     }
 
   val description =
@@ -38,79 +35,79 @@ data class RowDiff(
 
   val staleRows: Int
     get() = updated.count()
+
+  override fun toString(): String =
+    """
+      |RowDif [
+      |  srcRowCount: $srcRowCount 
+      |  dstRowCount: $dstRowCount 
+      |  added: $added 
+      |  deleted: $deleted 
+      |  updated: $updated 
+      |]
+    """.trimMargin()
 }
 
 internal fun compareRows(
-  dest: Set<Row>,
-  src: Set<Row>,
-  primaryKeyFields: Set<String>,
-  includeFields: Set<String>,
-  compareFields: Set<String>,
+  dstRows: Set<Row>,
+  srcRows: Set<Row>,
+  primaryKeyFieldNames: Set<String>,
 ): RowDiff =
-  if (dest.isEmpty()) {
-    val srcRows = src.index(
-      keyFields = primaryKeyFields,
-      includeFields = includeFields,
-    )
-
+  if (srcRows.isEmpty() && dstRows.isEmpty()) {
     RowDiff(
-      srcRows = srcRows,
-      destRows = IndexedRows.empty(),
-      added = srcRows,
-      deleted = IndexedRows.empty(),
-      updated = IndexedRows.empty(),
-      primaryKeyFields = primaryKeyFields,
-      includeFields = includeFields,
-      compareFields = compareFields,
+      srcRowCount = 0,
+      dstRowCount = 0,
+      added = emptySet(),
+      deleted = emptySet(),
+      updated = emptySet(),
     )
-  } else if (src.isEmpty()) {
-    val destRows = dest.index(
-      keyFields = primaryKeyFields,
-      includeFields = includeFields,
-    )
-
+  } else if (dstRows.isEmpty()) {
     RowDiff(
-      srcRows = IndexedRows.empty(),
-      destRows = destRows,
-      added = IndexedRows.empty(),
-      deleted = destRows,
-      updated = IndexedRows.empty(),
-      primaryKeyFields = primaryKeyFields,
-      includeFields = includeFields,
-      compareFields = compareFields,
+      srcRowCount = srcRows.count(),
+      dstRowCount = 0,
+      added = srcRows.toSet(),
+      deleted = emptySet(),
+      updated = emptySet(),
+    )
+  } else if (srcRows.isEmpty()) {
+    RowDiff(
+      srcRowCount = 0,
+      dstRowCount = dstRows.count(),
+      added = emptySet(),
+      deleted = dstRows.toSet(),
+      updated = emptySet(),
     )
   } else {
-    val srcRows = src.index(
-      keyFields = primaryKeyFields,
-      includeFields = includeFields,
-    )
+    val indexedSrcRows = srcRows.associate { row ->
+      row.split(primaryKeyFieldNames)
+    }
 
-    val destRows = dest.index(
-      keyFields = primaryKeyFields,
-      includeFields = includeFields,
-    )
+    val indexedDstRows = dstRows.associate { row ->
+      row.split(primaryKeyFieldNames)
+    }
 
-    val addedRows = srcRows.filterKeys { key -> destRows[key] == null }
+    val addedRows = indexedSrcRows.filterKeys { key ->
+      indexedDstRows[key] == null
+    }
 
-    val deletedRows = destRows.filterKeys { key -> srcRows[key] == null }
+    val deletedRows = indexedDstRows.filterKeys { key ->
+      indexedSrcRows[key] == null
+    }
 
-    val updatedRows = srcRows.filter { (key, newRow) ->
-      val oldRow = destRows[key]
+    val updatedRows = indexedSrcRows.filter { (key, newRow) ->
+      val oldRow = indexedDstRows[key]
       if (oldRow == null) {
         false
       } else {
-        newRow.toMap() != oldRow.toMap()
+        newRow.value != oldRow.value
       }
     }
 
     RowDiff(
-      srcRows = srcRows,
-      destRows = destRows,
-      added = IndexedRows(addedRows),
-      deleted = IndexedRows(deletedRows),
-      updated = IndexedRows(updatedRows),
-      primaryKeyFields = primaryKeyFields,
-      includeFields = includeFields,
-      compareFields = compareFields,
+      srcRowCount = srcRows.count(),
+      dstRowCount = dstRows.count(),
+      added = addedRows.keys,
+      deleted = deletedRows.keys,
+      updated = updatedRows.keys,
     )
   }

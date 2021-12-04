@@ -1,105 +1,104 @@
 package kda
 
+import kda.adapter.selectAdapter
+import kda.domain.Adapter
 import kda.domain.Criteria
-import kda.domain.Datasource
-import kda.domain.Dialect
+import kda.domain.DbDialect
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
 
+@ExperimentalStdlibApi
 fun compareRows(
   srcCon: Connection,
-  destCon: Connection,
+  dstCon: Connection,
   cacheCon: Connection,
-  srcDialect: Dialect,
-  destDialect: Dialect,
-  cacheDialect: Dialect,
+  srcDialect: DbDialect,
+  dstDialect: DbDialect,
+  cacheDialect: DbDialect,
   srcSchema: String?,
   srcTable: String,
-  destSchema: String?,
-  destTable: String,
+  dstSchema: String?,
+  dstTable: String,
   compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
-  criteria: Criteria = Criteria(emptySet()),
+  criteria: Criteria? = null,
   includeFields: Set<String>? = null,
   showSQL: Boolean = false,
-): Result<RowDiff> = runCatching {
-  val src = datasource(con = srcCon, dialect = srcDialect)
+  batchSize: Int = 1_000,
+): RowDiff {
+  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL)
 
-  val dest = datasource(con = destCon, dialect = destDialect)
-
-  val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
+  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
 
   val tables =
     copyTable(
       srcCon = srcCon,
-      destCon = destCon,
+      dstCon = dstCon,
       cacheCon = cacheCon,
-      srcDialect = srcDialect,
-      destDialect = destDialect,
+      dstDialect = dstDialect,
       cacheDialect = cacheDialect,
       srcSchema = srcSchema,
       srcTable = srcTable,
-      destSchema = destSchema,
-      destTable = destTable,
+      dstSchema = dstSchema,
+      dstTable = dstTable,
       includeFields = includeFields,
-      primaryKeyFields = primaryKeyFieldNames,
+      primaryKeyFieldNames = primaryKeyFieldNames,
     )
-      .getOrThrow()
 
-  val srcRows = fetchLookupTable(
-    ds = src,
-    primaryKeyFieldNames = primaryKeyFieldNames,
-    compareFields = compareFields,
-    criteria = criteria,
-    tableDef = tables.srcTableDef,
-    showSQL = showSQL,
-  ).getOrThrow()
+  val srcRows: Set<Row> =
+    fetchLookupTable(
+      adapter = srcAdapter,
+      primaryKeyFieldNames = primaryKeyFieldNames,
+      compareFields = compareFields,
+      criteria = criteria,
+      schema = srcSchema,
+      table = tables.srcTableDef,
+      batchSize = batchSize,
+    )
 
-  val destRows = fetchLookupTable(
-    ds = dest,
-    primaryKeyFieldNames = primaryKeyFieldNames,
-    compareFields = compareFields,
-    criteria = criteria,
-    tableDef = tables.destTableDef,
-    showSQL = showSQL,
-  ).getOrThrow()
+  val dstRows: Set<Row> =
+    fetchLookupTable(
+      adapter = dstAdapter,
+      primaryKeyFieldNames = primaryKeyFieldNames,
+      compareFields = compareFields,
+      criteria = criteria,
+      schema = dstSchema,
+      table = tables.dstTableDef,
+      batchSize = batchSize,
+    )
 
-  kda.domain.compareRows(
-    dest = destRows,
-    src = srcRows,
-    primaryKeyFields = primaryKeyFieldNames.toSet(),
-    compareFields = compareFields,
-    includeFields = includeFieldNames,
+  return kda.domain.compareRows(
+    dstRows = dstRows,
+    srcRows = srcRows,
+    primaryKeyFieldNames = primaryKeyFieldNames.toSet(),
   )
 }
 
+@ExperimentalStdlibApi
 private fun fetchLookupTable(
-  ds: Datasource,
-  tableDef: Table,
+  adapter: Adapter,
+  schema: String?,
+  table: Table,
   primaryKeyFieldNames: List<String>,
   compareFields: Set<String>,
-  criteria: Criteria,
-  showSQL: Boolean,
-): Result<Set<Row>> = runCatching {
+  criteria: Criteria?,
+  batchSize: Int,
+): Set<Row> {
   val includeFieldNames = primaryKeyFieldNames.toSet().union(compareFields)
 
-  val srcLkpTable = tableDef.subset(includeFieldNames)
+  val includeFields = table.fields.filter { it.name in includeFieldNames }.toSet()
 
-  val includeFields = tableDef.fields.filter { it.name in includeFieldNames }.toSet()
-
-  val srcKeysSQL: String = ds.adapter.select(table = srcLkpTable, criteria = criteria)
-
-  if (showSQL) {
-    println(
-      """Fetching lookup table for table ${tableDef.name}:
-      |  $srcKeysSQL
-    """.trimMargin()
+  return adapter
+    .select(
+      schema = schema,
+      table = table.name,
+      criteria = criteria,
+      fields = includeFields,
+      batchSize = batchSize,
+      limit = null,
+      orderBy = emptyList(),
     )
-  }
-
-  val result = ds.executor.fetchRows(sql = srcKeysSQL, fields = includeFields)
-
-  result.toSet()
+    .toSet()
 }

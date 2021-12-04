@@ -1,9 +1,14 @@
 package kda.domain
 
 data class SyncResult(
-  val srcTableDef: Table,
-  val destTableDef: Table,
-  val added: IndexedRows,
-  val deleted: IndexedRows,
-  val updated: IndexedRows,
-)
+  val deleted: Int,
+  val upserted: Int,
+) {
+  override fun toString(): String =
+    """
+      |SyncResult [
+      |  deleted: $deleted
+      |  upserterd: $upserted
+      |]
+    """.trimMargin()
+}
