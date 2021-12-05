@@ -105,6 +105,15 @@ data class Criteria(
       )
     }
 
+  override fun toString(): String =
+    """
+      |Criteria [
+      |  dialect: $dialect
+      |  sql: $sql
+      |  boundParameters: $boundParameters
+      |]
+    """.trimMargin()
+
   companion object {
     fun empty(dialect: DbDialect): Criteria =
       Criteria(dialect = dialect, sql = null, boundParameters = emptyList())

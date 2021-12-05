@@ -77,26 +77,26 @@ fun sync(
       primaryKeyFieldNames = primaryKeyFieldNames,
     )
 
-  val fieldNames = tables.srcTableDef.fields.map { it.name }.toSet()
+  val fieldNames = tables.srcTable.fields.map { it.name }.toSet()
 
   val compareFieldNamesFinal: Set<String> =
     if (compareFields == null) {
-      fieldNames.minus(tables.srcTableDef.primaryKeyFieldNames.toSet())
+      fieldNames.minus(tables.srcTable.primaryKeyFieldNames.toSet())
     } else {
       fieldNames.filter { fldName -> fldName in compareFields }.toSet()
     }
 
-  val pkFields = tables.srcTableDef.primaryKeyFieldNames.toSet()
+  val pkFields = tables.srcTable.primaryKeyFieldNames.toSet()
 
   val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal).union(timestampFieldNames)
 
   val lkpTableFields =
-    tables.srcTableDef.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
+    tables.srcTable.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
   val fullCriteria = getFullCriteria(
     dstDialect = dstDialect,
     dstSchema = dstSchema,
-    dstTable = tables.dstTableDef,
+    dstTable = tables.dstTable,
     tsFieldNames = timestampFieldNames,
     cache = cache,
     criteria = criteria,
@@ -132,15 +132,15 @@ fun sync(
   val deleteKeys: Set<Row> =
     rowDiff
       .deleted
-      .map { it.subset(tables.dstTableDef.primaryKeyFieldNames.toSet()) }
+      .map { it.subset(tables.dstTable.primaryKeyFieldNames.toSet()) }
       .toSet()
 
   deleteRows(
     dstAdapter = dstAdapter,
     dstSchema = dstSchema,
-    dstTable = tables.dstTableDef,
+    dstTable = tables.dstTable,
     deletedRows = deleteKeys,
-    fields = tables.dstTableDef.primaryKeyFields.toSet(),
+    fields = tables.dstTable.primaryKeyFields.toSet(),
     chunkSize = batchSize,
   )
 
@@ -149,9 +149,9 @@ fun sync(
     dstAdapter = dstAdapter,
     srcSchema = srcSchema,
     dstSchema = dstSchema,
-    srcTable = tables.srcTableDef,
-    dstTable = tables.dstTableDef,
-    primaryKeyFieldNames = tables.dstTableDef.primaryKeyFieldNames.toSet(),
+    srcTable = tables.srcTable,
+    dstTable = tables.dstTable,
+    primaryKeyFieldNames = tables.dstTable.primaryKeyFieldNames.toSet(),
     addedRows = rowDiff.added,
     updatedRows = rowDiff.updated,
     batchSize = batchSize,

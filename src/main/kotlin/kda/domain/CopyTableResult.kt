@@ -1,6 +1,14 @@
 package kda.domain
 
 data class CopyTableResult(
-  val srcTableDef: Table,
-  val dstTableDef: Table,
-)
+  val srcTable: Table,
+  val dstTable: Table,
+) {
+  override fun toString(): String =
+    """
+      |CopyTableResult [
+      |  srcTable: $srcTable
+      |  dstTable: $dstTable
+      |]
+    """.trimMargin()
+}

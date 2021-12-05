@@ -26,4 +26,13 @@ data class Predicate <out T : Any?>(
     }
     return parameters.map { BoundParameter(parameter = it, value = value) }.toSet()
   }
+
+  override fun toString(): String =
+    """
+      |Predicate [
+      |  field: $field
+      |  operator: $operator
+      |  value: $value 
+      |]
+    """.trimMargin()
 }

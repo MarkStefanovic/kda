@@ -348,7 +348,7 @@ class StdAdapter(
               """
               |StdAdapter.selectRows: select rows from $fullTableName matching row:
               |  SQL:
-              |    $sql
+              |    ${sql.split("\n").joinToString("\n    ")}
               |  Parameters:
               |    $paramsStr
             """.trimMargin()
@@ -417,7 +417,10 @@ class StdAdapter(
         println(
           """
           |StdAdapter.upsertRows - insert rows:
-          |$sql
+          |  SQL:
+          |    ${sql.split("\n").joinToString("\n    ")}
+          |  Parameters:
+          |    ${parameters.joinToString("\n    ") { it.toString() }}
         """.trimMargin()
         )
       }

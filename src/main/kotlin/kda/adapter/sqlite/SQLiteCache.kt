@@ -36,7 +36,7 @@ class SQLiteCache(
         println(
           """
           |SQLiteCache.init - create table_def table:
-          |$tableDefSQL
+          |  ${tableDefSQL.split("\n").joinToString("\n  ")}
         """.trimMargin()
         )
       }
@@ -62,7 +62,7 @@ class SQLiteCache(
         println(
           """
           |SQLiteCache.init - create pk table:
-          |$pkSQL
+          |  ${pkSQL.split("\n").joinToString("\n  ")}
         """.trimMargin()
         )
       }
@@ -88,7 +88,7 @@ class SQLiteCache(
         println(
           """
           |SQLiteCache.init - create ts table:
-          |$tsSQL
+          |  ${tsSQL.split("\n").joinToString("\n  ")}
         """.trimMargin()
         )
       }
@@ -195,9 +195,10 @@ class SQLiteCache(
       println(
         """
         |SQLiteCache.addTable - add primary key field to pk table:
-        |$insertPKsql
-        |PARAMS:  
-        |  $params
+        |  SQL:
+        |    ${insertPKsql.split("\n").joinToString("\n    ")}
+        |  Parameters:  
+        |    $params
       """.trimMargin()
       )
     }
@@ -234,12 +235,13 @@ class SQLiteCache(
       println(
         """
         |SQLiteCache.addTimestamp - add timestamp to ts table:
-        |$sql
-        |PARAMS:
-        |  schema_name: ${schema ?: ""}
-        |  table_name: $table
-        |  field_name: $fieldName
-        |  ts: $ts
+        |  SQL:
+        |    ${sql.split("\n").joinToString("\n    ")}
+        |  Parameters:
+        |    schema_name: ${schema ?: ""}
+        |    table_name: $table
+        |    field_name: $fieldName
+        |    ts: $ts
       """.trimMargin()
       )
     }
@@ -393,11 +395,12 @@ class SQLiteCache(
       println(
         """
         |SQLiteCache.getTimestamp get timestamp from ts table:
-        |$sql
-        |PARAMS: 
-        |  schema_name: ${schema ?: ""}
-        |  table_name: $table
-        |  field_name: $fieldName
+        |  SQL:
+        |    ${sql.split("\n").joinToString("\n    ")}
+        |  PARAMS: 
+        |    schema_name: ${schema ?: ""}
+        |    table_name: $table
+        |    field_name: $fieldName
       """.trimMargin()
       )
     }

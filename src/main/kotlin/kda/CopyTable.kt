@@ -53,7 +53,7 @@ fun copyTable(
   }
 
   return CopyTableResult(
-    srcTableDef = srcTableDef,
-    dstTableDef = dstTableDef,
+    srcTable = srcTableDef,
+    dstTable = dstTableDef,
   )
 }

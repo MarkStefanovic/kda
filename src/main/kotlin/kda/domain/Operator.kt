@@ -6,4 +6,13 @@ enum class Operator {
   GreaterThanOrEqualTo,
   LessThan,
   LessThanOrEqualTo;
+
+  override fun toString(): String =
+    when (this) {
+      Equals               -> "="
+      GreaterThan          -> ">"
+      GreaterThanOrEqualTo -> ">="
+      LessThan             -> "<"
+      LessThanOrEqualTo    -> "<="
+    }
 }

@@ -49,7 +49,7 @@ class CopyTableTest {
         assertIs<CopyTableResult>(result)
         assertEquals(
           expected = setOf("customer_id", "first_name", "last_name"),
-          actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()
+          actual = result.srcTable.fields.map { fld -> fld.name }.toSet()
         )
         assert(pgTableExists(con, "sales", "customer2"))
       }
@@ -94,7 +94,7 @@ class CopyTableTest {
 
       assertEquals(
         expected = setOf("customer_id", "first_name", "last_name"),
-        actual = result.srcTableDef.fields.map { fld -> fld.name }.toSet()
+        actual = result.srcTable.fields.map { fld -> fld.name }.toSet()
       )
     }
   }

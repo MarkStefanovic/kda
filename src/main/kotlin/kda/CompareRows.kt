@@ -54,7 +54,7 @@ fun compareRows(
       compareFields = compareFields,
       criteria = criteria,
       schema = srcSchema,
-      table = tables.srcTableDef,
+      table = tables.srcTable,
       batchSize = batchSize,
     )
 
@@ -65,7 +65,7 @@ fun compareRows(
       compareFields = compareFields,
       criteria = criteria,
       schema = dstSchema,
-      table = tables.dstTableDef,
+      table = tables.dstTable,
       batchSize = batchSize,
     )
 

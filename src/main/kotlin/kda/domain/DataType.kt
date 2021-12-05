@@ -37,4 +37,5 @@ sealed class DataType<out T : Any?>(
 
   data class text(val maxLength: Int? = null) : DataType<String>(description = "text [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = false, name = "text")
   data class nullableText(val maxLength: Int? = null) : DataType<String?>(description = "nullableText [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = true, name = "nullableText")
+
 }

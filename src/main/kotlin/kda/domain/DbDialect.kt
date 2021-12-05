@@ -5,4 +5,12 @@ enum class DbDialect {
   MSSQL,
   PostgreSQL,
   SQLite;
+
+  override fun toString(): String =
+    when (this) {
+      HH         -> "HH"
+      MSSQL      -> "MSSQL"
+      PostgreSQL -> "PostgreSQL"
+      SQLite     -> "SQLite"
+    }
 }
