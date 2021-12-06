@@ -38,7 +38,7 @@ fun inspectTable(
   hardCodedPrimaryKeyFieldNames: List<String>? = null,
 ): Table? {
   val fields = mutableListOf<Field<*>>()
-  con.metaData.getColumns(null, null, "customer", null).use { rs ->
+  con.metaData.getColumns(null, schema, table, null).use { rs ->
     while (rs.next()) {
       val dataType = rs.getInt("DATA_TYPE")
       val columnName = rs.getString("COLUMN_NAME")

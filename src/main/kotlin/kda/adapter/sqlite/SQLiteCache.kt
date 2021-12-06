@@ -48,7 +48,7 @@ class SQLiteCache(
 
     if (!tableExists(con = con, schema = null, table = "pk")) {
       val pkSQL = """
-        |CREATE TABLE IF NOT EXISTS pk (
+        |CREATE TABLE pk (
         |   schema_name TEXT NOT NULL
         |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
         |,  field_name TEXT NOT NULL CHECK (LENGTH(field_name) > 0)
@@ -74,7 +74,7 @@ class SQLiteCache(
 
     if (!tableExists(con = con, schema = null, table = "ts")) {
       val tsSQL = """
-        |CREATE TABLE IF NOT EXISTS ts (
+        |CREATE TABLE ts (
         |   schema_name TEXT NOT NULL
         |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
         |,  field_name TEXT NOT NULL CHECK (LENGTH(field_name) > 0)
@@ -101,7 +101,7 @@ class SQLiteCache(
 
   override fun addTable(schema: String?, table: Table) {
     val insertFieldSQL = """
-      |INSERT INTO table_def (
+      |INSERT OR REPLACE INTO table_def (
       |   schema_name
       |,  table_name
       |,  field_name
@@ -174,7 +174,7 @@ class SQLiteCache(
     }
 
     val insertPKsql = """
-      |INSERT INTO pk (
+      |INSERT OR REPLACE INTO pk (
       |   schema_name
       |,  table_name
       |,  field_name

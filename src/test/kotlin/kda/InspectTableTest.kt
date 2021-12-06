@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class InspectTableTest {
+
   @Test
-  fun inspectTable_happy_path() {
+  fun sqlite_inspectTable_happy_path() {
     testSQLiteConnection().use { con ->
       con.createStatement().use { stmt ->
         stmt.execute("DROP TABLE IF EXISTS customer")
@@ -47,4 +48,5 @@ class InspectTableTest {
       assertEquals(expected = expected, actual = actual)
     }
   }
+
 }
