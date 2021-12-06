@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package kda
 
 import kda.domain.DbDialect
@@ -7,6 +5,7 @@ import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
+@ExperimentalStdlibApi
 class CompareRowsTest {
   @Test
   fun happy_path() {

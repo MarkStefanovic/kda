@@ -8,9 +8,9 @@ enum class DbDialect {
 
   override fun toString(): String =
     when (this) {
-      HH         -> "HH"
-      MSSQL      -> "MSSQL"
+      HH -> "HH"
+      MSSQL -> "MSSQL"
       PostgreSQL -> "PostgreSQL"
-      SQLite     -> "SQLite"
+      SQLite -> "SQLite"
     }
 }

@@ -9,10 +9,10 @@ enum class Operator {
 
   override fun toString(): String =
     when (this) {
-      Equals               -> "="
-      GreaterThan          -> ">"
+      Equals -> "="
+      GreaterThan -> ">"
       GreaterThanOrEqualTo -> ">="
-      LessThan             -> "<"
-      LessThanOrEqualTo    -> "<="
+      LessThan -> "<"
+      LessThanOrEqualTo -> "<="
     }
 }

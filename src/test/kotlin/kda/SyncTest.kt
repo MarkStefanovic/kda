@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class, ExperimentalStdlibApi::class)
-
 package kda
 
 import kda.adapter.sqlite.SQLiteCache
@@ -156,6 +154,7 @@ fun updateCustomer(
   }
 }
 
+@ExperimentalStdlibApi
 class SyncTest {
   @BeforeEach
   fun setup() {
@@ -499,6 +498,7 @@ class SyncTest {
   }
 }
 
+@ExperimentalStdlibApi
 class GetFullCriteriaTest {
   @Test
   fun given_cache_empty_and_no_initial_criteria() {

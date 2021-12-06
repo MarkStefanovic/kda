@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package kda
 
 import kda.adapter.selectAdapter
@@ -174,6 +172,7 @@ fun sync(
   )
 }
 
+@ExperimentalStdlibApi
 private fun deleteRows(
   dstAdapter: Adapter,
   dstTable: Table,
@@ -194,6 +193,7 @@ private fun deleteRows(
   }
 }
 
+@ExperimentalStdlibApi
 private fun upsertRows(
   srcAdapter: Adapter,
   dstAdapter: Adapter,

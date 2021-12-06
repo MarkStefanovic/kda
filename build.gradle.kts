@@ -25,7 +25,11 @@ tasks.test {
 }
 
 tasks.compileKotlin {
-    targetCompatibility = "16"
+    kotlinOptions.jvmTarget = "16"
+}
+
+tasks.compileTestKotlin {
+    kotlinOptions.jvmTarget = "16"
 }
 
 tasks.compileJava {
