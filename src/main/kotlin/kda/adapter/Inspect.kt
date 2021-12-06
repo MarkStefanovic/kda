@@ -27,7 +27,7 @@ fun getPrimaryKeyFields(con: Connection, schema: String?, table: String): List<S
 }
 
 fun tableExists(con: Connection, schema: String?, table: String): Boolean =
-  con.metaData.getTables(null, schema, table, arrayOf("TABLE")).use { rs ->
+  con.metaData.getTables(null, schema, table, arrayOf("TABLE", "VIEW")).use { rs ->
     rs.next()
   }
 
