@@ -1,17 +1,16 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package kda
 
 import kda.domain.CopyTableResult
 import kda.domain.DbDialect
-import kda.testutil.pgTableExists
-import kda.testutil.testPgConnection
-import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
+import testutil.pgTableExists
+import testutil.testPgConnection
+import testutil.testSQLiteConnection
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
+@ExperimentalStdlibApi
 class CopyTableTest {
   @Test
   fun given_dest_does_not_exist_then_it_should_be_created() {

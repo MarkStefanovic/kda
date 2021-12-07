@@ -24,3 +24,4 @@ gradle-app.setting
 NOTES.txt
 *.db
 TODO.txt
+/src/test/resources/config.json

@@ -10,11 +10,11 @@ import kda.domain.Field
 import kda.domain.Parameter
 import kda.domain.Table
 import kda.domain.eq
-import kda.testutil.pgTableExists
-import kda.testutil.testPgConnection
-import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import testutil.pgTableExists
+import testutil.testPgConnection
+import testutil.testSQLiteConnection
 import java.sql.Connection
 import java.sql.Timestamp
 import java.sql.Types

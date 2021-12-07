@@ -1,4 +1,4 @@
-package kda.testutil
+package testutil
 
 import org.junit.jupiter.api.Test
 import java.sql.Connection
@@ -20,12 +20,15 @@ fun pgTableExists(con: Connection, schema: String, table: String): Boolean =
     }
   }
 
-fun testPgConnection(): Connection =
-  DriverManager.getConnection(
-    "jdbc:postgresql://localhost:5432/testdb",
-    System.getenv("DB_USER"),
-    System.getenv("DB_PASS")
+fun testPgConnection(): Connection {
+  val config: TestConfig = getConfig()
+
+  return DriverManager.getConnection(
+    config.pgURL,
+    config.pgUsername,
+    config.pgPassword,
   )
+}
 
 class TableExistsUtil {
   @Test

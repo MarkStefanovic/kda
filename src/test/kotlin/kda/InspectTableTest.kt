@@ -4,8 +4,8 @@ import kda.domain.DataType
 import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.Table
-import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
+import testutil.testSQLiteConnection
 import kotlin.test.assertEquals
 
 class InspectTableTest {
@@ -48,5 +48,4 @@ class InspectTableTest {
       assertEquals(expected = expected, actual = actual)
     }
   }
-
 }

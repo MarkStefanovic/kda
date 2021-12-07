@@ -4,8 +4,8 @@ import kda.adapter.sqlite.SQLiteCache
 import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Table
-import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
+import testutil.testSQLiteConnection
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

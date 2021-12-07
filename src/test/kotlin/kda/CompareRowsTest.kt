@@ -1,8 +1,8 @@
 package kda
 
 import kda.domain.DbDialect
-import kda.testutil.testSQLiteConnection
 import org.junit.jupiter.api.Test
+import testutil.testSQLiteConnection
 import kotlin.test.assertEquals
 
 @ExperimentalStdlibApi
