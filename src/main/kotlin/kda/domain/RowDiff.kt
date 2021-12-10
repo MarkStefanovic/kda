@@ -86,28 +86,44 @@ internal fun compareRows(
       row.split(primaryKeyFieldNames)
     }
 
-    val addedRows = indexedSrcRows.filterKeys { key ->
-      indexedDstRows[key] == null
-    }
+    val addedRows: Set<Row> =
+      indexedSrcRows
+        .filterKeys { key ->
+          indexedDstRows[key] == null
+        }
+        .map { (key, value) ->
+          key.merge(value)
+        }
+        .toSet()
 
-    val deletedRows = indexedDstRows.filterKeys { key ->
-      indexedSrcRows[key] == null
-    }
+    val deletedRows: Set<Row> =
+      indexedDstRows
+        .filterKeys { key ->
+          indexedSrcRows[key] == null
+        }
+        .map { (key, value) -> key.merge(value) }
+        .toSet()
 
-    val updatedRows = indexedSrcRows.filter { (key, newRow) ->
-      val oldRow = indexedDstRows[key]
-      if (oldRow == null) {
-        false
-      } else {
-        newRow.value != oldRow.value
-      }
-    }
+    val updatedRows: Set<Row> =
+      indexedSrcRows
+        .filter { (key, newRow) ->
+          val oldRow = indexedDstRows[key]
+          if (oldRow == null) {
+            false
+          } else {
+            newRow.value != oldRow.value
+          }
+        }
+        .map { (key, value) ->
+          key.merge(value)
+        }
+        .toSet()
 
     RowDiff(
       srcRowCount = srcRows.count(),
       dstRowCount = dstRows.count(),
-      added = addedRows.keys,
-      deleted = deletedRows.keys,
-      updated = updatedRows.keys,
+      added = addedRows,
+      deleted = deletedRows,
+      updated = updatedRows,
     )
   }
