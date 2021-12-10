@@ -21,7 +21,7 @@ internal fun PreparedStatement.applyValue(
     setNull(index, dataType.jdbcType.vendorTypeNumber)
   } else {
     when (dataType) {
-      DataType.bigInt, DataType.nullableBigInt -> setLong(index, value as Long)
+      DataType.bigInt, DataType.nullableBigInt -> setLong(index, (value as Number).toLong())
       DataType.bool, DataType.nullableBool -> setBoolean(index, value as Boolean)
       is DataType.decimal, is DataType.nullableDecimal -> setBigDecimal(index, value as BigDecimal)
       DataType.float, DataType.nullableFloat -> setFloat(index, value as Float)

@@ -17,7 +17,8 @@ data class Table(
   }
 
   fun field(name: String): Field<*> =
-    fields.first { it.name == name }
+    fields.firstOrNull { it.name == name }
+      ?: throw KDAError.FieldNotFound(fieldName = name, availableFieldNames = fields.map { it.name }.toSet())
 
   override fun toString(): String =
     """
