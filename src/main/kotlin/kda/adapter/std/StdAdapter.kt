@@ -4,6 +4,7 @@ package kda.adapter.std
 
 import kda.adapter.applyBoundParameters
 import kda.adapter.applyRow
+import kda.adapter.getValue
 import kda.adapter.toMap
 import kda.adapter.toRows
 import kda.adapter.toSQL
@@ -254,6 +255,43 @@ class StdAdapter(
           while (rs.next()) {
             yield(rs.toMap(fields))
           }
+        }
+      }
+    }
+  }
+
+  override fun selectGreatest(
+    schema: String?,
+    table: String,
+    fields: Set<Field<*>>,
+  ): Any? {
+    val fullTableName = details.fullTableName(schema = schema, table = table)
+
+    val fieldNameCSV: String =
+      fields
+        .sortedBy { it.name }
+        .joinToString(", ") { details.wrapName(it.name) }
+
+    val sql = """
+      |SELECT GREATEST($fieldNameCSV) AS greatest_val
+      |FROM $fullTableName
+    """.trimMargin()
+
+    if (showSQL) {
+      println(
+        """
+        |StdAdapter.selectGreatest:
+        |  ${sql.split("\n").joinToString("\n  ")}
+      """.trimMargin()
+      )
+    }
+
+    con.createStatement().use { statement ->
+      statement.executeQuery(sql).use { rs ->
+        return if (rs.next()) {
+          rs.getObject("greatest_val")
+        } else {
+          null
         }
       }
     }

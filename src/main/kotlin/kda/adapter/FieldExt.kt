@@ -41,8 +41,8 @@ internal fun Field<*>.toWhereEqualsParameter(details: DbAdapterDetails): List<Pa
   }
 }
 
-internal fun Collection<Field<*>>.toWhereEqualsParameters(details: DbAdapterDetails): List<Parameter> =
-  sortedBy { it.name }.flatMap { it.toWhereEqualsParameter(details = details) }
+// internal fun Collection<Field<*>>.toWhereEqualsParameters(details: DbAdapterDetails): List<Parameter> =
+//  sortedBy { it.name }.flatMap { it.toWhereEqualsParameter(details = details) }
 
 internal fun Field<*>.toWhereEqualsBoundParameter(details: DbAdapterDetails, row: Row): List<BoundParameter> {
   val wrappedFieldName = details.wrapName(name)

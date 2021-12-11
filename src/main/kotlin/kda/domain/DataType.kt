@@ -17,8 +17,8 @@ sealed class DataType<out T : Any?>(
   object bool : DataType<Boolean>(description = "bool", jdbcType = JDBCType.BOOLEAN, nullable = false, name = "bool")
   object nullableBool : DataType<Boolean?>(description = "nullableBool", jdbcType = JDBCType.BOOLEAN, nullable = true, name = "nullableBool")
 
-  object bigInt : DataType<Int>(description = "bigInt", jdbcType = JDBCType.BIGINT, nullable = false, name = "bigInt")
-  object nullableBigInt : DataType<Boolean?>(description = "nullableBigInt", jdbcType = JDBCType.BIGINT, nullable = true, name = "nullableBigInt")
+  object bigInt : DataType<Long>(description = "bigInt", jdbcType = JDBCType.BIGINT, nullable = false, name = "bigInt")
+  object nullableBigInt : DataType<Long?>(description = "nullableBigInt", jdbcType = JDBCType.BIGINT, nullable = true, name = "nullableBigInt")
 
   data class decimal(val precision: Int, val scale: Int) : DataType<BigDecimal>(description = "decimal [ precision: $precision, scale: $scale ]", jdbcType = JDBCType.DECIMAL, nullable = false, name = "decimal")
   data class nullableDecimal(val precision: Int, val scale: Int) : DataType<BigDecimal?>(description = "nullableDecimal [ precision: $precision, scale: $scale ]", jdbcType = JDBCType.DECIMAL, nullable = true, name = "nullableDecimal")

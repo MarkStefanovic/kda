@@ -44,6 +44,12 @@ interface Adapter {
     orderBy: List<OrderBy>,
   ): Sequence<Row>
 
+  fun selectGreatest(
+    schema: String?,
+    table: String,
+    fields: Set<Field<*>>,
+  ): Any?
+
   fun selectRows(
     schema: String?,
     table: String,

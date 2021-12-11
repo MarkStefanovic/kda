@@ -1,10 +1,8 @@
 package kda
 
 import kda.adapter.selectAdapter
-import kda.adapter.sqlite.SQLiteCache
 import kda.adapter.where
 import kda.domain.Adapter
-import kda.domain.Cache
 import kda.domain.CopyTableResult
 import kda.domain.Criteria
 import kda.domain.DbDialect
@@ -18,8 +16,8 @@ import kda.domain.SyncResult
 import kda.domain.Table
 import kda.domain.compareRows
 import java.sql.Connection
+import java.sql.Timestamp
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 
 @ExperimentalStdlibApi
 fun sync(
@@ -53,13 +51,6 @@ fun sync(
 
   val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
 
-  val cache: Cache = when (cacheDialect) {
-    DbDialect.HH -> TODO()
-    DbDialect.MSSQL -> TODO()
-    DbDialect.PostgreSQL -> TODO()
-    DbDialect.SQLite -> SQLiteCache(con = cacheCon, showSQL = showSQL)
-  }
-
   val tables: CopyTableResult =
     copyTable(
       srcCon = srcCon,
@@ -92,11 +83,11 @@ fun sync(
     tables.srcTable.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
 
   val fullCriteria = getFullCriteria(
+    dstAdapter = dstAdapter,
     dstDialect = dstDialect,
     dstSchema = dstSchema,
     dstTable = tables.dstTable,
     tsFieldNames = timestampFieldNames,
-    cache = cache,
     criteria = criteria,
   )
 
@@ -154,17 +145,6 @@ fun sync(
     updatedRows = rowDiff.updated,
     batchSize = batchSize,
   )
-
-  if (timestampFieldNames.isNotEmpty()) {
-    updateLatestTimestamps(
-      timestampFieldNames = timestampFieldNames,
-      addedKeys = rowDiff.added,
-      updatedKeys = rowDiff.updated,
-      dstSchema = dstSchema,
-      dstTable = dstTable,
-      cache = cache,
-    )
-  }
 
   return SyncResult(
     deleted = rowDiff.deleted.count(),
@@ -233,23 +213,17 @@ private fun upsertRows(
 }
 
 @ExperimentalStdlibApi
-internal fun getFullCriteria(
+private fun getFullCriteria(
+  dstAdapter: Adapter,
   dstDialect: DbDialect,
   dstSchema: String?,
   dstTable: Table,
   tsFieldNames: Set<String>,
-  cache: Cache,
   criteria: Criteria?,
 ): Criteria? =
   if (tsFieldNames.isEmpty()) {
     criteria
   } else {
-    val cachedTimestamps: Map<String, LocalDateTime?> =
-      tsFieldNames
-        .associateWith { fieldName ->
-          cache.getTimestamp(schema = dstSchema, table = dstTable.name, fieldName = fieldName)
-        }
-
     val tsFields: Set<Field<*>> =
       tsFieldNames
         .map { fieldName ->
@@ -257,63 +231,33 @@ internal fun getFullCriteria(
         }
         .toSet()
 
-    var tsCriteria: Criteria = where(dstDialect)
-    tsFields.forEach { field ->
-      val ts = cachedTimestamps[field.name]
-      if (ts != null) {
-        tsCriteria = tsCriteria.or(Predicate(field = field, operator = Operator.GreaterThan, value = ts))
+    val latestTimestamp: LocalDateTime? = (
+      dstAdapter.selectGreatest(
+        schema = dstSchema,
+        table = dstTable.name,
+        fields = tsFields,
+      ) as Timestamp?
+      )?.toLocalDateTime()
+
+    val tsCriteria: Criteria? = if (latestTimestamp == null) {
+      null
+    } else {
+      var c = where(dstDialect)
+      tsFields.forEach { field ->
+        c = c.or(
+          Predicate(
+            field = field,
+            operator = Operator.GreaterThan,
+            value = latestTimestamp,
+          )
+        )
       }
+      c
     }
 
-    if (tsCriteria.isEmpty) {
+    if (tsCriteria == null) {
       criteria
     } else {
       criteria?.and(tsCriteria) ?: tsCriteria
     }
   }
-
-private fun updateLatestTimestamps(
-  cache: Cache,
-  dstSchema: String?,
-  dstTable: String,
-  timestampFieldNames: Set<String>,
-  addedKeys: Set<Row>,
-  updatedKeys: Set<Row>,
-) {
-  if (timestampFieldNames.isNotEmpty()) {
-    timestampFieldNames.forEach { fieldName ->
-      if (addedKeys.isNotEmpty()) {
-        if (!addedKeys.first().value.containsKey(fieldName)) {
-          throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = addedKeys.first().value.keys)
-        }
-      }
-
-      if (updatedKeys.isNotEmpty()) {
-        if (!updatedKeys.first().value.containsKey(fieldName)) {
-          throw KDAError.FieldNotFound(fieldName = fieldName, availableFieldNames = updatedKeys.first().value.keys)
-        }
-      }
-    }
-
-    val allKeys = addedKeys + updatedKeys
-
-    timestampFieldNames.forEach { timestampFieldName ->
-      val ts: LocalDateTime? =
-        allKeys
-          .maxByOrNull { row ->
-            (row.value[timestampFieldName] as LocalDateTime?)
-              ?.toEpochSecond(ZoneOffset.UTC)
-              ?: LocalDateTime.MIN.toEpochSecond(ZoneOffset.UTC)
-          }
-          ?.value
-          ?.get(timestampFieldName) as LocalDateTime?
-
-      cache.addTimestamp(
-        schema = dstSchema,
-        table = dstTable,
-        fieldName = timestampFieldName,
-        ts = ts,
-      )
-    }
-  }
-}

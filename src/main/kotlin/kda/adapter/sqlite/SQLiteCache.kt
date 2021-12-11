@@ -1,3 +1,5 @@
+@file:Suppress("SqlResolve")
+
 package kda.adapter.sqlite
 
 import kda.adapter.tableExists
@@ -7,9 +9,7 @@ import kda.domain.Field
 import kda.domain.KDAError
 import kda.domain.Table
 import java.sql.Connection
-import java.sql.Timestamp
 import java.sql.Types
-import java.time.LocalDateTime
 
 class SQLiteCache(
   val con: Connection,
@@ -99,6 +99,7 @@ class SQLiteCache(
     }
   }
 
+  @Suppress("SqlInsertValues")
   override fun addTable(schema: String?, table: Table) {
     val insertFieldSQL = """
       |INSERT OR REPLACE INTO table_def (
@@ -216,50 +217,6 @@ class SQLiteCache(
     }
   }
 
-  override fun addTimestamp(schema: String?, table: String, fieldName: String, ts: LocalDateTime?) {
-    val sql = """
-      |INSERT OR REPLACE INTO ts (
-      |   schema_name
-      |,  table_name
-      |,  field_name
-      |,  ts
-      |) VALUES (
-      |   ?
-      |,  ?
-      |,  ?
-      |,  ?
-      |) 
-    """.trimMargin()
-
-    if (showSQL) {
-      println(
-        """
-        |SQLiteCache.addTimestamp - add timestamp to ts table:
-        |  SQL:
-        |    ${sql.split("\n").joinToString("\n    ")}
-        |  Parameters:
-        |    schema_name: ${schema ?: ""}
-        |    table_name: $table
-        |    field_name: $fieldName
-        |    ts: $ts
-      """.trimMargin()
-      )
-    }
-
-    con.prepareStatement(sql).use { preparedStatement ->
-      preparedStatement.setString(1, schema ?: "")
-      preparedStatement.setString(2, table)
-      preparedStatement.setString(3, fieldName)
-      if (ts == null) {
-        preparedStatement.setNull(4, Types.TIMESTAMP)
-      } else {
-        preparedStatement.setTimestamp(4, Timestamp.valueOf(ts))
-      }
-
-      preparedStatement.execute()
-    }
-  }
-
   override fun getTable(schema: String?, table: String): Table? {
     val fetchFieldsSQL = """
       |SELECT 
@@ -373,60 +330,6 @@ class SQLiteCache(
         fields = fields.toSet(),
         primaryKeyFieldNames = primaryKeyFieldNames,
       )
-    }
-  }
-
-  override fun getTimestamp(
-    schema: String?,
-    table: String,
-    fieldName: String,
-  ): LocalDateTime? {
-    val sql = """
-      |SELECT 
-      |   ts.ts
-      |FROM ts
-      |WHERE 
-      |   ts.schema_name = ?
-      |   AND ts.table_name = ?
-      |   AND ts.field_name = ?
-    """.trimMargin()
-
-    if (showSQL) {
-      println(
-        """
-        |SQLiteCache.getTimestamp get timestamp from ts table:
-        |  SQL:
-        |    ${sql.split("\n").joinToString("\n    ")}
-        |  PARAMS: 
-        |    schema_name: ${schema ?: ""}
-        |    table_name: $table
-        |    field_name: $fieldName
-      """.trimMargin()
-      )
-    }
-
-    return con.prepareStatement(sql).use { preparedStatement ->
-      preparedStatement.setString(1, schema ?: "")
-      preparedStatement.setString(2, table)
-      preparedStatement.setString(3, fieldName)
-
-      preparedStatement.executeQuery().use { rs ->
-        if (rs.next()) {
-          val value = rs.getObject("ts")
-          if (value == null) {
-            null
-          } else {
-            try {
-              (Timestamp(value as Long)).toLocalDateTime()
-            } catch (e: Throwable) {
-              println("SQLiteCache.getTimestamp(): value: $value")
-              throw e
-            }
-          }
-        } else {
-          null
-        }
-      }
     }
   }
 }
