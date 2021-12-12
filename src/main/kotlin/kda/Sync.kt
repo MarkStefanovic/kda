@@ -77,7 +77,7 @@ fun sync(
 
   val pkFields = tables.srcTable.primaryKeyFieldNames.toSet()
 
-  val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal).union(timestampFieldNames)
+  val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal)
 
   val lkpTableFields =
     tables.srcTable.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
