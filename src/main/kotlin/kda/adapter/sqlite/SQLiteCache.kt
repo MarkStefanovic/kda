@@ -71,32 +71,6 @@ class SQLiteCache(
         statement.execute(pkSQL)
       }
     }
-
-    if (!tableExists(con = con, schema = null, table = "ts")) {
-      val tsSQL = """
-        |CREATE TABLE ts (
-        |   schema_name TEXT NOT NULL
-        |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
-        |,  field_name TEXT NOT NULL CHECK (LENGTH(field_name) > 0)
-        |,  ts DATETIME NULL
-        |,  date_added DATETIME NOT NULL DEFAULT current_timestamp
-        |,  PRIMARY KEY (table_name, schema_name, field_name)
-        |)
-      """.trimMargin()
-
-      if (showSQL) {
-        println(
-          """
-          |SQLiteCache.init - create ts table:
-          |  ${tsSQL.split("\n").joinToString("\n  ")}
-        """.trimMargin()
-        )
-      }
-
-      con.createStatement().use { statement ->
-        statement.execute(tsSQL)
-      }
-    }
   }
 
   @Suppress("SqlInsertValues")
