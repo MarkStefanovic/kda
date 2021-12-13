@@ -65,7 +65,7 @@ internal fun compareRows(
     RowDiff(
       srcRowCount = srcRows.count(),
       dstRowCount = 0,
-      added = srcRows.toSet(),
+      added = srcRows.map { it.subset(primaryKeyFieldNames) }.toSet(),
       deleted = emptySet(),
       updated = emptySet(),
     )
@@ -74,7 +74,7 @@ internal fun compareRows(
       srcRowCount = 0,
       dstRowCount = dstRows.count(),
       added = emptySet(),
-      deleted = dstRows.toSet(),
+      deleted = dstRows.map { it.subset(primaryKeyFieldNames) }.toSet(),
       updated = emptySet(),
     )
   } else {
@@ -91,9 +91,7 @@ internal fun compareRows(
         .filterKeys { key ->
           indexedDstRows[key] == null
         }
-        .map { (key, value) ->
-          key.merge(value)
-        }
+        .keys
         .toSet()
 
     val deletedRows: Set<Row> =
@@ -101,7 +99,7 @@ internal fun compareRows(
         .filterKeys { key ->
           indexedSrcRows[key] == null
         }
-        .map { (key, value) -> key.merge(value) }
+        .keys
         .toSet()
 
     val updatedRows: Set<Row> =
@@ -114,9 +112,7 @@ internal fun compareRows(
             newRow.value != oldRow.value
           }
         }
-        .map { (key, value) ->
-          key.merge(value)
-        }
+        .keys
         .toSet()
 
     RowDiff(
