@@ -1,7 +1,8 @@
 package kda.domain
 
-data class Predicate <out T : Any?>(
-  val field: Field<T>,
+data class BinaryPredicate <out T : Any?>(
+  val parameterName: String,
+  val dataType: DataType<T>,
   val operator: Operator,
   val value: T,
 ) {
@@ -13,10 +14,12 @@ data class Predicate <out T : Any?>(
       Operator.LessThan -> "<"
       Operator.LessThanOrEqualTo -> "<="
     }
-    "${field.name} $op $value"
+    "$parameterName $op $value"
   }
 
   fun toBoundParameters(details: DbAdapterDetails): Set<BoundParameter> {
+    val field = Field(name = parameterName, dataType = dataType)
+
     val parameters: Set<Parameter> = when (operator) {
       Operator.Equals -> details.whereFieldIsEqualTo(field = field)
       Operator.GreaterThan -> details.whereFieldIsGreaterThan(field = field)
@@ -29,8 +32,9 @@ data class Predicate <out T : Any?>(
 
   override fun toString(): String =
     """
-      |Predicate [
-      |  field: $field
+      |BinaryPredicate [
+      |  parameterName: $parameterName
+      |  dataType: $dataType
       |  operator: $operator
       |  value: $value 
       |]

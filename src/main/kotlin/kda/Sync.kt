@@ -3,13 +3,14 @@ package kda
 import kda.adapter.selectAdapter
 import kda.adapter.where
 import kda.domain.Adapter
+import kda.domain.BinaryPredicate
 import kda.domain.CopyTableResult
 import kda.domain.Criteria
+import kda.domain.DataType
 import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.KDAError
 import kda.domain.Operator
-import kda.domain.Predicate
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.SyncResult
@@ -245,8 +246,9 @@ private fun getFullCriteria(
       var c = where(dstDialect)
       tsFields.forEach { field ->
         c = c.or(
-          Predicate(
-            field = field,
+          BinaryPredicate(
+            parameterName = field.name,
+            dataType = DataType.localDateTime,
             operator = Operator.GreaterThan,
             value = latestTimestamp,
           )

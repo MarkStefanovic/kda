@@ -9,8 +9,8 @@ data class Field<out T : Any?> (val name: String, val dataType: DataType<T>) {
   override fun toString() = "Field [ name: $name, dataType: ${dataType.description} ]"
 }
 
-infix fun <T : Any?> Field<T>.eq(value: T) = Predicate(field = this, operator = Operator.Equals, value = value)
-infix fun <T : Any?> Field<T>.ge(value: T) = Predicate(field = this, operator = Operator.GreaterThan, value = value)
-infix fun <T : Any?> Field<T>.geq(value: T) = Predicate(field = this, operator = Operator.GreaterThanOrEqualTo, value = value)
-infix fun <T : Any?> Field<T>.le(value: T) = Predicate(field = this, operator = Operator.LessThan, value = value)
-infix fun <T : Any?> Field<T>.leq(value: T) = Predicate(field = this, operator = Operator.LessThanOrEqualTo, value = value)
+infix fun <T : Any?> Field<T>.eq(value: T) = BinaryPredicate(parameterName = name, dataType = dataType, operator = Operator.Equals, value = value)
+infix fun <T : Any?> Field<T>.ge(value: T) = BinaryPredicate(parameterName = name, dataType = dataType, operator = Operator.GreaterThan, value = value)
+infix fun <T : Any?> Field<T>.geq(value: T) = BinaryPredicate(parameterName = name, dataType = dataType, operator = Operator.GreaterThanOrEqualTo, value = value)
+infix fun <T : Any?> Field<T>.le(value: T) = BinaryPredicate(parameterName = name, dataType = dataType, operator = Operator.LessThan, value = value)
+infix fun <T : Any?> Field<T>.leq(value: T) = BinaryPredicate(parameterName = name, dataType = dataType, operator = Operator.LessThanOrEqualTo, value = value)

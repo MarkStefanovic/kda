@@ -35,8 +35,8 @@ data class Criteria(
     }
   }
 
-  fun and(predicate: Predicate<*>): Criteria {
-    val newParams: List<BoundParameter> = predicate.toBoundParameters(details = details).sortedBy { it.parameter.name }
+  fun and(binaryPredicate: BinaryPredicate<*>): Criteria {
+    val newParams: List<BoundParameter> = binaryPredicate.toBoundParameters(details = details).sortedBy { it.parameter.name }
 
     val paramSQL = newParams.joinToString(" OR ") { boundParameter -> boundParameter.parameter.sql }
 
@@ -55,8 +55,8 @@ data class Criteria(
     }
   }
 
-  fun or(predicate: Predicate<*>): Criteria {
-    val newParams: List<BoundParameter> = predicate.toBoundParameters(details = details).sortedBy { it.parameter.name }
+  fun or(binaryPredicate: BinaryPredicate<*>): Criteria {
+    val newParams: List<BoundParameter> = binaryPredicate.toBoundParameters(details = details).sortedBy { it.parameter.name }
 
     val paramSQL = newParams.joinToString(" OR ") { boundParameter -> boundParameter.parameter.sql }
 
