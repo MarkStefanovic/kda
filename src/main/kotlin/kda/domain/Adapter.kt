@@ -12,19 +12,19 @@ interface Adapter {
     schema: String?,
     table: String,
     criteria: Criteria,
-  )
+  ): Int
 
   fun deleteAll(
     schema: String?,
     table: String,
-  )
+  ): Int
 
   fun deleteRows(
     schema: String?,
     table: String,
     fields: Set<Field<*>>,
     keys: Set<Row>,
-  )
+  ): Int
 
   fun select(
     schema: String?,
@@ -65,5 +65,5 @@ interface Adapter {
     rows: Set<Row>,
     keyFields: Set<Field<*>>,
     valueFields: Set<Field<*>>,
-  )
+  ): Int
 }

@@ -65,8 +65,10 @@ class StdAdapter(
     schema: String?,
     table: String,
     criteria: Criteria,
-  ) {
-    if (criteria.boundParameters.isNotEmpty()) {
+  ): Int =
+    if (criteria.boundParameters.isEmpty()) {
+      0
+    } else {
       val fullTableName = details.fullTableName(schema = schema, table = table)
 
       val sql = "DELETE FROM $fullTableName WHERE ${criteria.sql}"
@@ -78,12 +80,11 @@ class StdAdapter(
       con.prepareStatement(sql).use { statement ->
         statement.applyBoundParameters(criteria.boundParameters)
 
-        statement.executeQuery()
+        statement.executeUpdate()
       }
     }
-  }
 
-  override fun deleteAll(schema: String?, table: String) {
+  override fun deleteAll(schema: String?, table: String): Int {
     val fullTableName = details.fullTableName(schema = schema, table = table)
 
     val sql = "TRUNCATE $fullTableName"
@@ -92,12 +93,12 @@ class StdAdapter(
       println(sql)
     }
 
-    con.createStatement().use { statement ->
-      statement.execute(sql)
+    return con.createStatement().use { statement ->
+      statement.executeUpdate(sql)
     }
   }
 
-  override fun deleteRows(schema: String?, table: String, fields: Set<Field<*>>, keys: Set<Row>) {
+  override fun deleteRows(schema: String?, table: String, fields: Set<Field<*>>, keys: Set<Row>): Int {
     val fullTableName = details.fullTableName(schema = schema, table = table)
 
     val fieldLookup = fields.associateBy { it.name }
@@ -133,12 +134,12 @@ class StdAdapter(
       )
     }
 
-    con.prepareStatement(sql).use { preparedStatement ->
+    return con.prepareStatement(sql).use { preparedStatement ->
       keys.forEach { row ->
         preparedStatement.applyRow(row = row, parameters = whereClauseParameters)
         preparedStatement.addBatch()
       }
-      preparedStatement.executeBatch()
+      preparedStatement.executeBatch().toList().sum()
     }
   }
 
@@ -411,8 +412,10 @@ class StdAdapter(
     rows: Set<Row>,
     keyFields: Set<Field<*>>,
     valueFields: Set<Field<*>>,
-  ) {
-    if (rows.isNotEmpty()) {
+  ): Int =
+    if (rows.isEmpty()) {
+      0
+    } else {
       val sortedKeyFields = keyFields.sortedBy { it.name }
 
       val allFields = (keyFields + valueFields).sortedBy { it.name }
@@ -490,8 +493,7 @@ class StdAdapter(
 
           statement.addBatch()
         }
-        statement.executeBatch()
+        statement.executeBatch().asList().sum()
       }
     }
-  }
 }

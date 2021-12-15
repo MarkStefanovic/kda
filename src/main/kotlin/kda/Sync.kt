@@ -125,7 +125,7 @@ fun sync(
       .map { it.subset(tables.dstTable.primaryKeyFieldNames.toSet()) }
       .toSet()
 
-  deleteRows(
+  val rowsDeleted: Int = deleteRows(
     dstAdapter = dstAdapter,
     dstSchema = dstSchema,
     dstTable = tables.dstTable,
@@ -134,7 +134,7 @@ fun sync(
     chunkSize = batchSize,
   )
 
-  upsertRows(
+  val rowsUpserted: Int = upsertRows(
     srcAdapter = srcAdapter,
     dstAdapter = dstAdapter,
     srcSchema = srcSchema,
@@ -148,8 +148,8 @@ fun sync(
   )
 
   return SyncResult(
-    deleted = rowDiff.deleted.count(),
-    upserted = rowDiff.added.count() + rowDiff.updated.count(),
+    deleted = rowsDeleted,
+    upserted = rowsUpserted,
   )
 }
 
@@ -161,8 +161,10 @@ private fun deleteRows(
   fields: Set<Field<*>>,
   deletedRows: Set<Row>,
   chunkSize: Int,
-) {
-  if (deletedRows.isNotEmpty()) {
+): Int =
+  if (deletedRows.isEmpty()) {
+    0
+  } else {
     deletedRows.chunked(chunkSize) { keys ->
       dstAdapter.deleteRows(
         schema = dstSchema,
@@ -170,9 +172,8 @@ private fun deleteRows(
         fields = fields,
         keys = keys.toSet(),
       )
-    }
+    }.sum()
   }
-}
 
 @ExperimentalStdlibApi
 private fun upsertRows(
@@ -186,32 +187,35 @@ private fun upsertRows(
   updatedRows: Set<Row>,
   batchSize: Int,
   primaryKeyFieldNames: Set<String>,
-) {
-  updatedRows.union(addedRows).chunked(batchSize) { keys ->
-    val fullRows = srcAdapter.selectRows(
-      schema = srcSchema,
-      table = srcTable.name,
-      keys = keys.toSet(),
-      fields = srcTable.fields,
-      batchSize = batchSize,
-      orderBy = emptyList(),
-    ).toSet()
+): Int =
+  if (updatedRows.isEmpty() && addedRows.isEmpty()) {
+    0
+  } else {
+    updatedRows.union(addedRows).chunked(batchSize) { keys ->
+      val fullRows = srcAdapter.selectRows(
+        schema = srcSchema,
+        table = srcTable.name,
+        keys = keys.toSet(),
+        fields = srcTable.fields,
+        batchSize = batchSize,
+        orderBy = emptyList(),
+      ).toSet()
 
-    val primaryKeyFields: Set<Field<*>> =
-      primaryKeyFieldNames.map { dstTable.field(it) }.toSet()
+      val primaryKeyFields: Set<Field<*>> =
+        primaryKeyFieldNames.map { dstTable.field(it) }.toSet()
 
-    val valueFields: Set<Field<*>> =
-      dstTable.fields - primaryKeyFields
+      val valueFields: Set<Field<*>> =
+        dstTable.fields - primaryKeyFields
 
-    dstAdapter.upsertRows(
-      schema = dstSchema,
-      table = dstTable.name,
-      rows = fullRows,
-      keyFields = primaryKeyFields,
-      valueFields = valueFields,
-    )
+      dstAdapter.upsertRows(
+        schema = dstSchema,
+        table = dstTable.name,
+        rows = fullRows,
+        keyFields = primaryKeyFields,
+        valueFields = valueFields,
+      )
+    }.sum()
   }
-}
 
 @ExperimentalStdlibApi
 private fun getFullCriteria(
