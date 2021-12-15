@@ -441,14 +441,35 @@ class StdAdapter(
       val valuesSQL = valueClauseParameters.joinToString(", ") {
         it.sql
       }
+
       val setClauseSQL = setClauseParameters.joinToString(", ") {
         it.sql
       }
+
+      val fullyQualifiedSrcFieldNameCSV: String = valueFields.sortedBy { it.name }.joinToString(", ") { field ->
+        val wrapppedFieldName = details.wrapName(field.name)
+        "$fullTableName.$wrapppedFieldName"
+      }
+
+      val fullyQualifiedDstFieldNameCSV: String = valueFields.sortedBy { it.name }.joinToString(", ") { field ->
+        val wrapppedFieldName = details.wrapName(field.name)
+        "EXCLUDED.$wrapppedFieldName"
+      }
+
+      val whereClause = """
+        |WHERE (
+        |  $fullyQualifiedSrcFieldNameCSV
+        |) IS DISTINCT FROM (
+        |  $fullyQualifiedDstFieldNameCSV
+        |)
+      """.trimMargin()
+
       val sql = """
         |INSERT INTO $fullTableName ($allFieldCSV)
         |VALUES ($valuesSQL)
         |ON CONFLICT ($keyFieldCSV)
         |DO UPDATE SET $setClauseSQL
+        |$whereClause
       """.trimMargin()
 
       if (showSQL) {
