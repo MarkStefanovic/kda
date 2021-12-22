@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package kda.adapter.pg
 
 import kda.adapter.tableExists
@@ -16,6 +18,7 @@ class PgCache(
 ) : Cache {
   init {
     if (!tableExists(con = con, schema = cacheSchema, table = "table_def")) {
+      //language=PostgreSQL
       val sql = """
         |CREATE TABLE $cacheSchema.table_def (
         |   schema_name TEXT NOT NULL
@@ -50,6 +53,7 @@ class PgCache(
 
   @Suppress("SqlInsertValues")
   override fun addTable(schema: String?, table: Table) {
+    //language=PostgreSQL
     val sql = """
       |INSERT INTO $cacheSchema.table_def (
       |   schema_name
@@ -171,6 +175,7 @@ class PgCache(
   }
 
   override fun getTable(schema: String?, table: String): Table? {
+    //language=PostgreSQL
     val sql = """
       |SELECT 
       |   t.field_name
@@ -214,6 +219,7 @@ class PgCache(
           val precision = rs.getObject("precision") as Int? ?: 18
           val scale = rs.getObject("scale") as Int? ?: 4
           if (pkCols.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
             pkCols.addAll(rs.getArray("pk_cols").array as Array<out String>)
           }
 
