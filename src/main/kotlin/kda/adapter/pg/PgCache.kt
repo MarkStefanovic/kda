@@ -27,7 +27,8 @@ class PgCache(
         |,  precision INTEGER NULL CHECK (precision IS NULL OR precision > 0)
         |,  scale INTEGER NULL CHECK (scale IS NULL OR scale > 0)
         |,  pk_cols TEXT[] NOT NULL
-        |,  date_added TIMESTAMP NOT NULL DEFAULT now()
+        |,  date_added TIMESTAMPTZ NOT NULL DEFAULT now()
+        |,  date_updated TIMESTAMPTZ NULL
         |,  PRIMARY KEY (table_name, schema_name, field_name)
         |)
       """.trimMargin()
@@ -83,6 +84,25 @@ class PgCache(
       |,  precision = EXCLUDED.precision
       |,  scale = EXCLUDED.scale
       |,  pk_cols = EXCLUDED.pk_cols
+      |,  date_updated = now()
+      |WHERE 
+      |(
+      |   EXCLUDED.data_type
+      |,  EXCLUDED.nullable
+      |,  EXCLUDED.max_length
+      |,  EXCLUDED.precision
+      |,  EXCLUDED.scale
+      |,  EXCLUDED.pk_cols
+      |) 
+      |IS DISTINCT FROM 
+      |(
+      |   $cacheSchema.table_def.data_type
+      |,  $cacheSchema.table_def.nullable
+      |,  $cacheSchema.table_def.max_length
+      |,  $cacheSchema.table_def.precision
+      |,  $cacheSchema.table_def.scale
+      |,  $cacheSchema.table_def.pk_cols
+      |) 
     """.trimMargin()
 
     if (showSQL) {
