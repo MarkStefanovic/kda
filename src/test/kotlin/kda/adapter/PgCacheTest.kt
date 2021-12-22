@@ -1,19 +1,29 @@
-package kda
+package kda.adapter
 
-import kda.adapter.sqlite.SQLiteCache
+import kda.adapter.pg.PgCache
 import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Table
 import org.junit.jupiter.api.Test
-import testutil.testSQLiteConnection
+import testutil.testPgConnection
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class DbCacheTest {
+class PgCacheTest {
   @Test
   fun addTableDef_happy_path() {
-    testSQLiteConnection().use { con ->
-      val cache = SQLiteCache(con = con, showSQL = false)
+    testPgConnection().use { con ->
+      con.createStatement().use { statement ->
+        //language=PostgreSQL
+        statement.execute(
+          """
+          |-- noinspection SqlResolve @ any/"ketl"
+          |DROP TABLE IF EXISTS ketl.table_def
+        """.trimMargin()
+        )
+      }
+
+      val cache = PgCache(con = con, cacheSchema = "ketl", showSQL = false)
 
       val expected = Table(
         name = "customer",

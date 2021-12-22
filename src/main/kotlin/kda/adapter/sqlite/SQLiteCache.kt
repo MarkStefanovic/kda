@@ -24,9 +24,9 @@ class SQLiteCache(
         |,  field_name TEXT NOT NULL CHECK (LENGTH(field_name) > 0)
         |,  data_type TEXT NOT NULL CHECK (LENGTH(data_type) > 0)
         |,  nullable BOOLEAN NOT NULL CHECK (nullable IN (0, 1))
-        |,  max_length INTEGER NULL CHECK (max_length IS NULL OR LENGTH(max_length) > 0)
-        |,  precision INTEGER NULL CHECK (precision IS NULL OR LENGTH(precision) > 0)
-        |,  scale INTEGER NULL CHECK (scale IS NULL OR LENGTH(scale) > 0)
+        |,  max_length INTEGER NULL CHECK (max_length IS NULL OR max_length > 0)
+        |,  precision INTEGER NULL CHECK (precision IS NULL OR precision > 0)
+        |,  scale INTEGER NULL CHECK (scale IS NULL OR scale > 0)
         |,  date_added DATETIME NOT NULL DEFAULT current_timestamp
         |,  PRIMARY KEY (table_name, schema_name, field_name)
         |)

@@ -1,5 +1,6 @@
 package kda
 
+import kda.adapter.pg.PgCache
 import kda.adapter.sqlite.SQLiteCache
 import kda.domain.DbDialect
 import kda.domain.KDAError
@@ -10,6 +11,7 @@ fun inspectTable(
   con: Connection,
   cacheCon: Connection,
   cacheDialect: DbDialect,
+  cacheSchema: String?,
   schema: String?,
   table: String,
   primaryKeyFieldNames: List<String>,
@@ -32,8 +34,15 @@ fun inspectTable(
     val cache = when (cacheDialect) {
       DbDialect.HH -> TODO()
       DbDialect.MSSQL -> TODO()
-      DbDialect.PostgreSQL -> TODO()
-      DbDialect.SQLite -> SQLiteCache(con = cacheCon, showSQL = showSQL)
+      DbDialect.PostgreSQL -> PgCache(
+        con = cacheCon,
+        cacheSchema = cacheSchema ?: error("cacheSchema is required"),
+        showSQL = showSQL,
+      )
+      DbDialect.SQLite -> SQLiteCache(
+        con = cacheCon,
+        showSQL = showSQL,
+      )
     }
 
     val cachedTable = cache.getTable(schema = schema, table = table)

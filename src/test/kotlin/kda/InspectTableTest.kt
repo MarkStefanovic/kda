@@ -30,6 +30,7 @@ class InspectTableTest {
         con = con,
         cacheCon = con,
         cacheDialect = DbDialect.SQLite,
+        cacheSchema = null,
         schema = null,
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),
