@@ -20,7 +20,7 @@ class PgCache(
     if (!tableExists(con = con, schema = cacheSchema, table = "table_def")) {
       //language=PostgreSQL
       val sql = """
-        |CREATE TABLE $cacheSchema.table_def (
+        |CREATE TABLE IF NOT EXISTS $cacheSchema.table_def (
         |   schema_name TEXT NOT NULL
         |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
         |,  field_name TEXT NOT NULL CHECK (LENGTH(field_name) > 0)
@@ -28,7 +28,7 @@ class PgCache(
         |,  nullable BOOLEAN NOT NULL
         |,  max_length INTEGER NULL CHECK (max_length IS NULL OR max_length > 0)
         |,  precision INTEGER NULL CHECK (precision IS NULL OR precision > 0)
-        |,  scale INTEGER NULL CHECK (scale IS NULL OR scale > 0)
+        |,  scale INTEGER NULL CHECK (scale IS NULL OR scale >= 0)
         |,  pk_cols TEXT[] NOT NULL
         |,  date_added TIMESTAMPTZ NOT NULL DEFAULT now()
         |,  date_updated TIMESTAMPTZ NULL
