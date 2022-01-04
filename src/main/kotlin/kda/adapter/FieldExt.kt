@@ -14,35 +14,15 @@ internal fun Collection<Field<*>>.toSetValuesEqualToParameters(details: DbAdapte
       Parameter(name = field.name, dataType = field.dataType, sql = "${details.wrapName(field.name)} = ?")
     }
 
-internal fun Field<*>.toWhereEqualsParameter(details: DbAdapterDetails): List<Parameter> {
+internal fun Field<*>.toWhereEqualsParameter(details: DbAdapterDetails): Parameter {
   val wrappedFieldName = details.wrapName(this.name)
 
-  return if (dataType.nullable) {
-    listOf(
-      Parameter(
-        name = name,
-        dataType = dataType,
-        sql = "$wrappedFieldName = ?"
-      ),
-      Parameter(
-        name = name,
-        dataType = dataType,
-        sql = "COALESCE($wrappedFieldName, ?) IS NULL"
-      ),
-    )
-  } else {
-    listOf(
-      Parameter(
-        name = name,
-        dataType = dataType,
-        sql = "$wrappedFieldName = ?"
-      ),
-    )
-  }
+  return Parameter(
+    name = name,
+    dataType = dataType,
+    sql = "$wrappedFieldName = ?",
+  )
 }
-
-// internal fun Collection<Field<*>>.toWhereEqualsParameters(details: DbAdapterDetails): List<Parameter> =
-//  sortedBy { it.name }.flatMap { it.toWhereEqualsParameter(details = details) }
 
 internal fun Field<*>.toWhereEqualsBoundParameter(details: DbAdapterDetails, row: Row): List<BoundParameter> {
   val wrappedFieldName = details.wrapName(name)
