@@ -16,7 +16,6 @@ import kda.domain.Adapter
 import kda.domain.BoundParameter
 import kda.domain.Criteria
 import kda.domain.DbAdapterDetails
-import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.KDAError
 import kda.domain.OrderBy
@@ -30,7 +29,6 @@ class StdAdapter(
   private val con: Connection,
   private val showSQL: Boolean,
   private val details: DbAdapterDetails,
-  private val dialect: DbDialect,
 ) : Adapter {
 
   override fun createTable(schema: String?, table: Table) {
@@ -99,6 +97,8 @@ class StdAdapter(
   }
 
   override fun deleteRows(schema: String?, table: String, fields: Set<Field<*>>, keys: Set<Row>): Int {
+    println("deleteRows: schema = $schema, table = $table, fields = $fields, keys = $keys")
+
     val fullTableName = details.fullTableName(schema = schema, table = table)
 
     val fieldLookup = fields.associateBy { it.name }
