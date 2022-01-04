@@ -97,8 +97,6 @@ class StdAdapter(
   }
 
   override fun deleteRows(schema: String?, table: String, fields: Set<Field<*>>, keys: Set<Row>): Int {
-    println("deleteRows: schema = $schema, table = $table, fields = $fields, keys = $keys")
-
     val fullTableName = details.fullTableName(schema = schema, table = table)
 
     val fieldLookup = fields.associateBy { it.name }
