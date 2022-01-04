@@ -115,7 +115,7 @@ class StdAdapter(
         }
         .sortedBy { it.name }
 
-    val whereClauseParameters: List<Parameter> = keyFields.flatMap { field ->
+    val whereClauseParameters: List<Parameter> = keyFields.map { field ->
       field.toWhereEqualsParameter(details = details)
     }
 
