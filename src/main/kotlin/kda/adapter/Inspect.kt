@@ -36,7 +36,7 @@ fun inspectTable(
   schema: String?,
   table: String,
   hardCodedPrimaryKeyFieldNames: List<String>? = null,
-): Table? {
+): Table {
   val fields = mutableListOf<Field<*>>()
   con.metaData.getColumns(null, schema, table, null).use { rs ->
     while (rs.next()) {
@@ -53,7 +53,7 @@ fun inspectTable(
       }
 
       val field = when (dataType) {
-        Types.BOOLEAN -> if (nullable) {
+        Types.BIT, Types.BOOLEAN -> if (nullable) {
           Field(name = columnName, dataType = DataType.nullableBool)
         } else {
           Field(name = columnName, dataType = DataType.bool)
@@ -63,7 +63,7 @@ fun inspectTable(
         } else {
           Field(name = columnName, dataType = DataType.bigInt)
         }
-        Types.BIT, Types.TINYINT, Types.SMALLINT, Types.INTEGER -> if (nullable) {
+        Types.TINYINT, Types.SMALLINT, Types.INTEGER -> if (nullable) {
           Field(name = columnName, dataType = DataType.nullableInt)
         } else {
           Field(name = columnName, dataType = DataType.int)
