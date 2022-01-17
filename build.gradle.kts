@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.5.31"
     id("org.jmailen.kotlinter") version "3.4.5"
     id( "org.jetbrains.kotlin.plugin.serialization") version "1.4.30"
+    id("org.jetbrains.kotlinx.kover") version "0.4.2"
 }
 
 group = "lime"
@@ -20,7 +21,7 @@ dependencies {
 
     testImplementation("org.postgresql", "postgresql", "42.2.16")
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 }
 
 tasks.test {
