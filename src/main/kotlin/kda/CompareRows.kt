@@ -8,7 +8,11 @@ import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.minutes
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 fun compareRows(
   srcCon: Connection,
@@ -28,10 +32,11 @@ fun compareRows(
   includeFields: Set<String>? = null,
   showSQL: Boolean = false,
   batchSize: Int = 1_000,
+  queryTimeout: Duration = Duration.minutes(30),
 ): RowDiff {
-  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL)
+  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL, queryTimeout = queryTimeout)
 
-  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
+  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL, queryTimeout = queryTimeout)
 
   val tables =
     copyTable(

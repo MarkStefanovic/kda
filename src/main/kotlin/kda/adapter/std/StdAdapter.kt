@@ -23,12 +23,16 @@ import kda.domain.Parameter
 import kda.domain.Row
 import kda.domain.Table
 import java.sql.Connection
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 class StdAdapter(
   private val con: Connection,
   private val showSQL: Boolean,
   private val details: DbAdapterDetails,
+  private val queryTimeout: Duration,
 ) : Adapter {
 
   override fun createTable(schema: String?, table: Table) {
@@ -55,6 +59,7 @@ class StdAdapter(
     }
 
     con.createStatement().use { statement ->
+      statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
       statement.execute(sql)
     }
   }
@@ -76,6 +81,8 @@ class StdAdapter(
       }
 
       con.prepareStatement(sql).use { statement ->
+        statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
         statement.applyBoundParameters(criteria.boundParameters)
 
         statement.executeUpdate()
@@ -92,6 +99,8 @@ class StdAdapter(
     }
 
     return con.createStatement().use { statement ->
+      statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
       statement.executeUpdate(sql)
     }
   }
@@ -134,6 +143,8 @@ class StdAdapter(
 
     return con.prepareStatement(sql).use { preparedStatement ->
       keys.forEach { row ->
+        preparedStatement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
         preparedStatement.applyRow(row = row, parameters = whereClauseParameters)
         preparedStatement.addBatch()
       }
@@ -193,6 +204,8 @@ class StdAdapter(
 
       sequence<Row> {
         con.prepareStatement(sql).use { preparedStatement ->
+          preparedStatement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
           preparedStatement.applyBoundParameters(criteria.boundParameters)
           try {
             preparedStatement.executeQuery().use { rs ->
@@ -246,6 +259,8 @@ class StdAdapter(
 
     return sequence {
       con.createStatement().use { statement ->
+        statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
         if (showSQL) {
           println(baseSQL)
         }
@@ -286,6 +301,8 @@ class StdAdapter(
     }
 
     con.createStatement().use { statement ->
+      statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
       statement.executeQuery(sql).use { rs ->
         return if (rs.next()) {
           rs.getObject("greatest_val")
@@ -328,6 +345,8 @@ class StdAdapter(
     return if (keys.isEmpty()) {
       sequence {
         con.createStatement().use { statement ->
+          statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
           if (showSQL) {
             println(baseSQL)
           }
@@ -393,6 +412,8 @@ class StdAdapter(
           }
 
           con.prepareStatement(sql).use { statement ->
+            statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
             statement.applyBoundParameters(parameters = parameters.flatten())
 
             statement.executeQuery().use { rs ->
@@ -487,6 +508,8 @@ class StdAdapter(
 
       con.prepareStatement(sql).use { statement ->
         rows.forEach { row ->
+          statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
           statement.applyRow(parameters = parameters, row = row)
 
           statement.addBatch()

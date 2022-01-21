@@ -5,7 +5,10 @@ import kda.adapter.tableExists
 import kda.domain.CopyTableResult
 import kda.domain.DbDialect
 import java.sql.Connection
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 fun copyTable(
   srcCon: Connection,
@@ -21,6 +24,7 @@ fun copyTable(
   primaryKeyFieldNames: List<String>,
   showSQL: Boolean = false,
   includeFields: Set<String>? = null,
+  queryTimeout: Duration = Duration.minutes(30),
 ): CopyTableResult {
 
   val srcTableDef = inspectTable(
@@ -48,7 +52,7 @@ fun copyTable(
     primaryKeyFieldNames = primaryKeyFieldNames,
   )
 
-  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
+  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL, queryTimeout = queryTimeout)
 
   if (!tableExists(con = dstCon, schema = dstSchema, table = dstTable)) {
     dstAdapter.createTable(schema = dstSchema, table = dstTableDef)

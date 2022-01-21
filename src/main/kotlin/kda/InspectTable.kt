@@ -55,11 +55,7 @@ fun inspectTable(
           table = table,
           hardCodedPrimaryKeyFieldNames = primaryKeyFieldNames,
         )
-        if (def == null) {
-          throw KDAError.TableNotFound(schema = schema, table = table)
-        } else {
-          cache.addTable(schema = schema, table = def)
-        }
+        cache.addTable(schema = schema, table = def)
         def
       } else {
         cachedTable

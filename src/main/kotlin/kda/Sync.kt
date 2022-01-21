@@ -19,7 +19,10 @@ import kda.domain.compareRows
 import java.sql.Connection
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 fun sync(
   srcCon: Connection,
@@ -40,6 +43,7 @@ fun sync(
   timestampFieldNames: Set<String> = setOf(),
   batchSize: Int = 1_000,
   showSQL: Boolean = false,
+  queryTimeout: Duration = Duration.minutes(30),
 ): SyncResult {
   if (compareFields != null && compareFields.isEmpty()) {
     throw KDAError.InvalidArgument(
@@ -49,9 +53,9 @@ fun sync(
     )
   }
 
-  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL)
+  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL, queryTimeout = queryTimeout)
 
-  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL)
+  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL, queryTimeout = queryTimeout)
 
   val tables: CopyTableResult =
     copyTable(
