@@ -1,3 +1,5 @@
+@file:Suppress("SqlResolve")
+
 package kda
 
 import kda.domain.DbDialect
@@ -12,6 +14,7 @@ import java.sql.Types
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.time.ExperimentalTime
 
 data class Customer(
   val customerId: Int,
@@ -23,6 +26,7 @@ data class Customer(
 )
 
 fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
+  // language=PostgreSQL
   val sql = """
     |  SELECT customer_id, first_name, last_name, middle_initial, date_added, date_updated
     |  FROM sales.$tableName 
@@ -63,6 +67,7 @@ fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
 
 fun addCustomers(con: Connection, tableName: String, vararg customers: Customer) {
   for (customer in customers) {
+    // language=PostgreSQL
     val sql = """
       |    INSERT INTO sales.$tableName (customer_id, first_name, last_name, middle_initial, date_added, date_updated)
       |    VALUES (?, ?, ?, ?, ?, ?)
@@ -98,6 +103,7 @@ fun addCustomers(con: Connection, tableName: String, vararg customers: Customer)
 }
 
 fun deleteCustomer(con: Connection, tableName: String, customerId: Int) {
+  // language=PostgreSQL
   val sql = """
     DELETE FROM sales.$tableName 
     WHERE customer_id = ?
@@ -113,6 +119,7 @@ fun updateCustomer(
   tableName: String,
   customer: Customer,
 ) {
+  // language=PostgreSQL
   val sql = """
     UPDATE sales.$tableName 
     SET
@@ -143,15 +150,19 @@ fun updateCustomer(
   }
 }
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 class SyncTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
       con.createStatement().use { stmt ->
+        // language=PostgreSQL
         stmt.execute("DROP TABLE IF EXISTS sales.customer")
+        // language=PostgreSQL
         stmt.execute("DROP TABLE IF EXISTS sales.customer2")
         stmt.execute(
+          // language=PostgreSQL
           """
           CREATE TABLE sales.customer (
               customer_id INT NOT NULL
