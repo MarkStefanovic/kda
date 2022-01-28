@@ -1,22 +1,17 @@
 package kda
 
-import kda.adapter.pg.PgCache
-import kda.adapter.sqlite.SQLiteCache
-import kda.domain.DbDialect
+import kda.domain.Cache
 import kda.domain.KDAError
 import kda.domain.Table
 import java.sql.Connection
 
 fun inspectTable(
   con: Connection,
-  cacheCon: Connection,
-  cacheDialect: DbDialect,
-  cacheSchema: String?,
+  cache: Cache,
   schema: String?,
   table: String,
   primaryKeyFieldNames: List<String>,
   includeFieldNames: Set<String>?,
-  showSQL: Boolean = false,
 ): Table {
   if ((includeFieldNames != null) && (includeFieldNames.isEmpty())) {
     throw KDAError.InvalidArgument(
@@ -31,20 +26,6 @@ fun inspectTable(
       argumentValue = primaryKeyFieldNames,
     )
   } else {
-    val cache = when (cacheDialect) {
-      DbDialect.HH -> TODO()
-      DbDialect.MSSQL -> TODO()
-      DbDialect.PostgreSQL -> PgCache(
-        con = cacheCon,
-        cacheSchema = cacheSchema ?: error("cacheSchema is required"),
-        showSQL = showSQL,
-      )
-      DbDialect.SQLite -> SQLiteCache(
-        con = cacheCon,
-        showSQL = showSQL,
-      )
-    }
-
     val cachedTable = cache.getTable(schema = schema, table = table)
 
     val tableDef =

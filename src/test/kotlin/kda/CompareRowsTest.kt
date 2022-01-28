@@ -1,24 +1,31 @@
+@file:Suppress("SqlResolve")
+
 package kda
 
 import kda.domain.DbDialect
 import org.junit.jupiter.api.Test
 import testutil.testSQLiteConnection
 import kotlin.test.assertEquals
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 class CompareRowsTest {
   @Test
   fun happy_path() {
     testSQLiteConnection().use { con ->
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer2"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer (
           id INTEGER PRIMARY KEY 
@@ -30,6 +37,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer2 (
           id INTEGER NOT NULL
@@ -41,6 +49,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer (id, first_name, mi, last_name) 
         VALUES 
@@ -51,6 +60,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer2 (id, first_name, mi, last_name) 
         VALUES 
@@ -60,14 +70,19 @@ class CompareRowsTest {
       """
       ).executeUpdate()
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+        showSQL = true,
+      )
+
       val result = compareRows(
         srcCon = con,
         dstCon = con,
-        cacheCon = con,
+        cache = cache,
         srcDialect = DbDialect.SQLite,
         dstDialect = DbDialect.SQLite,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
         srcSchema = null,
         srcTable = "customer",
         dstSchema = null,
@@ -88,14 +103,17 @@ class CompareRowsTest {
   fun given_duplicate_dest_rows() {
     testSQLiteConnection().use { con ->
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer2"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer (
           id INTEGER PRIMARY KEY 
@@ -107,6 +125,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer2 (
           id INTEGER NOT NULL
@@ -118,6 +137,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer (id, first_name, mi, last_name) 
         VALUES 
@@ -128,6 +148,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer2 (id, first_name, mi, last_name) 
         VALUES 
@@ -139,14 +160,18 @@ class CompareRowsTest {
       """
       ).executeUpdate()
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val result = compareRows(
+        cache = cache,
         srcCon = con,
         dstCon = con,
-        cacheCon = con,
         srcDialect = DbDialect.SQLite,
         dstDialect = DbDialect.SQLite,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
         srcSchema = null,
         srcTable = "customer",
         dstSchema = null,
@@ -166,14 +191,17 @@ class CompareRowsTest {
   fun given_duplicate_src_rows() {
     testSQLiteConnection().use { con ->
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer2"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer (
           id INTEGER NOT NULL 
@@ -185,6 +213,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer2 (
           id INTEGER NOT NULL
@@ -196,6 +225,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer (id, first_name, mi, last_name) 
         VALUES 
@@ -207,6 +237,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer2 (id, first_name, mi, last_name) 
         VALUES 
@@ -218,14 +249,18 @@ class CompareRowsTest {
       """
       ).executeUpdate()
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val result = compareRows(
         srcCon = con,
         dstCon = con,
-        cacheCon = con,
+        cache = cache,
         srcDialect = DbDialect.SQLite,
         dstDialect = DbDialect.SQLite,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
         srcSchema = null,
         srcTable = "customer",
         dstSchema = null,
@@ -245,14 +280,17 @@ class CompareRowsTest {
   fun when_rows_are_added() {
     testSQLiteConnection().use { con ->
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer2"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer (
           id INTEGER PRIMARY KEY 
@@ -264,6 +302,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer2 (
           id INTEGER NOT NULL
@@ -275,6 +314,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer (id, first_name, mi, last_name) 
         VALUES 
@@ -285,6 +325,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer2 (id, first_name, mi, last_name) 
         VALUES 
@@ -293,14 +334,18 @@ class CompareRowsTest {
       """
       ).executeUpdate()
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val result = compareRows(
         srcCon = con,
         dstCon = con,
-        cacheCon = con,
+        cache = cache,
         srcDialect = DbDialect.SQLite,
         dstDialect = DbDialect.SQLite,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
         srcSchema = null,
         srcTable = "customer",
         dstSchema = null,
@@ -320,14 +365,17 @@ class CompareRowsTest {
   fun when_rows_are_updated() {
     testSQLiteConnection().use { con ->
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         "DROP TABLE IF EXISTS customer2"
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer (
           id INTEGER PRIMARY KEY 
@@ -339,6 +387,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         CREATE TABLE customer2 (
           id INTEGER NOT NULL
@@ -350,6 +399,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer (id, first_name, mi, last_name) 
         VALUES 
@@ -360,6 +410,7 @@ class CompareRowsTest {
       ).executeUpdate()
 
       con.prepareStatement(
+        // language=SQLite
         """
         INSERT INTO customer2 (id, first_name, mi, last_name) 
         VALUES 
@@ -369,14 +420,18 @@ class CompareRowsTest {
       """
       ).executeUpdate()
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val result = compareRows(
         srcCon = con,
         dstCon = con,
-        cacheCon = con,
+        cache = cache,
         srcDialect = DbDialect.SQLite,
         dstDialect = DbDialect.SQLite,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
         srcSchema = null,
         srcTable = "customer",
         dstSchema = null,

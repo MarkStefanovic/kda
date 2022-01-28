@@ -1,3 +1,5 @@
+@file:Suppress("SqlResolve")
+
 package kda
 
 import kda.domain.DataType
@@ -14,8 +16,12 @@ class InspectTableTest {
   fun sqlite_inspectTable_happy_path() {
     testSQLiteConnection().use { con ->
       con.createStatement().use { stmt ->
-        stmt.execute("DROP TABLE IF EXISTS customer")
         stmt.execute(
+          // language=SQLite
+          "DROP TABLE IF EXISTS customer"
+        )
+        stmt.execute(
+          // language=SQLite
           """
             |CREATE TABLE customer (
             |    customer_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
@@ -26,11 +32,15 @@ class InspectTableTest {
         )
       }
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val actual = inspectTable(
         con = con,
-        cacheCon = con,
-        cacheDialect = DbDialect.SQLite,
-        cacheSchema = null,
+        cache = cache,
         schema = null,
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),

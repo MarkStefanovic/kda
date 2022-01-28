@@ -2,6 +2,7 @@ package kda
 
 import kda.adapter.selectAdapter
 import kda.domain.Adapter
+import kda.domain.Cache
 import kda.domain.Criteria
 import kda.domain.DbDialect
 import kda.domain.Row
@@ -10,24 +11,21 @@ import kda.domain.Table
 import java.sql.Connection
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.minutes
 
 @ExperimentalTime
 @ExperimentalStdlibApi
 fun compareRows(
   srcCon: Connection,
   dstCon: Connection,
-  cacheCon: Connection,
   srcDialect: DbDialect,
   dstDialect: DbDialect,
-  cacheDialect: DbDialect,
-  cacheSchema: String?,
   srcSchema: String?,
   srcTable: String,
   dstSchema: String?,
   dstTable: String,
   compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
+  cache: Cache,
   criteria: Criteria? = null,
   includeFields: Set<String>? = null,
   showSQL: Boolean = false,
@@ -42,10 +40,8 @@ fun compareRows(
     copyTable(
       srcCon = srcCon,
       dstCon = dstCon,
-      cacheCon = cacheCon,
+      cache = cache,
       dstDialect = dstDialect,
-      cacheDialect = cacheDialect,
-      cacheSchema = cacheSchema,
       srcSchema = srcSchema,
       srcTable = srcTable,
       dstSchema = dstSchema,

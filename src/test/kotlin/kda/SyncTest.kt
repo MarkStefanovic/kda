@@ -213,14 +213,18 @@ class SyncTest {
 
         addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
 
+        val cache = createCache(
+          dialect = DbDialect.SQLite,
+          con = cacheCon,
+          schema = null,
+        )
+
         val resultAfterAdd = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -248,11 +252,9 @@ class SyncTest {
         val resultAfterUpdate = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -277,11 +279,9 @@ class SyncTest {
         val resultAfterDelete = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -336,14 +336,18 @@ class SyncTest {
 
         addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
 
+        val cache = createCache(
+          dialect = DbDialect.SQLite,
+          con = cacheCon,
+          schema = null,
+        )
+
         val resultAfterAdd = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -373,11 +377,9 @@ class SyncTest {
         val resultAfterUpdate = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -407,11 +409,9 @@ class SyncTest {
         val resultAfterDelete = sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",
@@ -477,14 +477,18 @@ class SyncTest {
 
         addCustomers(con = con, tableName = "customer", customer1, customer2, customer3, customer2dupe)
 
+        val cache = createCache(
+          dialect = DbDialect.SQLite,
+          con = cacheCon,
+          schema = null,
+        )
+
         sync(
           srcCon = con,
           dstCon = con,
-          cacheCon = cacheCon,
+          cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = "sales",
           srcTable = "customer",
           dstSchema = "sales",

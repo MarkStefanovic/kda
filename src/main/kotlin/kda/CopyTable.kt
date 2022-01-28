@@ -2,6 +2,7 @@ package kda
 
 import kda.adapter.selectAdapter
 import kda.adapter.tableExists
+import kda.domain.Cache
 import kda.domain.CopyTableResult
 import kda.domain.DbDialect
 import java.sql.Connection
@@ -13,15 +14,13 @@ import kotlin.time.ExperimentalTime
 fun copyTable(
   srcCon: Connection,
   dstCon: Connection,
-  cacheCon: Connection,
   dstDialect: DbDialect,
-  cacheDialect: DbDialect,
-  cacheSchema: String?,
   srcSchema: String?,
   srcTable: String,
   dstSchema: String?,
   dstTable: String,
   primaryKeyFieldNames: List<String>,
+  cache: Cache,
   showSQL: Boolean = false,
   includeFields: Set<String>? = null,
   queryTimeout: Duration = Duration.minutes(30),
@@ -29,9 +28,7 @@ fun copyTable(
 
   val srcTableDef = inspectTable(
     con = srcCon,
-    cacheCon = cacheCon,
-    cacheDialect = cacheDialect,
-    cacheSchema = cacheSchema,
+    cache = cache,
     schema = srcSchema,
     table = srcTable,
     primaryKeyFieldNames = primaryKeyFieldNames,

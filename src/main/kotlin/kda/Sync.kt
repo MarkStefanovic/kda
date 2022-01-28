@@ -4,6 +4,7 @@ import kda.adapter.selectAdapter
 import kda.adapter.where
 import kda.domain.Adapter
 import kda.domain.BinaryPredicate
+import kda.domain.Cache
 import kda.domain.CopyTableResult
 import kda.domain.Criteria
 import kda.domain.DataType
@@ -27,16 +28,14 @@ import kotlin.time.ExperimentalTime
 fun sync(
   srcCon: Connection,
   dstCon: Connection,
-  cacheCon: Connection,
   srcDialect: DbDialect,
   dstDialect: DbDialect,
-  cacheDialect: DbDialect,
-  cacheSchema: String?,
   srcSchema: String?,
   srcTable: String,
   dstSchema: String?,
   dstTable: String,
   primaryKeyFieldNames: List<String>,
+  cache: Cache,
   criteria: Criteria? = null,
   compareFields: Set<String>? = null,
   includeFields: Set<String>? = null,
@@ -59,12 +58,10 @@ fun sync(
 
   val tables: CopyTableResult =
     copyTable(
+      cache = cache,
       srcCon = srcCon,
       dstCon = dstCon,
-      cacheCon = cacheCon,
       dstDialect = dstDialect,
-      cacheDialect = cacheDialect,
-      cacheSchema = cacheSchema,
       srcSchema = srcSchema,
       srcTable = srcTable,
       dstSchema = dstSchema,

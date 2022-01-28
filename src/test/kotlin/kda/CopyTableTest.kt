@@ -1,3 +1,5 @@
+@file:Suppress("SqlResolve")
+
 package kda
 
 import kda.domain.CopyTableResult
@@ -9,7 +11,9 @@ import testutil.testSQLiteConnection
 import java.sql.Connection
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 @ExperimentalStdlibApi
 class CopyTableTest {
   @Test
@@ -17,9 +21,16 @@ class CopyTableTest {
     testPgConnection().use { con: Connection ->
       testSQLiteConnection().use { cacheCon: Connection ->
         con.createStatement().use { stmt ->
-          stmt.execute("DROP TABLE IF EXISTS sales.customer")
-          stmt.execute("DROP TABLE IF EXISTS sales.customer2")
           stmt.execute(
+            // language=PostgreSQL
+            "DROP TABLE IF EXISTS sales.customer"
+          )
+          stmt.execute(
+            // language=PostgreSQL
+            "DROP TABLE IF EXISTS sales.customer2"
+          )
+          stmt.execute(
+            // language=PostgreSQL
             """
             CREATE TABLE sales.customer (
                 customer_id SERIAL PRIMARY KEY
@@ -31,14 +42,18 @@ class CopyTableTest {
         }
         assert(!pgTableExists(con, "sales", "customer2"))
 
+        val cache = createCache(
+          dialect = DbDialect.SQLite,
+          con = cacheCon,
+          schema = null,
+        )
+
         val result =
           copyTable(
             srcCon = con,
             dstCon = con,
-            cacheCon = cacheCon,
+            cache = cache,
             dstDialect = DbDialect.PostgreSQL,
-            cacheDialect = DbDialect.SQLite,
-            cacheSchema = null,
             srcSchema = "sales",
             srcTable = "customer",
             dstSchema = "sales",
@@ -60,11 +75,18 @@ class CopyTableTest {
   fun given_no_primary_is_enforced_at_db_level() {
     testSQLiteConnection().use { con: Connection ->
       con.createStatement().use { stmt ->
-        stmt.execute("DROP TABLE IF EXISTS customer")
-
-        stmt.execute("DROP TABLE IF EXISTS customer2")
+        stmt.execute(
+          // language=SQLite
+          "DROP TABLE IF EXISTS customer"
+        )
 
         stmt.execute(
+          // language=SQLite
+          "DROP TABLE IF EXISTS customer2"
+        )
+
+        stmt.execute(
+          // language=SQLite
           """
           CREATE TABLE customer (
               customer_id INTEGER NOT NULL
@@ -75,14 +97,18 @@ class CopyTableTest {
         )
       }
 
+      val cache = createCache(
+        dialect = DbDialect.SQLite,
+        con = con,
+        schema = null,
+      )
+
       val result =
         copyTable(
           srcCon = con,
           dstCon = con,
-          cacheCon = con,
+          cache = cache,
           dstDialect = DbDialect.SQLite,
-          cacheDialect = DbDialect.SQLite,
-          cacheSchema = null,
           srcSchema = null,
           srcTable = "customer",
           dstSchema = null,
