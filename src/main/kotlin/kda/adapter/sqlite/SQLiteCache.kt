@@ -15,6 +15,8 @@ class SQLiteCache(
   val con: Connection,
   val showSQL: Boolean,
 ) : Cache {
+  val cache = mutableMapOf<Pair<String?, String>, Table>()
+
   init {
     if (!tableExists(con = con, schema = null, table = "table_def")) {
       val tableDefSQL = """
@@ -75,6 +77,8 @@ class SQLiteCache(
 
   @Suppress("SqlInsertValues")
   override fun addTable(schema: String?, table: Table) {
+    cache[schema to table.name] = table
+
     val insertFieldSQL = """
       |INSERT OR REPLACE INTO table_def (
       |   schema_name
@@ -192,6 +196,10 @@ class SQLiteCache(
   }
 
   override fun getTable(schema: String?, table: String): Table? {
+    if (cache.containsKey(schema to table)) {
+      return cache[schema to table]
+    }
+
     val fetchFieldsSQL = """
       |SELECT 
       |   t.field_name

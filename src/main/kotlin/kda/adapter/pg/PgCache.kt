@@ -16,7 +16,7 @@ class PgCache(
   val cacheSchema: String,
   val showSQL: Boolean,
 ) : Cache {
-  val cache = mutableMapOf<Pair<String, String>, Table>()
+  val cache = mutableMapOf<Pair<String?, String>, Table>()
 
   init {
     if (!tableExists(con = con, schema = cacheSchema, table = "table_def")) {
@@ -55,8 +55,6 @@ class PgCache(
 
   @Suppress("SqlInsertValues")
   override fun addTable(schema: String?, table: Table) {
-    require(schema != null) { "Schema is required." }
-
     cache[schema to table.name] = table
 
     //language=PostgreSQL
