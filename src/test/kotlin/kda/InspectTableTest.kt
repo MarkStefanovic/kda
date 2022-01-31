@@ -41,6 +41,7 @@ class InspectTableTest {
       val actual = inspectTable(
         con = con,
         cache = cache,
+        dbName = "db",
         schema = null,
         table = "customer",
         primaryKeyFieldNames = listOf("customer_id"),

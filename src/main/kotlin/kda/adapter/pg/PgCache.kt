@@ -2,7 +2,6 @@
 
 package kda.adapter.pg
 
-import kda.adapter.tableExists
 import kda.domain.Cache
 import kda.domain.DataType
 import kda.domain.Field
@@ -16,10 +15,12 @@ class PgCache(
   val cacheSchema: String,
   val showSQL: Boolean,
 ) : Cache {
-  val cache = mutableMapOf<Pair<String?, String>, Table>()
+  private val cache = mutableMapOf<Triple<String, String?, String>, Table>()
+
+  private val existingTables = mutableMapOf<String, MutableSet<Pair<String?, String>>>()
 
   init {
-    if (!tableExists(con = con, schema = cacheSchema, table = "table_def")) {
+    if (!kda.adapter.tableExists(con = con, schema = cacheSchema, table = "table_def")) {
       //language=PostgreSQL
       val sql = """
         |CREATE TABLE IF NOT EXISTS $cacheSchema.table_def (
@@ -54,8 +55,8 @@ class PgCache(
   }
 
   @Suppress("SqlInsertValues")
-  override fun addTable(schema: String?, table: Table) {
-    cache[schema to table.name] = table
+  override fun addTable(dbName: String, schema: String?, table: Table) {
+    cache[Triple(dbName, schema, table.name)] = table
 
     //language=PostgreSQL
     val sql = """
@@ -178,9 +179,10 @@ class PgCache(
     }
   }
 
-  override fun getTable(schema: String?, table: String): Table? {
-    if (cache.containsKey(schema to table)) {
-      return cache[schema to table]
+  override fun getTable(dbName: String, schema: String?, table: String): Table? {
+    val key = Triple(dbName, schema, table)
+    if (cache.containsKey(key)) {
+      return cache[key]
     }
 
     //language=PostgreSQL
@@ -262,12 +264,30 @@ class PgCache(
       if (pkCols.isEmpty()) {
         throw KDAError.TableMissingAPrimaryKey(schema = schema, table = table)
       } else {
-        Table(
+        val tableDef = Table(
           name = table,
           fields = fields.toSet(),
           primaryKeyFieldNames = pkCols,
         )
+        cache[key] = tableDef
+        tableDef
       }
     }
   }
+
+  override fun tableExists(con: Connection, dbName: String, schema: String?, table: String): Boolean =
+    if (existingTables[dbName]?.contains(schema to table) == true) {
+      true
+    } else {
+      if (kda.adapter.tableExists(con = con, schema = schema, table = table)) {
+        if (existingTables.containsKey(dbName)) {
+          existingTables[dbName]?.add(schema to table)
+        } else {
+          existingTables[dbName] = mutableSetOf(schema to table)
+        }
+        true
+      } else {
+        false
+      }
+    }
 }

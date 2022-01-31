@@ -2,7 +2,6 @@
 
 package kda.adapter.sqlite
 
-import kda.adapter.tableExists
 import kda.domain.Cache
 import kda.domain.DataType
 import kda.domain.Field
@@ -15,10 +14,12 @@ class SQLiteCache(
   val con: Connection,
   val showSQL: Boolean,
 ) : Cache {
-  val cache = mutableMapOf<Pair<String?, String>, Table>()
+  private val cache = mutableMapOf<Triple<String, String?, String>, Table>()
+
+  private val existingTables = mutableMapOf<String, MutableSet<Pair<String?, String>>>()
 
   init {
-    if (!tableExists(con = con, schema = null, table = "table_def")) {
+    if (!kda.adapter.tableExists(con = con, schema = null, table = "table_def")) {
       val tableDefSQL = """
         |CREATE TABLE table_def (
         |   schema_name TEXT NOT NULL
@@ -48,7 +49,7 @@ class SQLiteCache(
       }
     }
 
-    if (!tableExists(con = con, schema = null, table = "pk")) {
+    if (!kda.adapter.tableExists(con = con, schema = null, table = "pk")) {
       val pkSQL = """
         |CREATE TABLE pk (
         |   schema_name TEXT NOT NULL
@@ -76,8 +77,8 @@ class SQLiteCache(
   }
 
   @Suppress("SqlInsertValues")
-  override fun addTable(schema: String?, table: Table) {
-    cache[schema to table.name] = table
+  override fun addTable(dbName: String, schema: String?, table: Table) {
+    cache[Triple(dbName, schema, table.name)] = table
 
     val insertFieldSQL = """
       |INSERT OR REPLACE INTO table_def (
@@ -195,9 +196,11 @@ class SQLiteCache(
     }
   }
 
-  override fun getTable(schema: String?, table: String): Table? {
-    if (cache.containsKey(schema to table)) {
-      return cache[schema to table]
+  override fun getTable(dbName: String, schema: String?, table: String): Table? {
+    val key = Triple(dbName, schema, table)
+
+    if (cache.containsKey(key)) {
+      return cache[key]
     }
 
     val fetchFieldsSQL = """
@@ -307,11 +310,31 @@ class SQLiteCache(
         }
       }
 
-      Table(
+      val tableDef = Table(
         name = table,
         fields = fields.toSet(),
         primaryKeyFieldNames = primaryKeyFieldNames,
       )
+
+      cache[key] = tableDef
+
+      tableDef
     }
   }
+
+  override fun tableExists(con: Connection, dbName: String, schema: String?, table: String): Boolean =
+    if (existingTables[dbName]?.contains(schema to table) == true) {
+      true
+    } else {
+      if (kda.adapter.tableExists(con = con, schema = schema, table = table)) {
+        if (existingTables.containsKey(dbName)) {
+          existingTables[dbName]?.add(schema to table)
+        } else {
+          existingTables[dbName] = mutableSetOf(schema to table)
+        }
+        true
+      } else {
+        false
+      }
+    }
 }

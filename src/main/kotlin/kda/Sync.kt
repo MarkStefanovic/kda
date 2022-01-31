@@ -1,26 +1,19 @@
 package kda
 
 import kda.adapter.selectAdapter
-import kda.adapter.where
 import kda.domain.Adapter
-import kda.domain.BinaryPredicate
 import kda.domain.Cache
 import kda.domain.CopyTableResult
 import kda.domain.Criteria
-import kda.domain.DataType
 import kda.domain.DbDialect
 import kda.domain.Field
-import kda.domain.KDAError
-import kda.domain.Operator
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.SyncResult
 import kda.domain.Table
-import kda.domain.compareRows
 import java.sql.Connection
-import java.sql.Timestamp
-import java.time.LocalDateTime
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -30,8 +23,10 @@ fun sync(
   dstCon: Connection,
   srcDialect: DbDialect,
   dstDialect: DbDialect,
+  srcDbName: String,
   srcSchema: String?,
   srcTable: String,
+  dstDbName: String,
   dstSchema: String?,
   dstTable: String,
   primaryKeyFieldNames: List<String>,
@@ -42,91 +37,65 @@ fun sync(
   timestampFieldNames: Set<String> = setOf(),
   batchSize: Int = 1_000,
   showSQL: Boolean = false,
-  queryTimeout: Duration = Duration.minutes(30),
+  queryTimeout: Duration = 30.minutes,
 ): SyncResult {
-  if (compareFields != null && compareFields.isEmpty()) {
-    throw KDAError.InvalidArgument(
-      errorMessage = "If a value is provided, then it must contain at least one field name.",
-      argumentName = "compareFields",
-      argumentValue = compareFields,
-    )
-  }
-
-  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL, queryTimeout = queryTimeout)
-
-  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL, queryTimeout = queryTimeout)
-
   val tables: CopyTableResult =
     copyTable(
       cache = cache,
       srcCon = srcCon,
       dstCon = dstCon,
       dstDialect = dstDialect,
+      srcDbName = srcDbName,
       srcSchema = srcSchema,
       srcTable = srcTable,
+      dstDbName = dstDbName,
       dstSchema = dstSchema,
       dstTable = dstTable,
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
     )
 
-  val fieldNames = tables.srcTable.fields.map { it.name }.toSet()
-
-  val compareFieldNamesFinal: Set<String> =
-    if (compareFields == null) {
-      fieldNames.minus(tables.srcTable.primaryKeyFieldNames.toSet())
-    } else {
-      fieldNames.filter { fldName -> fldName in compareFields }.toSet()
-    }
-
-  val pkFields = tables.srcTable.primaryKeyFieldNames.toSet()
-
-  val lkpTableFieldNames = pkFields.union(compareFieldNamesFinal)
-
-  val lkpTableFields =
-    tables.srcTable.fields.filter { fld -> fld.name in lkpTableFieldNames }.toSet()
-
-  val fullCriteria = getFullCriteria(
-    dstAdapter = dstAdapter,
+  val rowDiff: RowDiff = compareRows(
+    srcCon = srcCon,
+    dstCon = dstCon,
+    srcDialect = srcDialect,
     dstDialect = dstDialect,
+    srcDbName = srcDbName,
+    srcSchema = srcSchema,
+    srcTable = srcTable,
+    dstDbName = dstDbName,
     dstSchema = dstSchema,
-    dstTable = tables.dstTable,
-    tsFieldNames = timestampFieldNames,
+    dstTable = dstTable,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    cache = cache,
     criteria = criteria,
+    compareFields = compareFields ?: emptySet(),
+    includeFields = includeFields,
+    timestampFieldNames = timestampFieldNames,
+    batchSize = batchSize,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
   )
-
-  val srcLkpRows: Set<Row> = srcAdapter.select(
-    fields = lkpTableFields,
-    schema = srcSchema,
-    table = srcTable,
-    batchSize = batchSize,
-    criteria = fullCriteria,
-    limit = null,
-    orderBy = listOf(),
-  ).toSet()
-
-  val dstLkpRows: Set<Row> = dstAdapter.select(
-    fields = lkpTableFields,
-    schema = dstSchema,
-    table = dstTable,
-    batchSize = batchSize,
-    criteria = fullCriteria,
-    limit = null,
-    orderBy = listOf(),
-  ).toSet()
-
-  val rowDiff: RowDiff =
-    compareRows(
-      dstRows = dstLkpRows,
-      srcRows = srcLkpRows,
-      primaryKeyFieldNames = pkFields,
-    )
 
   val deleteKeys: Set<Row> =
     rowDiff
       .deleted
       .map { it.subset(tables.dstTable.primaryKeyFieldNames.toSet()) }
       .toSet()
+
+  val srcAdapter = selectAdapter(
+    dialect = srcDialect,
+    con = srcCon,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
+  )
+
+  val dstAdapter = selectAdapter(
+    dialect = dstDialect,
+    con = dstCon,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
+  )
 
   val rowsDeleted: Int = deleteRows(
     dstAdapter = dstAdapter,
@@ -218,55 +187,4 @@ private fun upsertRows(
         valueFields = valueFields,
       )
     }.sum()
-  }
-
-@ExperimentalStdlibApi
-private fun getFullCriteria(
-  dstAdapter: Adapter,
-  dstDialect: DbDialect,
-  dstSchema: String?,
-  dstTable: Table,
-  tsFieldNames: Set<String>,
-  criteria: Criteria?,
-): Criteria? =
-  if (tsFieldNames.isEmpty()) {
-    criteria
-  } else {
-    val tsFields: Set<Field<*>> =
-      tsFieldNames
-        .map { fieldName ->
-          dstTable.field(fieldName)
-        }
-        .toSet()
-
-    val latestTimestamp: LocalDateTime? = (
-      dstAdapter.selectGreatest(
-        schema = dstSchema,
-        table = dstTable.name,
-        fields = tsFields,
-      ) as Timestamp?
-      )?.toLocalDateTime()
-
-    val tsCriteria: Criteria? = if (latestTimestamp == null) {
-      null
-    } else {
-      var c = where(dstDialect)
-      tsFields.forEach { field ->
-        c = c.or(
-          BinaryPredicate(
-            parameterName = field.name,
-            dataType = DataType.localDateTime,
-            operator = Operator.GreaterThan,
-            value = latestTimestamp,
-          )
-        )
-      }
-      c
-    }
-
-    if (tsCriteria == null) {
-      criteria
-    } else {
-      criteria?.and(tsCriteria) ?: tsCriteria
-    }
   }

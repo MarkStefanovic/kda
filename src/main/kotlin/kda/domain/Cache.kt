@@ -1,7 +1,11 @@
 package kda.domain
 
-interface Cache {
-  fun addTable(schema: String?, table: Table)
+import java.sql.Connection
 
-  fun getTable(schema: String?, table: String): Table?
+interface Cache {
+  fun addTable(dbName: String, schema: String?, table: Table)
+
+  fun getTable(dbName: String, schema: String?, table: String): Table?
+
+  fun tableExists(con: Connection, dbName: String, schema: String?, table: String): Boolean
 }

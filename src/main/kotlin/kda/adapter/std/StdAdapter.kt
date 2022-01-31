@@ -4,7 +4,6 @@ package kda.adapter.std
 
 import kda.adapter.applyBoundParameters
 import kda.adapter.applyRow
-import kda.adapter.getValue
 import kda.adapter.toMap
 import kda.adapter.toRows
 import kda.adapter.toSQL
@@ -34,6 +33,50 @@ class StdAdapter(
   private val details: DbAdapterDetails,
   private val queryTimeout: Duration,
 ) : Adapter {
+  override fun addRows(
+    schema: String?,
+    table: String,
+    rows: Iterable<Row>,
+    fields: Set<Field<*>>,
+  ): Int {
+    val newRows = rows.toList()
+
+    return if (newRows.isEmpty()) {
+      0
+    } else {
+      val fieldNameCSV = newRows.first().fieldsSorted.joinToString(", ") { details.wrapName(it) }
+      val placeholderCSV = newRows.first().fields.joinToString(", ") { "?" }
+      val fullTableName = details.fullTableName(schema = schema, table = table)
+
+      val sql = """
+        |INSERT INTO $fullTableName ($fieldNameCSV)
+        |VALUES ($placeholderCSV)
+      """.trimMargin()
+
+      if (showSQL) {
+        println(
+          """
+          |StdAdapter.upsertRows - insert rows:
+          |  SQL:
+          |    ${sql.split("\n").joinToString("\n    ")}
+        """.trimMargin()
+        )
+      }
+
+      val parameters = fields.sortedBy { it.name }.map { it.toValuesParameter() }
+
+      con.prepareStatement(sql).use { statement ->
+        statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
+        newRows.forEach { row ->
+          statement.applyRow(parameters = parameters, row = row)
+
+          statement.addBatch()
+        }
+        statement.executeBatch().asList().sum()
+      }
+    }
+  }
 
   override fun createTable(schema: String?, table: Table) {
     val fieldDefCSV: String =
@@ -507,9 +550,9 @@ class StdAdapter(
       }
 
       con.prepareStatement(sql).use { statement ->
-        rows.forEach { row ->
-          statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+        statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
 
+        rows.forEach { row ->
           statement.applyRow(parameters = parameters, row = row)
 
           statement.addBatch()

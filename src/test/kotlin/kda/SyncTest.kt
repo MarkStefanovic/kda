@@ -5,150 +5,13 @@ package kda
 import kda.domain.DbDialect
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import testutil.pgTableExists
+import testutil.Customer
+import testutil.PgCustomerRepo
 import testutil.testPgConnection
 import testutil.testSQLiteConnection
-import java.sql.Connection
-import java.sql.Timestamp
-import java.sql.Types
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.time.ExperimentalTime
-
-data class Customer(
-  val customerId: Int,
-  val firstName: String,
-  val lastName: String,
-  val middleInitial: String?,
-  val dateAdded: LocalDateTime,
-  val dateUpdated: LocalDateTime?,
-)
-
-fun fetchCustomers(con: Connection, tableName: String): Set<Customer> {
-  // language=PostgreSQL
-  val sql = """
-    |  SELECT customer_id, first_name, last_name, middle_initial, date_added, date_updated
-    |  FROM sales.$tableName 
-    |  ORDER BY customer_id
-  """.trimMargin()
-  println(
-    """
-    |SyncTest.fetchCustomers SQL:
-    |$sql
-  """.trimMargin()
-  )
-
-  val customers = mutableListOf<Customer>()
-  con.createStatement().use { stmt ->
-    stmt.executeQuery(sql).use { rs ->
-      while (rs.next()) {
-        val dateUpdatedObj = rs.getObject("date_updated")
-        val dateUpdated = if (dateUpdatedObj == null) {
-          null
-        } else {
-          (dateUpdatedObj as Timestamp).toLocalDateTime()
-        }
-        val customer =
-          Customer(
-            customerId = rs.getInt("customer_id"),
-            firstName = rs.getString("first_name"),
-            lastName = rs.getString("last_name"),
-            middleInitial = rs.getObject("middle_initial") as String?,
-            dateAdded = rs.getTimestamp("date_added").toLocalDateTime(),
-            dateUpdated = dateUpdated,
-          )
-        customers.add(customer)
-      }
-    }
-  }
-  return customers.toSet()
-}
-
-fun addCustomers(con: Connection, tableName: String, vararg customers: Customer) {
-  for (customer in customers) {
-    // language=PostgreSQL
-    val sql = """
-      |    INSERT INTO sales.$tableName (customer_id, first_name, last_name, middle_initial, date_added, date_updated)
-      |    VALUES (?, ?, ?, ?, ?, ?)
-    """.trimMargin()
-    println(
-      """
-      |SyncTest.addCustomers:
-      |  SQL:
-      |$sql
-      |  Parameters:
-      |    ${customers.joinToString("\n    ")}
-    """.trimMargin()
-    )
-
-    con.prepareStatement(sql).use { stmt ->
-      stmt.setInt(1, customer.customerId)
-      stmt.setString(2, customer.firstName)
-      stmt.setString(3, customer.lastName)
-      if (customer.middleInitial == null) {
-        stmt.setNull(4, Types.VARCHAR)
-      } else {
-        stmt.setString(4, customer.middleInitial)
-      }
-      stmt.setTimestamp(5, Timestamp.valueOf(customer.dateAdded))
-      if (customer.dateUpdated == null) {
-        stmt.setNull(6, Types.TIMESTAMP)
-      } else {
-        stmt.setTimestamp(6, Timestamp.valueOf(customer.dateUpdated))
-      }
-      stmt.execute()
-    }
-  }
-}
-
-fun deleteCustomer(con: Connection, tableName: String, customerId: Int) {
-  // language=PostgreSQL
-  val sql = """
-    DELETE FROM sales.$tableName 
-    WHERE customer_id = ?
-  """
-  con.prepareStatement(sql).use { stmt ->
-    stmt.setInt(1, customerId)
-    stmt.execute()
-  }
-}
-
-fun updateCustomer(
-  con: Connection,
-  tableName: String,
-  customer: Customer,
-) {
-  // language=PostgreSQL
-  val sql = """
-    UPDATE sales.$tableName 
-    SET
-      first_name = ?
-    , last_name = ?
-    , middle_initial = ?
-    , date_added = ?
-    , date_updated = ?
-    WHERE 
-      customer_id = ?
-  """
-  con.prepareStatement(sql).use { stmt ->
-    stmt.setString(1, customer.firstName)
-    stmt.setString(2, customer.lastName)
-    if (customer.middleInitial == null) {
-      stmt.setNull(3, Types.VARCHAR)
-    } else {
-      stmt.setString(3, customer.middleInitial)
-    }
-    stmt.setTimestamp(4, Timestamp.valueOf(customer.dateAdded))
-    if (customer.dateUpdated == null) {
-      stmt.setNull(5, Types.TIMESTAMP)
-    } else {
-      stmt.setTimestamp(5, Timestamp.valueOf(customer.dateUpdated))
-    }
-    stmt.setInt(6, customer.customerId)
-    stmt.execute()
-  }
-}
 
 @ExperimentalTime
 @ExperimentalStdlibApi
@@ -156,32 +19,19 @@ class SyncTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      con.createStatement().use { stmt ->
-        // language=PostgreSQL
-        stmt.execute("DROP TABLE IF EXISTS sales.customer")
-        // language=PostgreSQL
-        stmt.execute("DROP TABLE IF EXISTS sales.customer2")
-        stmt.execute(
-          // language=PostgreSQL
-          """
-          CREATE TABLE sales.customer (
-              customer_id INT NOT NULL
-          ,   first_name TEXT NOT NULL
-          ,   last_name TEXT NOT NULL
-          ,   middle_initial TEXT NULL
-          ,   date_added TIMESTAMP NOT NULL DEFAULT now()
-          ,   date_updated TIMESTAMP NULL
-          )
-          """
-        )
-      }
-      assertFalse(pgTableExists(con, schema = "sales", table = "customer2"))
+      PgCustomerRepo(con = con, tableName = "customer").recreateTable()
+      PgCustomerRepo(con = con, tableName = "customer2").recreateTable()
     }
   }
 
   @Test
   fun given_no_timestamps_used() {
     testPgConnection().use { con ->
+      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+
+      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      dstRepo.addUniqueConstraint()
+
       testSQLiteConnection().use { cacheCon ->
 
         // TEST ADD
@@ -211,7 +61,7 @@ class SyncTest {
         )
         val customers = setOf(customer1, customer2, customer3)
 
-        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
+        srcRepo.addCustomers(customer1, customer2, customer3)
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
@@ -225,8 +75,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -237,7 +89,7 @@ class SyncTest {
           criteria = null,
         )
 
-        val actual = fetchCustomers(con = con, tableName = "customer2")
+        val actual = dstRepo.fetchCustomers()
 
         assertEquals(expected = customers, actual = actual)
 
@@ -247,7 +99,7 @@ class SyncTest {
         val updatedCustomer2 = customer2.copy(dateUpdated = LocalDateTime.of(2020, 1, 2, 3, 4, 5), middleInitial = "Z")
 
         // TEST UPDATE
-        updateCustomer(con = con, tableName = "customer", customer = updatedCustomer2)
+        srcRepo.updateCustomer(customer = updatedCustomer2)
 
         val resultAfterUpdate = sync(
           srcCon = con,
@@ -255,8 +107,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -266,7 +120,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val updatedCustomers = fetchCustomers(con = con, tableName = "customer2")
+        val updatedCustomers = dstRepo.fetchCustomers()
 
         assertEquals(expected = setOf(customer1, updatedCustomer2, customer3), actual = updatedCustomers)
 
@@ -274,7 +128,7 @@ class SyncTest {
         assertEquals(expected = 1, actual = resultAfterUpdate.upserted)
 
         // TEST DELETE
-        deleteCustomer(con = con, tableName = "customer", customerId = 3)
+        srcRepo.deleteCustomer(customerId = 3)
 
         val resultAfterDelete = sync(
           srcCon = con,
@@ -282,8 +136,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -293,7 +149,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val customersAfterDelete = fetchCustomers(con = con, tableName = "customer2")
+        val customersAfterDelete = dstRepo.fetchCustomers()
 
         assertEquals(expected = setOf(customer1, updatedCustomer2), actual = customersAfterDelete)
 
@@ -306,6 +162,11 @@ class SyncTest {
   @Test
   fun given_timestamps_used_and_empty_inital_cache() {
     testPgConnection().use { con ->
+      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+
+      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      dstRepo.addUniqueConstraint()
+
       testSQLiteConnection().use { cacheCon ->
         // TEST ADD
         val customer1 = Customer(
@@ -334,7 +195,7 @@ class SyncTest {
         )
         val customers = setOf(customer1, customer2, customer3)
 
-        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3)
+        srcRepo.addCustomers(customer1, customer2, customer3)
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
@@ -348,8 +209,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -360,7 +223,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val actual = fetchCustomers(con = con, tableName = "customer2")
+        val actual = dstRepo.fetchCustomers()
 
         assertEquals(expected = customers, actual = actual)
 
@@ -372,7 +235,7 @@ class SyncTest {
           dateUpdated = LocalDateTime.of(2020, 1, 2, 3, 4, 5),
           middleInitial = "Z"
         )
-        updateCustomer(con = con, tableName = "customer", customer = updatedCustomer2)
+        srcRepo.updateCustomer(customer = updatedCustomer2)
 
         val resultAfterUpdate = sync(
           srcCon = con,
@@ -380,8 +243,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -392,7 +257,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val updatedCustomers = fetchCustomers(con = con, tableName = "customer2")
+        val updatedCustomers = dstRepo.fetchCustomers()
 
         assertEquals(expected = 3, actual = updatedCustomers.count())
 
@@ -402,9 +267,9 @@ class SyncTest {
         assertEquals(expected = 1, actual = resultAfterUpdate.upserted)
 
         // TEST DELETE
-        deleteCustomer(con = con, tableName = "customer", customerId = 3)
+        srcRepo.deleteCustomer(customerId = 3)
 
-        assertEquals(expected = 2, fetchCustomers(con = con, tableName = "customer").count())
+        assertEquals(expected = 2, srcRepo.fetchCustomers().count())
 
         val resultAfterDelete = sync(
           srcCon = con,
@@ -412,8 +277,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -424,7 +291,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val customersAfterDelete = fetchCustomers(con = con, tableName = "customer2")
+        val customersAfterDelete = dstRepo.fetchCustomers()
 
         assertEquals(expected = 2, actual = customersAfterDelete.count())
 
@@ -440,6 +307,11 @@ class SyncTest {
   @Test
   fun given_duplicate_source_keys_sync_just_first_one_of_them() {
     testPgConnection().use { con ->
+      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+
+      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      dstRepo.addUniqueConstraint()
+
       testSQLiteConnection().use { cacheCon ->
         // TEST ADD
         val customer1 = Customer(
@@ -475,7 +347,7 @@ class SyncTest {
           dateUpdated = null,
         )
 
-        addCustomers(con = con, tableName = "customer", customer1, customer2, customer3, customer2dupe)
+        srcRepo.addCustomers(customer1, customer2, customer3, customer2dupe)
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
@@ -489,8 +361,10 @@ class SyncTest {
           cache = cache,
           srcDialect = DbDialect.PostgreSQL,
           dstDialect = DbDialect.PostgreSQL,
+          srcDbName = "src",
           srcSchema = "sales",
           srcTable = "customer",
+          dstDbName = "dst",
           dstSchema = "sales",
           dstTable = "customer2",
           compareFields = setOf("first_name", "last_name", "middle_initial"),
@@ -501,7 +375,7 @@ class SyncTest {
           showSQL = true,
         )
 
-        val actual = fetchCustomers(con = con, tableName = "customer2")
+        val actual = dstRepo.fetchCustomers()
 
         assertEquals(expected = setOf(customer1, customer2dupe, customer3), actual = actual)
       }

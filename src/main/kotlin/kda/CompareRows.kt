@@ -1,15 +1,25 @@
 package kda
 
 import kda.adapter.selectAdapter
+import kda.adapter.where
 import kda.domain.Adapter
+import kda.domain.BinaryPredicate
 import kda.domain.Cache
+import kda.domain.CopyTableResult
 import kda.domain.Criteria
+import kda.domain.DataType
 import kda.domain.DbDialect
+import kda.domain.Field
+import kda.domain.KDAError
+import kda.domain.Operator
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
+import java.sql.Timestamp
+import java.time.LocalDateTime
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -19,8 +29,10 @@ fun compareRows(
   dstCon: Connection,
   srcDialect: DbDialect,
   dstDialect: DbDialect,
+  srcDbName: String,
   srcSchema: String?,
   srcTable: String,
+  dstDbName: String,
   dstSchema: String?,
   dstTable: String,
   compareFields: Set<String>,
@@ -28,26 +40,59 @@ fun compareRows(
   cache: Cache,
   criteria: Criteria? = null,
   includeFields: Set<String>? = null,
+  timestampFieldNames: Set<String> = setOf(),
   showSQL: Boolean = false,
   batchSize: Int = 1_000,
-  queryTimeout: Duration = Duration.minutes(30),
+  queryTimeout: Duration = 30.minutes,
 ): RowDiff {
-  val srcAdapter = selectAdapter(dialect = srcDialect, con = srcCon, showSQL = showSQL, queryTimeout = queryTimeout)
+  if (compareFields.isEmpty()) {
+    throw KDAError.InvalidArgument(
+      errorMessage = "If a value is provided, then it must contain at least one field name.",
+      argumentName = "compareFields",
+      argumentValue = compareFields,
+    )
+  }
 
-  val dstAdapter = selectAdapter(dialect = dstDialect, con = dstCon, showSQL = showSQL, queryTimeout = queryTimeout)
+  val srcAdapter: Adapter =
+    selectAdapter(
+      dialect = srcDialect,
+      con = srcCon,
+      showSQL = showSQL,
+      queryTimeout = queryTimeout,
+    )
 
-  val tables =
+  val dstAdapter: Adapter =
+    selectAdapter(
+      dialect = dstDialect,
+      con = dstCon,
+      showSQL = showSQL,
+      queryTimeout = queryTimeout,
+    )
+
+  val tables: CopyTableResult =
     copyTable(
       srcCon = srcCon,
       dstCon = dstCon,
       cache = cache,
       dstDialect = dstDialect,
+      srcDbName = srcDbName,
       srcSchema = srcSchema,
       srcTable = srcTable,
+      dstDbName = dstDbName,
       dstSchema = dstSchema,
       dstTable = dstTable,
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
+    )
+
+  val fullCriteria: Criteria? =
+    getFullCriteria(
+      dstAdapter = dstAdapter,
+      dstDialect = dstDialect,
+      dstSchema = dstSchema,
+      dstTable = tables.dstTable,
+      tsFieldNames = timestampFieldNames,
+      criteria = criteria,
     )
 
   val srcRows: Set<Row> =
@@ -55,7 +100,7 @@ fun compareRows(
       adapter = srcAdapter,
       primaryKeyFieldNames = primaryKeyFieldNames,
       compareFields = compareFields,
-      criteria = criteria,
+      criteria = fullCriteria,
       schema = srcSchema,
       table = tables.srcTable,
       batchSize = batchSize,
@@ -66,7 +111,7 @@ fun compareRows(
       adapter = dstAdapter,
       primaryKeyFieldNames = primaryKeyFieldNames,
       compareFields = compareFields,
-      criteria = criteria,
+      criteria = fullCriteria,
       schema = dstSchema,
       table = tables.dstTable,
       batchSize = batchSize,
@@ -105,3 +150,54 @@ private fun fetchLookupTable(
     )
     .toSet()
 }
+
+@ExperimentalStdlibApi
+private fun getFullCriteria(
+  dstAdapter: Adapter,
+  dstDialect: DbDialect,
+  dstSchema: String?,
+  dstTable: Table,
+  tsFieldNames: Set<String>,
+  criteria: Criteria?,
+): Criteria? =
+  if (tsFieldNames.isEmpty()) {
+    criteria
+  } else {
+    val tsFields: Set<Field<*>> =
+      tsFieldNames
+        .map { fieldName ->
+          dstTable.field(fieldName)
+        }
+        .toSet()
+
+    val latestTimestamp: LocalDateTime? = (
+      dstAdapter.selectGreatest(
+        schema = dstSchema,
+        table = dstTable.name,
+        fields = tsFields,
+      ) as Timestamp?
+      )?.toLocalDateTime()
+
+    val tsCriteria: Criteria? = if (latestTimestamp == null) {
+      null
+    } else {
+      var c = where(dstDialect)
+      tsFields.forEach { field ->
+        c = c.or(
+          BinaryPredicate(
+            parameterName = field.name,
+            dataType = DataType.localDateTime,
+            operator = Operator.GreaterThan,
+            value = latestTimestamp,
+          )
+        )
+      }
+      c
+    }
+
+    if (tsCriteria == null) {
+      criteria
+    } else {
+      criteria?.and(tsCriteria) ?: tsCriteria
+    }
+  }

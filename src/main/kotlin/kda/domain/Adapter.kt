@@ -2,6 +2,12 @@ package kda.domain
 
 @ExperimentalStdlibApi
 interface Adapter {
+  fun addRows(
+    schema: String?,
+    table: String,
+    rows: Iterable<Row>,
+    fields: Set<Field<*>>,
+  ): Int
 
   fun createTable(
     schema: String?,

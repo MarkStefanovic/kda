@@ -123,5 +123,5 @@ object StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun wrapName(name: String) = "\"${name.lowercase()}\""
+  override fun wrapName(name: String) = "\"$name\""
 }

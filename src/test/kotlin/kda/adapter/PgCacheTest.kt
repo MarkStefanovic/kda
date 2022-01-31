@@ -34,9 +34,9 @@ class PgCacheTest {
         primaryKeyFieldNames = listOf("customer_id"),
       )
 
-      cache.addTable(schema = null, table = expected)
+      cache.addTable(dbName = "db", schema = null, table = expected)
 
-      val actual = cache.getTable(schema = null, table = "customer")
+      val actual = cache.getTable(dbName = "db", schema = null, table = "customer")
 
       assertNotNull(actual)
 

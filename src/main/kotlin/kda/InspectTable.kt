@@ -8,6 +8,7 @@ import java.sql.Connection
 fun inspectTable(
   con: Connection,
   cache: Cache,
+  dbName: String,
   schema: String?,
   table: String,
   primaryKeyFieldNames: List<String>,
@@ -26,7 +27,7 @@ fun inspectTable(
       argumentValue = primaryKeyFieldNames,
     )
   } else {
-    val cachedTable = cache.getTable(schema = schema, table = table)
+    val cachedTable = cache.getTable(dbName = dbName, schema = schema, table = table)
 
     val tableDef =
       if (cachedTable == null) {
@@ -36,7 +37,7 @@ fun inspectTable(
           table = table,
           hardCodedPrimaryKeyFieldNames = primaryKeyFieldNames,
         )
-        cache.addTable(schema = schema, table = def)
+        cache.addTable(dbName = dbName, schema = schema, table = def)
         def
       } else {
         cachedTable

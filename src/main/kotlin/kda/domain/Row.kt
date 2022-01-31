@@ -8,6 +8,9 @@ value class Row(val value: Map<String, Any?>) {
   val fieldsSorted: List<String>
     get() = value.keys.sorted()
 
+  fun add(vararg values: Pair<String, Any?>): Row =
+    Row(value.toMap(mutableMapOf(*values)))
+
   fun split(keyFieldNames: Set<String>): Pair<Row, Row> {
     val valueFieldNames = value.keys.subtract(keyFieldNames)
 
