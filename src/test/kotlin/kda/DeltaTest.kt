@@ -57,7 +57,7 @@ class DeltaTest {
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
-          con = cacheCon,
+          connector = { cacheCon },
           schema = null,
         )
 
@@ -92,7 +92,7 @@ class DeltaTest {
 
         val deltaRows = mutableListOf<Triple<Int, LocalDateTime, String>>()
         con.createStatement().use { statement ->
-          val result = statement.executeQuery(
+          statement.executeQuery(
             // language=PostgreSQL
             "SELECT customer_id, batch_ts, op FROM sales.customer2_delta"
           ).use { resultSet ->

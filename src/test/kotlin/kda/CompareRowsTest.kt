@@ -72,7 +72,7 @@ class CompareRowsTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
         showSQL = true,
       )
@@ -164,7 +164,7 @@ class CompareRowsTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 
@@ -255,7 +255,7 @@ class CompareRowsTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 
@@ -342,7 +342,7 @@ class CompareRowsTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 
@@ -430,7 +430,7 @@ class CompareRowsTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 

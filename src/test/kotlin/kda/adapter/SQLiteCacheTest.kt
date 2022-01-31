@@ -13,7 +13,7 @@ class SQLiteCacheTest {
   @Test
   fun addTableDef_happy_path() {
     testSQLiteConnection().use { con ->
-      val cache = SQLiteCache(con = con, showSQL = false)
+      val cache = SQLiteCache(connector = { con }, showSQL = false)
 
       val expected = Table(
         name = "customer",

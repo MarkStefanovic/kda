@@ -23,7 +23,7 @@ class PgCacheTest {
         )
       }
 
-      val cache = PgCache(con = con, cacheSchema = "ketl", showSQL = false)
+      val cache = PgCache(connector = { con }, cacheSchema = "ketl", showSQL = false)
 
       val expected = Table(
         name = "customer",

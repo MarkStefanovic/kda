@@ -34,7 +34,7 @@ class InspectTableTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 
