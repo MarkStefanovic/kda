@@ -1,10 +1,10 @@
 package kda.adapter
 
-import kda.adapter.sqlite.SQLiteCache
 import kda.domain.DataType
 import kda.domain.Field
 import kda.domain.Table
 import org.junit.jupiter.api.Test
+import testutil.sqliteCache
 import testutil.testSQLiteConnection
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -12,8 +12,8 @@ import kotlin.test.assertNotNull
 class SQLiteCacheTest {
   @Test
   fun addTableDef_happy_path() {
-    testSQLiteConnection().use { con ->
-      val cache = SQLiteCache(connector = { con }, showSQL = false)
+    testSQLiteConnection().use {
+      val cache = sqliteCache()
 
       val expected = Table(
         name = "customer",

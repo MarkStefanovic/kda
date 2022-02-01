@@ -3,10 +3,10 @@
 package kda
 
 import kda.domain.DataType
-import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.Table
 import org.junit.jupiter.api.Test
+import testutil.sqliteCache
 import testutil.testSQLiteConnection
 import kotlin.test.assertEquals
 
@@ -32,11 +32,7 @@ class InspectTableTest {
         )
       }
 
-      val cache = createCache(
-        dialect = DbDialect.SQLite,
-        connector = { con },
-        schema = null,
-      )
+      val cache = sqliteCache()
 
       val actual = inspectTable(
         con = con,

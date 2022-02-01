@@ -7,6 +7,7 @@ import kda.domain.DeltaResult
 import org.junit.jupiter.api.BeforeEach
 import testutil.Customer
 import testutil.PgCustomerRepo
+import testutil.sqliteCache
 import testutil.testPgConnection
 import testutil.testSQLiteConnection
 import java.sql.Connection
@@ -77,11 +78,7 @@ class DeltaTest {
       testSQLiteConnection().use { cacheCon ->
         srcRepo.addCustomers(customer1, customer2)
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          con = cacheCon,
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         val result = delta(
           srcCon = con,
@@ -145,7 +142,7 @@ class DeltaTest {
         srcRepo.addCustomers(customer2)
         dstRepo.addCustomers(customer1, customer2)
 
-        val cache = createCache(dialect = DbDialect.SQLite, con = cacheCon, schema = null)
+        val cache = sqliteCache()
 
         val result = delta(
           srcCon = con,
@@ -210,11 +207,7 @@ class DeltaTest {
         dstRepo.addCustomers(customer1, customer2)
         srcRepo.updateCustomer(customer2.copy(middleInitial = "Z"))
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          con = cacheCon,
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         val result = delta(
           srcCon = con,

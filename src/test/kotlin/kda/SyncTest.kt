@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import testutil.Customer
 import testutil.PgCustomerRepo
+import testutil.sqliteCache
 import testutil.testPgConnection
 import testutil.testSQLiteConnection
 import java.time.LocalDateTime
@@ -33,7 +34,6 @@ class SyncTest {
       dstRepo.addUniqueConstraint()
 
       testSQLiteConnection().use { cacheCon ->
-
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -63,11 +63,7 @@ class SyncTest {
 
         srcRepo.addCustomers(customer1, customer2, customer3)
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          connector = { cacheCon },
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         val resultAfterAdd = sync(
           srcCon = con,
@@ -197,11 +193,7 @@ class SyncTest {
 
         srcRepo.addCustomers(customer1, customer2, customer3)
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          connector = { cacheCon },
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         val resultAfterAdd = sync(
           srcCon = con,
@@ -349,11 +341,7 @@ class SyncTest {
 
         srcRepo.addCustomers(customer1, customer2, customer3, customer2dupe)
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          connector = { cacheCon },
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         sync(
           srcCon = con,

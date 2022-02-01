@@ -6,6 +6,7 @@ import kda.domain.CopyTableResult
 import kda.domain.DbDialect
 import org.junit.jupiter.api.Test
 import testutil.pgTableExists
+import testutil.sqliteCache
 import testutil.testPgConnection
 import testutil.testSQLiteConnection
 import java.sql.Connection
@@ -42,11 +43,7 @@ class CopyTableTest {
         }
         assert(!pgTableExists(con, "sales", "customer2"))
 
-        val cache = createCache(
-          dialect = DbDialect.SQLite,
-          connector = { cacheCon },
-          schema = null,
-        )
+        val cache = sqliteCache()
 
         val result =
           copyTable(
@@ -99,11 +96,7 @@ class CopyTableTest {
         )
       }
 
-      val cache = createCache(
-        dialect = DbDialect.SQLite,
-        connector = { con },
-        schema = null,
-      )
+      val cache = sqliteCache()
 
       val result =
         copyTable(
