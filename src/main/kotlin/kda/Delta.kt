@@ -84,6 +84,8 @@ fun delta(
     queryTimeout = queryTimeout,
   )
 
+  println("$rowDiff")
+
   val deltaTableDef = Table(
     name = deltaTable,
     fields =
@@ -110,7 +112,10 @@ fun delta(
       table = deltaTable,
     )
   ) {
-    deltaAdapter.createTable(schema = dstSchema, table = deltaTableDef)
+    deltaAdapter.createTable(
+      schema = dstSchema,
+      table = deltaTableDef,
+    )
   }
 
   val batchTs = LocalDateTime.now()
@@ -122,7 +127,7 @@ fun delta(
     queryTimeout = queryTimeout,
   )
 
-  val rowsAdded: Int = appendRowsForOp(
+  val rowsAdded: Int = addRowsFromSource(
     deltaAdapter = deltaAdapter,
     srcAdapter = srcAdapter,
     deltaSchema = deltaSchema,
@@ -135,20 +140,7 @@ fun delta(
     batchTimestamp = batchTs
   )
 
-  val rowsDeleted: Int = appendRowsForOp(
-    deltaAdapter = deltaAdapter,
-    srcAdapter = srcAdapter,
-    deltaSchema = deltaSchema,
-    srcSchema = srcSchema,
-    deltaTable = deltaTableDef,
-    srcTable = tables.srcTable,
-    keys = rowDiff.deleted,
-    op = "D",
-    chunkSize = batchSize,
-    batchTimestamp = batchTs
-  )
-
-  val rowsUpdated: Int = appendRowsForOp(
+  val rowsUpdated: Int = addRowsFromSource(
     deltaAdapter = deltaAdapter,
     srcAdapter = srcAdapter,
     deltaSchema = deltaSchema,
@@ -161,6 +153,25 @@ fun delta(
     batchTimestamp = batchTs
   )
 
+  val dstAdapter = selectAdapter(
+    dialect = dstDialect,
+    con = dstCon,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
+  )
+
+  val rowsDeleted: Int = addDeletedRows(
+    deltaAdapter = deltaAdapter,
+    dstAdapter = dstAdapter,
+    deltaSchema = deltaSchema,
+    dstSchema = dstSchema,
+    deltaTable = deltaTableDef,
+    dstTable = tables.dstTable,
+    keys = rowDiff.deleted,
+    chunkSize = batchSize,
+    batchTimestamp = batchTs
+  )
+
   return DeltaResult(
     added = rowsAdded,
     deleted = rowsDeleted,
@@ -169,7 +180,7 @@ fun delta(
 }
 
 @ExperimentalStdlibApi
-private fun appendRowsForOp(
+private fun addRowsFromSource(
   deltaAdapter: Adapter,
   srcAdapter: Adapter,
   deltaSchema: String?,
@@ -194,10 +205,44 @@ private fun appendRowsForOp(
     ).toSet()
 
     val extendedRows = fullRows.map {
-      it.add(
-        "batch_ts" to batchTimestamp,
-        "op" to op,
+      it.add("batch_ts" to batchTimestamp, "op" to op)
+    }
+    extendedRows.chunked(chunkSize) { batch ->
+      deltaAdapter.addRows(
+        schema = deltaSchema,
+        table = deltaTable.name,
+        rows = batch,
+        fields = deltaTable.fields,
       )
+    }.sum()
+  }
+
+@ExperimentalStdlibApi
+private fun addDeletedRows(
+  deltaAdapter: Adapter,
+  dstAdapter: Adapter,
+  deltaSchema: String?,
+  dstSchema: String?,
+  deltaTable: Table,
+  dstTable: Table,
+  keys: Set<Row>,
+  chunkSize: Int,
+  batchTimestamp: LocalDateTime,
+): Int =
+  if (keys.isEmpty()) {
+    0
+  } else {
+    val fullRows = dstAdapter.selectRows(
+      schema = dstSchema,
+      table = dstTable.name,
+      keys = keys.toSet(),
+      fields = dstTable.fields,
+      batchSize = chunkSize,
+      orderBy = emptyList(),
+    ).toSet()
+
+    val extendedRows = fullRows.map {
+      it.add("batch_ts" to batchTimestamp, "op" to "D")
     }
     extendedRows.chunked(chunkSize) { batch ->
       deltaAdapter.addRows(
