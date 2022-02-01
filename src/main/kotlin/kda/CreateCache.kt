@@ -8,7 +8,7 @@ import java.sql.Connection
 
 fun createCache(
   dialect: DbDialect,
-  con: Connection,
+  connector: () -> Connection,
   schema: String?,
   showSQL: Boolean = false,
 ): Cache =
@@ -16,12 +16,12 @@ fun createCache(
     DbDialect.HH -> TODO()
     DbDialect.MSSQL -> TODO()
     DbDialect.PostgreSQL -> PgCache(
-      con = con,
+      connector = connector,
       cacheSchema = schema ?: error("cacheSchema is required"),
       showSQL = showSQL,
     )
     DbDialect.SQLite -> SQLiteCache(
-      con = con,
+      connector = connector,
       showSQL = showSQL,
     )
   }

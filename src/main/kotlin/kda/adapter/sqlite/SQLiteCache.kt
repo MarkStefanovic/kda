@@ -1,4 +1,4 @@
-@file:Suppress("SqlResolve")
+@file:Suppress("SqlResolve", "SqlNoDataSourceInspection")
 
 package kda.adapter.sqlite
 
@@ -11,7 +11,7 @@ import java.sql.Connection
 import java.sql.Types
 
 class SQLiteCache(
-  val con: Connection,
+  private val connector: () -> Connection,
   val showSQL: Boolean,
 ) : Cache {
   private val cache = mutableMapOf<Triple<String, String?, String>, Table>()
@@ -19,8 +19,16 @@ class SQLiteCache(
   private val existingTables = mutableMapOf<String, MutableSet<Pair<String?, String>>>()
 
   init {
-    if (!kda.adapter.tableExists(con = con, schema = null, table = "table_def")) {
-      val tableDefSQL = """
+    connector().use { con ->
+      if (
+        !kda.adapter.tableExists(
+          con = con,
+          schema = null,
+          table = "table_def",
+        )
+      ) {
+        // language=SQLite
+        val tableDefSQL = """
         |CREATE TABLE table_def (
         |   schema_name TEXT NOT NULL
         |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
@@ -35,22 +43,23 @@ class SQLiteCache(
         |)
       """.trimMargin()
 
-      if (showSQL) {
-        println(
-          """
+        if (showSQL) {
+          println(
+            """
           |SQLiteCache.init - create table_def table:
           |  ${tableDefSQL.split("\n").joinToString("\n  ")}
         """.trimMargin()
-        )
+          )
+        }
+
+        con.createStatement().use { statement ->
+          statement.execute(tableDefSQL)
+        }
       }
 
-      con.createStatement().use { statement ->
-        statement.execute(tableDefSQL)
-      }
-    }
-
-    if (!kda.adapter.tableExists(con = con, schema = null, table = "pk")) {
-      val pkSQL = """
+      if (!kda.adapter.tableExists(con = con, schema = null, table = "pk")) {
+        // language=SQLite
+        val pkSQL = """
         |CREATE TABLE pk (
         |   schema_name TEXT NOT NULL
         |,  table_name TEXT NOT NULL CHECK (LENGTH(table_name) > 0)
@@ -61,17 +70,18 @@ class SQLiteCache(
         |)
       """.trimMargin()
 
-      if (showSQL) {
-        println(
-          """
+        if (showSQL) {
+          println(
+            """
           |SQLiteCache.init - create pk table:
           |  ${pkSQL.split("\n").joinToString("\n  ")}
         """.trimMargin()
-        )
-      }
+          )
+        }
 
-      con.createStatement().use { statement ->
-        statement.execute(pkSQL)
+        con.createStatement().use { statement ->
+          statement.execute(pkSQL)
+        }
       }
     }
   }
@@ -80,6 +90,7 @@ class SQLiteCache(
   override fun addTable(dbName: String, schema: String?, table: Table) {
     cache[Triple(dbName, schema, table.name)] = table
 
+    // language=SQLite
     val insertFieldSQL = """
       |INSERT OR REPLACE INTO table_def (
       |   schema_name
@@ -117,43 +128,45 @@ class SQLiteCache(
       )
     }
 
-    con.prepareStatement(insertFieldSQL).use { preparedStatement ->
-      table.fields.forEach { field ->
-        preparedStatement.setString(1, schema ?: "")
-        preparedStatement.setString(2, table.name)
-        preparedStatement.setString(3, field.name)
-        preparedStatement.setString(4, field.dataType.name)
-        preparedStatement.setBoolean(5, field.dataType.nullable)
-        val maxLength: Int? = when (field.dataType) {
-          is DataType.text -> field.dataType.maxLength
-          is DataType.nullableText -> field.dataType.maxLength
-          else -> null
-        }
-        if (maxLength == null) {
-          preparedStatement.setNull(6, Types.INTEGER)
-        } else {
-          preparedStatement.setInt(6, maxLength)
-        }
-        when (field.dataType) {
-          is DataType.decimal -> {
-            preparedStatement.setInt(7, field.dataType.precision)
-            preparedStatement.setInt(8, field.dataType.scale)
+    connector().use { con ->
+      con.prepareStatement(insertFieldSQL).use { preparedStatement ->
+        table.fields.forEach { field ->
+          preparedStatement.setString(1, schema ?: "")
+          preparedStatement.setString(2, table.name)
+          preparedStatement.setString(3, field.name)
+          preparedStatement.setString(4, field.dataType.name)
+          preparedStatement.setBoolean(5, field.dataType.nullable)
+          val maxLength: Int? = when (field.dataType) {
+            is DataType.text -> field.dataType.maxLength
+            is DataType.nullableText -> field.dataType.maxLength
+            else -> null
           }
-          is DataType.nullableDecimal -> {
-            preparedStatement.setInt(7, field.dataType.precision)
-            preparedStatement.setInt(8, field.dataType.scale)
+          if (maxLength == null) {
+            preparedStatement.setNull(6, Types.INTEGER)
+          } else {
+            preparedStatement.setInt(6, maxLength)
           }
-          else -> {
-            preparedStatement.setNull(7, Types.INTEGER)
-            preparedStatement.setNull(8, Types.INTEGER)
+          when (field.dataType) {
+            is DataType.decimal -> {
+              preparedStatement.setInt(7, field.dataType.precision)
+              preparedStatement.setInt(8, field.dataType.scale)
+            }
+            is DataType.nullableDecimal -> {
+              preparedStatement.setInt(7, field.dataType.precision)
+              preparedStatement.setInt(8, field.dataType.scale)
+            }
+            else -> {
+              preparedStatement.setNull(7, Types.INTEGER)
+              preparedStatement.setNull(8, Types.INTEGER)
+            }
           }
+          preparedStatement.addBatch()
         }
-        preparedStatement.addBatch()
+        preparedStatement.executeBatch()
       }
-      preparedStatement.executeBatch()
-    }
 
-    val insertPKsql = """
+      // language=SQLite
+      val insertPKsql = """
       |INSERT OR REPLACE INTO pk (
       |   schema_name
       |,  table_name
@@ -167,32 +180,33 @@ class SQLiteCache(
       |)
     """.trimMargin()
 
-    if (showSQL) {
-      val params = table.primaryKeyFieldNames.mapIndexed { ix, fieldName ->
-        "[" + listOf(schema ?: "", table.name, fieldName, ix) + "]"
-      }.joinToString(", ")
+      if (showSQL) {
+        val params = table.primaryKeyFieldNames.mapIndexed { ix, fieldName ->
+          "[" + listOf(schema ?: "", table.name, fieldName, ix) + "]"
+        }.joinToString(", ")
 
-      println(
-        """
+        println(
+          """
         |SQLiteCache.addTable - add primary key field to pk table:
         |  SQL:
         |    ${insertPKsql.split("\n").joinToString("\n    ")}
         |  Parameters:  
         |    $params
       """.trimMargin()
-      )
-    }
-
-    con.prepareStatement(insertPKsql).use { preparedStatement ->
-      table.primaryKeyFieldNames.forEachIndexed { ix, fieldName ->
-        preparedStatement.setString(1, schema ?: "")
-        preparedStatement.setString(2, table.name)
-        preparedStatement.setString(3, fieldName)
-        preparedStatement.setInt(4, ix)
-
-        preparedStatement.addBatch()
+        )
       }
-      preparedStatement.executeBatch()
+
+      con.prepareStatement(insertPKsql).use { preparedStatement ->
+        table.primaryKeyFieldNames.forEachIndexed { ix, fieldName ->
+          preparedStatement.setString(1, schema ?: "")
+          preparedStatement.setString(2, table.name)
+          preparedStatement.setString(3, fieldName)
+          preparedStatement.setInt(4, ix)
+
+          preparedStatement.addBatch()
+        }
+        preparedStatement.executeBatch()
+      }
     }
   }
 
@@ -203,6 +217,7 @@ class SQLiteCache(
       return cache[key]
     }
 
+    // language=SQLite
     val fetchFieldsSQL = """
       |SELECT 
       |   t.field_name
@@ -231,50 +246,52 @@ class SQLiteCache(
       )
     }
 
-    val fields = mutableListOf<Field<*>>()
-    con.prepareStatement(fetchFieldsSQL).use { preparedStatement ->
-      preparedStatement.setString(1, schema ?: "")
-      preparedStatement.setString(2, table)
+    connector().use { con ->
+      val fields = mutableListOf<Field<*>>()
+      con.prepareStatement(fetchFieldsSQL).use { preparedStatement ->
+        preparedStatement.setString(1, schema ?: "")
+        preparedStatement.setString(2, table)
 
-      preparedStatement.executeQuery().use { rs ->
-        while (rs.next()) {
-          val fieldName = rs.getString("field_name")
-          val dataTypeName = rs.getString("data_type")
-          val maxLength = rs.getObject("max_length") as Int?
-          val precision = rs.getObject("precision") as Int? ?: 18
-          val scale = rs.getObject("scale") as Int? ?: 4
+        preparedStatement.executeQuery().use { rs ->
+          while (rs.next()) {
+            val fieldName = rs.getString("field_name")
+            val dataTypeName = rs.getString("data_type")
+            val maxLength = rs.getObject("max_length") as Int?
+            val precision = rs.getObject("precision") as Int? ?: 18
+            val scale = rs.getObject("scale") as Int? ?: 4
 
-          val dataType = when (dataTypeName) {
-            "bool" -> DataType.bool
-            "nullableBool" -> DataType.nullableBool
-            "bigInt" -> DataType.bigInt
-            "nullableBigInt" -> DataType.nullableBigInt
-            "decimal" -> DataType.decimal(precision = precision, scale = scale)
-            "nullableDecimal" -> DataType.nullableDecimal(precision = precision, scale = scale)
-            "float" -> DataType.float
-            "nullableFloat" -> DataType.nullableFloat
-            "int" -> DataType.int
-            "nullableInt" -> DataType.nullableInt
-            "localDate" -> DataType.localDate
-            "nullableLocalDate" -> DataType.nullableLocalDate
-            "localDateTime" -> DataType.localDateTime
-            "nullableLocalDateTime" -> DataType.nullableLocalDateTime
-            "text" -> DataType.text(maxLength = maxLength)
-            "nullableText" -> DataType.nullableText(maxLength = maxLength)
-            else -> throw KDAError.UnrecognizeDataType(dataTypeName)
+            val dataType = when (dataTypeName) {
+              "bool" -> DataType.bool
+              "nullableBool" -> DataType.nullableBool
+              "bigInt" -> DataType.bigInt
+              "nullableBigInt" -> DataType.nullableBigInt
+              "decimal" -> DataType.decimal(precision = precision, scale = scale)
+              "nullableDecimal" -> DataType.nullableDecimal(precision = precision, scale = scale)
+              "float" -> DataType.float
+              "nullableFloat" -> DataType.nullableFloat
+              "int" -> DataType.int
+              "nullableInt" -> DataType.nullableInt
+              "localDate" -> DataType.localDate
+              "nullableLocalDate" -> DataType.nullableLocalDate
+              "localDateTime" -> DataType.localDateTime
+              "nullableLocalDateTime" -> DataType.nullableLocalDateTime
+              "text" -> DataType.text(maxLength = maxLength)
+              "nullableText" -> DataType.nullableText(maxLength = maxLength)
+              else -> throw KDAError.UnrecognizeDataType(dataTypeName)
+            }
+
+            val field = Field(name = fieldName, dataType = dataType)
+
+            fields.add(field)
           }
-
-          val field = Field(name = fieldName, dataType = dataType)
-
-          fields.add(field)
         }
       }
-    }
 
-    return if (fields.isEmpty()) {
-      null
-    } else {
-      val fetchPKsql = """
+      return if (fields.isEmpty()) {
+        null
+      } else {
+        // language=SQLite
+        val fetchPKsql = """
         |SELECT 
         |   pk.field_name
         |FROM pk
@@ -285,40 +302,41 @@ class SQLiteCache(
         |   pk.ix
       """.trimMargin()
 
-      if (showSQL) {
-        println(
-          """
+        if (showSQL) {
+          println(
+            """
           |SQLiteCache.getTable - get primary key fields:
           |$fetchPKsql
           |PARAMS:
           |  schema_name: $schema
           |  table_name: $table
         """.trimMargin()
-        )
-      }
+          )
+        }
 
-      val primaryKeyFieldNames = mutableListOf<String>()
-      con.prepareStatement(fetchPKsql).use { preparedStatement ->
-        preparedStatement.setString(1, schema ?: "")
-        preparedStatement.setString(2, table)
+        val primaryKeyFieldNames = mutableListOf<String>()
+        con.prepareStatement(fetchPKsql).use { preparedStatement ->
+          preparedStatement.setString(1, schema ?: "")
+          preparedStatement.setString(2, table)
 
-        preparedStatement.executeQuery().use { rs ->
-          while (rs.next()) {
-            val pkFieldName = rs.getString("field_name")
-            primaryKeyFieldNames.add(pkFieldName)
+          preparedStatement.executeQuery().use { rs ->
+            while (rs.next()) {
+              val pkFieldName = rs.getString("field_name")
+              primaryKeyFieldNames.add(pkFieldName)
+            }
           }
         }
+
+        val tableDef = Table(
+          name = table,
+          fields = fields.toSet(),
+          primaryKeyFieldNames = primaryKeyFieldNames,
+        )
+
+        cache[key] = tableDef
+
+        tableDef
       }
-
-      val tableDef = Table(
-        name = table,
-        fields = fields.toSet(),
-        primaryKeyFieldNames = primaryKeyFieldNames,
-      )
-
-      cache[key] = tableDef
-
-      tableDef
     }
   }
 

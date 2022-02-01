@@ -44,7 +44,7 @@ class CopyTableTest {
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
-          con = cacheCon,
+          connector = { cacheCon },
           schema = null,
         )
 
@@ -101,7 +101,7 @@ class CopyTableTest {
 
       val cache = createCache(
         dialect = DbDialect.SQLite,
-        con = con,
+        connector = { con },
         schema = null,
       )
 

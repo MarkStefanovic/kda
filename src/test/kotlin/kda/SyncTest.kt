@@ -65,7 +65,7 @@ class SyncTest {
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
-          con = cacheCon,
+          connector = { cacheCon },
           schema = null,
         )
 
@@ -199,7 +199,7 @@ class SyncTest {
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
-          con = cacheCon,
+          connector = { cacheCon },
           schema = null,
         )
 
@@ -351,7 +351,7 @@ class SyncTest {
 
         val cache = createCache(
           dialect = DbDialect.SQLite,
-          con = cacheCon,
+          connector = { cacheCon },
           schema = null,
         )
 
