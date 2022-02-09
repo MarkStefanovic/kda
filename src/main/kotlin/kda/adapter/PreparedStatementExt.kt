@@ -25,7 +25,7 @@ internal fun PreparedStatement.applyValue(
       DataType.bool, DataType.nullableBool -> setBoolean(index, value as Boolean)
       is DataType.decimal, is DataType.nullableDecimal -> setBigDecimal(index, value as BigDecimal)
       DataType.float, DataType.nullableFloat -> setFloat(index, value as Float)
-      DataType.int, DataType.nullableInt -> setInt(index, value as Int)
+      DataType.int, DataType.nullableInt -> setInt(index, (value as Number).toInt())
       DataType.localDate, DataType.nullableLocalDate -> setDate(index, Date.valueOf(value as LocalDate))
       DataType.localDateTime, DataType.nullableLocalDateTime -> setTimestamp(index, Timestamp.valueOf(value as LocalDateTime))
       is DataType.text, is DataType.nullableText -> setString(index, value as String)

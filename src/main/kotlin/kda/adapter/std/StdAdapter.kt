@@ -487,7 +487,7 @@ class StdAdapter(
       val allFieldCSV = allFields.joinToString(", ") { details.wrapName(it.name) }
 
       val keyFieldCSV = sortedKeyFields.joinToString(", ") {
-        it.name
+        details.wrapName(it.name)
       }
 
       val valueClauseParameters: List<Parameter> =
