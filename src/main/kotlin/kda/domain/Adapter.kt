@@ -32,6 +32,11 @@ interface Adapter {
     keys: Set<Row>,
   ): Int
 
+  fun rowCount(
+    schema: String?,
+    table: String,
+  ): Int
+
   fun select(
     schema: String?,
     table: String,

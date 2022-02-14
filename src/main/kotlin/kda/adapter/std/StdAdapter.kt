@@ -56,10 +56,10 @@ class StdAdapter(
       if (showSQL) {
         println(
           """
-          |StdAdapter.upsertRows - insert rows:
+          |StdAdapter.upsertRows(schema = $schema, table = $table, rows = $rows, fields = $fields):
           |  SQL:
           |    ${sql.split("\n").joinToString("\n    ")}
-        """.trimMargin()
+          """.trimMargin()
         )
       }
 
@@ -98,7 +98,12 @@ class StdAdapter(
       """.trimMargin()
 
     if (showSQL) {
-      println(sql)
+      println(
+        """
+          |StdAdapter.createTable(schema = $schema, table = $table):
+          |  ${sql.split("\n").joinToString("\n  ")}
+          """.trimMargin()
+      )
     }
 
     con.createStatement().use { statement ->
@@ -120,7 +125,12 @@ class StdAdapter(
       val sql = "DELETE FROM $fullTableName WHERE ${criteria.sql}"
 
       if (showSQL) {
-        println(sql)
+        println(
+          """
+          |StdAdapter.delete(schema = $schema, table = $table, criteria = $criteria):
+          |  ${sql.split("\n").joinToString("\n  ")}
+          """.trimMargin()
+        )
       }
 
       con.prepareStatement(sql).use { statement ->
@@ -138,7 +148,12 @@ class StdAdapter(
     val sql = "TRUNCATE $fullTableName"
 
     if (showSQL) {
-      println(sql)
+      println(
+        """
+        |StdAdapter.deleteAll(schema = $schema, table = $table):
+        |  ${sql.split("\n").joinToString("\n  ")}
+        """.trimMargin()
+      )
     }
 
     return con.createStatement().use { statement ->
@@ -148,7 +163,12 @@ class StdAdapter(
     }
   }
 
-  override fun deleteRows(schema: String?, table: String, fields: Set<Field<*>>, keys: Set<Row>): Int {
+  override fun deleteRows(
+    schema: String?,
+    table: String,
+    fields: Set<Field<*>>,
+    keys: Set<Row>,
+  ): Int {
     val fullTableName = details.fullTableName(schema = schema, table = table)
 
     val fieldLookup = fields.associateBy { it.name }
@@ -176,7 +196,7 @@ class StdAdapter(
     if (showSQL) {
       println(
         """
-        |StdAdapter.deleteRows:
+        |StdAdapter.deleteRows(schema = $schema, table = $table, fields = $fields, keys = $keys):
         |  SQL: $sql
         |  Parameters: 
         |    $whereClauseParameters
@@ -192,6 +212,33 @@ class StdAdapter(
         preparedStatement.addBatch()
       }
       preparedStatement.executeBatch().toList().sum()
+    }
+  }
+
+  override fun rowCount(schema: String?, table: String): Int {
+    val fullTableName = details.fullTableName(schema = schema, table = table)
+
+    val sql = """
+      |SELECT COUNT(*) AS ct 
+      |FROM $fullTableName
+    """.trimMargin()
+
+    if (showSQL) {
+      println(
+        """
+          |StdAdapter.rowCount(schema = $schema, table = $table):
+          |  ${sql.split("\n").joinToString("\n    ")}
+        """.trimMargin()
+      )
+    }
+
+    con.createStatement().use { statement ->
+      statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
+      statement.executeQuery(sql).use { resultSet ->
+        resultSet.next()
+        return resultSet.getInt(1)
+      }
     }
   }
 
@@ -236,7 +283,7 @@ class StdAdapter(
       if (showSQL) {
         println(
           """
-          |StdAdapter.select - select rows when criteria is not null:
+          |StdAdapter.select(schema = $schema, table = $table, fields = $fields, criteria = $criteria, batchSize = $batchSize, limit = $limit, orderBy = $orderBy):
           |  SQL:
           |    ${sql.split("\n").joinToString("\n    ")}
           |  Parameters: 
@@ -265,7 +312,7 @@ class StdAdapter(
           } catch (e: Throwable) {
             println(
               """
-              |StdAdapter.select:
+              |StdAdapter.select(schema = $schema, table = $table, fields = $fields, criteria = $criteria, batchSize = $batchSize, limit = $limit, orderBy = $orderBy):
               |  preparedStatement:
               |    ${preparedStatement.toString().split("\n").joinToString("\n    ")}
               |  criteria: 
@@ -305,7 +352,12 @@ class StdAdapter(
         statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
 
         if (showSQL) {
-          println(baseSQL)
+          println(
+            """
+              |StdAdapter.selectAll(schema = $schema, table = $table, fields = $fields, batchSize = $batchSize, orderBy = $orderBy):
+              |  ${baseSQL.split("\n").joinToString("\n  ")}
+            """.trimMargin()
+          )
         }
 
         statement.executeQuery(baseSQL).use { rs ->
@@ -337,7 +389,7 @@ class StdAdapter(
     if (showSQL) {
       println(
         """
-        |StdAdapter.selectGreatest:
+        |StdAdapter.selectGreatest(schema = $schema, table = $table, fields = $fields):
         |  ${sql.split("\n").joinToString("\n  ")}
       """.trimMargin()
       )
@@ -445,7 +497,7 @@ class StdAdapter(
                 .joinToString("\n    ")
             println(
               """
-              |StdAdapter.selectRows: select rows from $fullTableName matching row:
+              |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
               |  SQL:
               |    ${sql.split("\n").joinToString("\n    ")}
               |  Parameters:
@@ -540,7 +592,7 @@ class StdAdapter(
       if (showSQL) {
         println(
           """
-          |StdAdapter.upsertRows - insert rows:
+          |StdAdapter.upsertRows(schema = $schema, table = $table, rows = $rows, keyFields = $keyFields, valueFields = $valueFields):
           |  SQL:
           |    ${sql.split("\n").joinToString("\n    ")}
           |  Parameters:
