@@ -39,7 +39,7 @@ object StdAdapterDetails : DbAdapterDetails {
     is DataType.text -> if (dataType.maxLength == null) "CAST(? AS TEXT)" else "CAST(? AS VARCHAR(${dataType.maxLength})"
   }
 
-  override fun <T : Any?> whereFieldIsEqualTo(field: Field<T>): Set<Parameter> {
+  override fun <T> whereFieldIsEqualTo(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {
@@ -54,7 +54,7 @@ object StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun <T : Any?> whereFieldIsGreaterThan(field: Field<T>): Set<Parameter> {
+  override fun <T> whereFieldIsGreaterThan(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {
@@ -73,7 +73,7 @@ object StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun <T : Any?> whereFieldIsGreaterThanOrEqualTo(field: Field<T>): Set<Parameter> {
+  override fun <T> whereFieldIsGreaterThanOrEqualTo(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {
@@ -90,7 +90,7 @@ object StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun <T : Any?> whereFieldIsLessThan(field: Field<T>): Set<Parameter> {
+  override fun <T> whereFieldIsLessThan(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {
@@ -105,7 +105,7 @@ object StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun <T : Any?> whereFieldIsLessThanOrEqualTo(field: Field<T>): Set<Parameter> {
+  override fun <T> whereFieldIsLessThanOrEqualTo(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {

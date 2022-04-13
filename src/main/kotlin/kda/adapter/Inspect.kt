@@ -111,15 +111,15 @@ fun inspectTable(
         Field(
           name = field.name,
           dataType = when (field.dataType) {
-            DataType.nullableBigInt        -> DataType.bigInt
-            DataType.nullableBool          -> DataType.bool
-            is DataType.nullableDecimal    -> DataType.decimal(precision = field.dataType.precision, scale = field.dataType.scale)
-            DataType.nullableFloat         -> DataType.float
-            DataType.nullableInt           -> DataType.int
-            DataType.nullableLocalDate     -> DataType.localDate
+            DataType.nullableBigInt -> DataType.bigInt
+            DataType.nullableBool -> DataType.bool
+            is DataType.nullableDecimal -> DataType.decimal(precision = field.dataType.precision, scale = field.dataType.scale)
+            DataType.nullableFloat -> DataType.float
+            DataType.nullableInt -> DataType.int
+            DataType.nullableLocalDate -> DataType.localDate
             DataType.nullableLocalDateTime -> DataType.localDateTime
-            is DataType.nullableText       -> DataType.text(maxLength = field.dataType.maxLength)
-            else                           -> field.dataType
+            is DataType.nullableText -> DataType.text(maxLength = field.dataType.maxLength)
+            else -> field.dataType
           }
         )
       } else {

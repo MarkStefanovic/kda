@@ -14,6 +14,7 @@ import kda.adapter.toWhereEqualsParameter
 import kda.domain.Adapter
 import kda.domain.BoundParameter
 import kda.domain.Criteria
+import kda.domain.DataType
 import kda.domain.DbAdapterDetails
 import kda.domain.Field
 import kda.domain.KDAError
@@ -21,7 +22,12 @@ import kda.domain.OrderBy
 import kda.domain.Parameter
 import kda.domain.Row
 import kda.domain.Table
+import java.math.BigDecimal
 import java.sql.Connection
+import java.sql.Date
+import java.sql.Timestamp
+import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -459,60 +465,113 @@ class StdAdapter(
         }
       }
     } else {
-      sequence {
-        val fieldLookup = fields.associateBy { it.name }
-        keys.chunked(batchSize).forEach { rows ->
-          val parameters: List<List<BoundParameter>> = rows.map { row ->
-            val sortedFields = row.fieldsSorted.map { fieldName ->
-              fieldLookup[fieldName]
-                ?: throw KDAError.FieldNotFound(
-                  fieldName = fieldName,
-                  availableFieldNames = fields.map { it.name }.toSet(),
-                )
-            }
-            sortedFields.toWhereEqualsBoundParameters(details = details, row = row)
-          }
+      if (keys.first().fields.count() == 1) {
+        val fieldName = keys.first().fields.first()
 
-          val whereClause = parameters.joinToString(" OR ") { orGroup ->
-            val sql = orGroup.joinToString(" OR ") { boundParameter ->
-              "(${boundParameter.parameter.sql})"
-            }
-            "($sql)"
-          }
-          val sql = """
-            |$baseSQL 
-            |WHERE $whereClause
-            |$orderByClause
-          """.trimMargin()
+        val field = fields.first { field -> field.name == fieldName }
 
-          if (showSQL) {
-            val paramsStr =
-              parameters
-                .mapIndexed { ix, params ->
-                  val ps = params.mapIndexed { paramIndex, param ->
-                    "  (${paramIndex + 1})  $param"
-                  }.joinToString("\n    ")
-                  "(${ix + 1})\n    $ps"
+        assert(!fields.first { it.name == fieldName }.dataType.nullable) {
+          "Key fields must not be nullable."
+        }
+
+        sequence {
+          keys.chunked(batchSize).forEach { rows ->
+            val wrappedFieldName = details.wrapName(name = fieldName)
+            val inClause = rows.joinToString(",") { "?" }
+            val whereClause = "WHERE $wrappedFieldName IN ($inClause)"
+            val sql = "$baseSQL $whereClause"
+
+            if (showSQL) {
+              println(
+                """
+                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
+                |  SQL:
+                |    ${sql.split("\n").joinToString("\n    ")}
+                |  Parameters:
+                |    ${rows.take(5)}...
+              """.trimMargin()
+              )
+            }
+
+            con.prepareStatement(sql).use { statement ->
+              statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
+              rows.forEachIndexed { index, row ->
+                when (field.dataType) {
+                  DataType.bigInt -> statement.setLong(index + 1, (row.value[fieldName] as Number).toLong())
+                  DataType.bool -> statement.setBoolean(index + 1, row.value[fieldName] as Boolean)
+                  is DataType.decimal -> statement.setBigDecimal(index + 1, row.value[fieldName] as BigDecimal)
+                  DataType.float -> statement.setFloat(index + 1, row.value[fieldName] as Float)
+                  DataType.int -> statement.setInt(index + 1, (row.value[fieldName] as Number).toInt())
+                  DataType.localDate -> statement.setDate(index + 1, Date.valueOf(row.value[fieldName] as LocalDate))
+                  DataType.localDateTime -> statement.setTimestamp(index + 1, Timestamp.valueOf(row.value[fieldName] as LocalDateTime))
+                  is DataType.text -> statement.setString(index + 1, row.value[fieldName] as String)
+                  else -> error("Key field cannot be nullable, but $fieldName is of type ${field.dataType}.")
                 }
-                .joinToString("\n    ")
-            println(
-              """
-              |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
-              |  SQL:
-              |    ${sql.split("\n").joinToString("\n    ")}
-              |  Parameters:
-              |    $paramsStr
-            """.trimMargin()
-            )
+              }
+
+              statement.executeQuery().use { rs ->
+                yieldAll(rs.toRows(fields))
+              }
+            }
           }
+        }
+      } else {
+        sequence {
+          val fieldLookup = fields.associateBy { it.name }
+          keys.chunked(batchSize).forEach { rows ->
+            val parameters: List<List<BoundParameter>> = rows.map { row ->
+              val sortedFields = row.fieldsSorted.map { fieldName ->
+                fieldLookup[fieldName]
+                  ?: throw KDAError.FieldNotFound(
+                    fieldName = fieldName,
+                    availableFieldNames = fields.map { it.name }.toSet(),
+                  )
+              }
+              sortedFields.toWhereEqualsBoundParameters(details = details, row = row)
+            }
 
-          con.prepareStatement(sql).use { statement ->
-            statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+            val whereClause = parameters.joinToString(" OR ") { orGroup ->
+              val sql = orGroup.joinToString(" OR ") { boundParameter ->
+                "(${boundParameter.parameter.sql})"
+              }
+              "($sql)"
+            }
+            val sql = """
+              |$baseSQL 
+              |WHERE $whereClause
+              |$orderByClause
+            """.trimMargin()
 
-            statement.applyBoundParameters(parameters = parameters.flatten())
+            if (showSQL) {
+              val paramsStr =
+                parameters
+                  .mapIndexed { ix, params ->
+                    val ps = params.mapIndexed { paramIndex, param ->
+                      "  (${paramIndex + 1})  $param"
+                    }.joinToString("\n    ")
+                    "(${ix + 1})\n    $ps"
+                  }
+                  .joinToString("\n    ")
+              println(
+                """
+                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
+                |  SQL:
+                |    ${sql.split("\n").joinToString("\n    ")}
+                |  Parameters:
+                |    $paramsStr
+              """.trimMargin()
+              )
+            }
 
-            statement.executeQuery().use { rs ->
-              yieldAll(rs.toRows(fields))
+            con.prepareStatement(sql).use { statement ->
+              statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
+              statement.applyBoundParameters(parameters = parameters.flatten())
+
+              statement.executeQuery().use { rs ->
+                yieldAll(rs.toRows(fields))
+              }
             }
           }
         }
@@ -612,4 +671,23 @@ class StdAdapter(
         statement.executeBatch().asList().sum()
       }
     }
+}
+
+@ExperimentalStdlibApi
+fun renderInClause(wrappedName: String, criteria: Set<Criteria>): String {
+  require(
+    criteria.all { c ->
+      c.boundParameters.count() == 1 && c.boundParameters.all { boundParameter ->
+        !boundParameter.parameter.dataType.nullable
+      }
+    } && criteria.flatMap { c ->
+      c.boundParameters.map { boundParameter ->
+        boundParameter.parameter.name
+      }
+    }.toSet().count() == 1
+  ) {
+    "Can only use an IN clause when all criteria are based on a single, non-nullable field."
+  }
+  val valuePlaceholders = criteria.joinToString(",") { _ -> "?" }
+  return "$wrappedName IN ($valuePlaceholders)"
 }
