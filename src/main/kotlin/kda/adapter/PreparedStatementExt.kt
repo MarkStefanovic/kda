@@ -29,6 +29,7 @@ internal fun PreparedStatement.applyValue(
       DataType.localDate, DataType.nullableLocalDate -> setDate(index, Date.valueOf(value as LocalDate))
       DataType.localDateTime, DataType.nullableLocalDateTime -> setTimestamp(index, Timestamp.valueOf(value as LocalDateTime))
       is DataType.text, is DataType.nullableText -> setString(index, value as String)
+      is DataType.timestampUTC, is DataType.nullableTimestampUTC -> setObject(index, value)
     }
   }
 }

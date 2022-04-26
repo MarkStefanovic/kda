@@ -21,11 +21,11 @@ private fun fetchDeltaRows(con: Connection): List<Pair<Int, String>> {
   con.createStatement().use { statement ->
     statement.executeQuery(
       // language=PostgreSQL
-      "SELECT customer_id, op FROM sales.customer2_delta ORDER BY customer_id, batch_ts"
+      "SELECT customer_id, kda_op FROM sales.customer2_delta ORDER BY customer_id, kda_ts"
     ).use { resultSet ->
       while (resultSet.next()) {
         val customerId = resultSet.getInt("customer_id")
-        val op = resultSet.getString("op")
+        val op = resultSet.getString("kda_op")
         val row = customerId to op
         deltaRows.add(row)
       }
@@ -40,8 +40,8 @@ class DeltaTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateTable()
-      PgCustomerRepo(con = con, tableName = "customer2").recreateTable()
+      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
+      PgCustomerRepo(con = con, tableName = "customer2").recreateCustomer2Table()
       con.createStatement().use { statement ->
         // language=PostgreSQL
         statement.execute("DROP TABLE IF EXISTS sales.customer2_delta")
@@ -75,7 +75,7 @@ class DeltaTest {
         dateUpdated = LocalDateTime.of(2011, 3, 4, 5, 6, 7),
       )
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use { _ ->
         srcRepo.addCustomers(customer1, customer2)
 
         val cache = sqliteCache()

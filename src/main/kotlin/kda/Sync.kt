@@ -12,6 +12,8 @@ import kda.domain.RowDiff
 import kda.domain.SyncResult
 import kda.domain.Table
 import java.sql.Connection
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -38,7 +40,10 @@ fun sync(
   batchSize: Int = 1_000,
   showSQL: Boolean = false,
   queryTimeout: Duration = 30.minutes,
+  addTimestamp: Boolean = false,
 ): SyncResult {
+  val batchTimestamp = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
+
   val tables: CopyTableResult =
     copyTable(
       cache = cache,
@@ -53,6 +58,7 @@ fun sync(
       dstTable = dstTable,
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
+      addTimestamp = addTimestamp,
     )
 
   val rowDiff: RowDiff = compareRows(
@@ -117,6 +123,8 @@ fun sync(
     addedRows = rowDiff.added,
     updatedRows = rowDiff.updated,
     batchSize = batchSize,
+    addTimestamp = addTimestamp,
+    batchTimestamp = batchTimestamp,
   )
 
   return SyncResult(
@@ -159,6 +167,8 @@ private fun upsertRows(
   updatedRows: Set<Row>,
   batchSize: Int,
   primaryKeyFieldNames: Set<String>,
+  addTimestamp: Boolean,
+  batchTimestamp: OffsetDateTime,
 ): Int =
   if (updatedRows.isEmpty() && addedRows.isEmpty()) {
     0
@@ -173,16 +183,21 @@ private fun upsertRows(
         orderBy = emptyList(),
       ).toSet()
 
+      val rows = if (addTimestamp) {
+        fullRows.map { row -> row.add("kda_ts" to batchTimestamp) }.toSet()
+      } else {
+        fullRows
+      }
+
       val primaryKeyFields: Set<Field<*>> =
         primaryKeyFieldNames.map { dstTable.field(it) }.toSet()
 
-      val valueFields: Set<Field<*>> =
-        dstTable.fields - primaryKeyFields
+      val valueFields: Set<Field<*>> = dstTable.fields - primaryKeyFields
 
       dstAdapter.upsertRows(
         schema = dstSchema,
         table = dstTable.name,
-        rows = fullRows,
+        rows = rows,
         keyFields = primaryKeyFields,
         valueFields = valueFields,
       )

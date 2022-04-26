@@ -59,6 +59,7 @@ class CopyTableTest {
             dstTable = "customer2",
             includeFields = setOf("customer_id", "first_name", "last_name"),
             primaryKeyFieldNames = listOf("customer_id"),
+            addTimestamp = false,
           )
         assertIs<CopyTableResult>(result)
         assertEquals(

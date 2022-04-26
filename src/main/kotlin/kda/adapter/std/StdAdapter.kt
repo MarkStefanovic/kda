@@ -17,6 +17,7 @@ import kda.domain.Criteria
 import kda.domain.DataType
 import kda.domain.DbAdapterDetails
 import kda.domain.Field
+import kda.domain.Index
 import kda.domain.KDAError
 import kda.domain.OrderBy
 import kda.domain.Parameter
@@ -114,6 +115,39 @@ class StdAdapter(
 
     con.createStatement().use { statement ->
       statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+      statement.execute(sql)
+    }
+  }
+
+  override fun createIndex(
+    schema: String?,
+    table: String,
+    index: Index,
+  ) {
+    val fullTableName = details.fullTableName(schema = schema, table = table)
+
+    val fieldNameCSV = index.fields.joinToString(", ") { (field, ascending) ->
+      if (ascending) {
+        details.wrapName(field)
+      } else {
+        "${details.wrapName(field)} DESC"
+      }
+    }
+
+    val sql = "CREATE INDEX IF NOT EXISTS ${index.name} ON $fullTableName ($fieldNameCSV)"
+
+    if (showSQL) {
+      println(
+        """
+          |StdAdapter.createIndex(schema = $schema, table = $table, index = $index):
+          |  ${sql.split("\n").joinToString("\n  ")}
+          """.trimMargin()
+      )
+    }
+
+    con.createStatement().use { statement ->
+      statement.queryTimeout = queryTimeout.inWholeSeconds.toInt()
+
       statement.execute(sql)
     }
   }

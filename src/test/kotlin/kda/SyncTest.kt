@@ -20,8 +20,8 @@ class SyncTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateTable()
-      PgCustomerRepo(con = con, tableName = "customer2").recreateTable()
+      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
+      PgCustomerRepo(con = con, tableName = "customer2").recreateCustomer2Table()
     }
   }
 
@@ -83,6 +83,7 @@ class SyncTest {
           batchSize = 2,
           showSQL = true,
           criteria = null,
+          addTimestamp = true,
         )
 
         val actual = dstRepo.fetchCustomers()
@@ -114,6 +115,7 @@ class SyncTest {
           includeFields = null,
           batchSize = 2,
           showSQL = true,
+          addTimestamp = true,
         )
 
         val updatedCustomers = dstRepo.fetchCustomers()

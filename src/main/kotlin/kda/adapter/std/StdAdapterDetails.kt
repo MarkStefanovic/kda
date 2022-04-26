@@ -21,8 +21,10 @@ object StdAdapterDetails : DbAdapterDetails {
       DataType.int, DataType.nullableInt -> "$wrappedName INT $nullability"
       DataType.localDate, DataType.nullableLocalDate -> "$wrappedName DATE $nullability"
       DataType.localDateTime, DataType.nullableLocalDateTime -> "$wrappedName TIMESTAMP $nullability"
-      is DataType.nullableText -> if (field.dataType.maxLength == null) "$wrappedName TEXT $nullability" else "$wrappedName VARCHAR(${field.dataType.maxLength}) $nullability"
       is DataType.text -> if (field.dataType.maxLength == null) "$wrappedName TEXT $nullability" else "$wrappedName VARCHAR(${field.dataType.maxLength}) $nullability"
+      is DataType.nullableText -> if (field.dataType.maxLength == null) "$wrappedName TEXT $nullability" else "$wrappedName VARCHAR(${field.dataType.maxLength}) $nullability"
+      is DataType.timestampUTC -> "$wrappedName TIMESTAMPTZ(${field.dataType.precision}) $nullability"
+      is DataType.nullableTimestampUTC -> "$wrappedName TIMESTAMPTZ(${field.dataType.precision}) $nullability"
     }
   }
 
@@ -37,6 +39,8 @@ object StdAdapterDetails : DbAdapterDetails {
     DataType.localDateTime, DataType.nullableLocalDateTime -> "CAST(? AS TIMESTAMP)"
     is DataType.nullableText -> if (dataType.maxLength == null) "CAST(? AS TEXT)" else "CAST(? AS VARCHAR(${dataType.maxLength})"
     is DataType.text -> if (dataType.maxLength == null) "CAST(? AS TEXT)" else "CAST(? AS VARCHAR(${dataType.maxLength})"
+    is DataType.timestampUTC -> "CAST(? AS TIMESTAMPTZ(${dataType.precision}))"
+    is DataType.nullableTimestampUTC -> "CAST(? AS TIMESTAMPTZ(${dataType.precision}))"
   }
 
   override fun <T> whereFieldIsEqualTo(field: Field<T>): Set<Parameter> {

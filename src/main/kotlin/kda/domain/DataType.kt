@@ -6,6 +6,7 @@ import java.math.BigDecimal
 import java.sql.JDBCType
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 sealed class DataType<out T : Any?>(
   open val description: String,
@@ -37,4 +38,7 @@ sealed class DataType<out T : Any?>(
 
   data class text(val maxLength: Int? = null) : DataType<String>(description = "text [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = false, name = "text")
   data class nullableText(val maxLength: Int? = null) : DataType<String?>(description = "nullableText [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = true, name = "nullableText")
+
+  data class timestampUTC(val precision: Int) : DataType<OffsetDateTime>(description = "timestampUTC", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = false, name = "timestampUTC")
+  data class nullableTimestampUTC(val precision: Int) : DataType<OffsetDateTime?>(description = "nullableTimestampUTC", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = true, name = "nullableTimestampUTC")
 }

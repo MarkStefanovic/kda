@@ -3,7 +3,9 @@ package kda
 import kda.adapter.selectAdapter
 import kda.domain.Cache
 import kda.domain.CopyTableResult
+import kda.domain.DataType
 import kda.domain.DbDialect
+import kda.domain.Field
 import kda.domain.KDAError
 import java.sql.Connection
 import kotlin.time.Duration
@@ -27,6 +29,7 @@ fun copyTable(
   showSQL: Boolean = false,
   includeFields: Set<String>? = null,
   queryTimeout: Duration = 30.minutes,
+  addTimestamp: Boolean = false,
 ): CopyTableResult {
   val srcTableDef = inspectTable(
     con = srcCon,
@@ -63,6 +66,14 @@ fun copyTable(
     primaryKeyFieldNames = primaryKeyFieldNames,
   )
 
+  val dstTableDefAfterAddingTimestamp = if (addTimestamp) {
+    dstTableDef.copy(
+      fields = dstTableDef.fields + Field("kda_ts", DataType.timestampUTC(0))
+    )
+  } else {
+    dstTableDef
+  }
+
   val dstAdapter = selectAdapter(
     dialect = dstDialect,
     con = dstCon,
@@ -78,11 +89,11 @@ fun copyTable(
       table = dstTable,
     )
   ) {
-    dstAdapter.createTable(schema = dstSchema, table = dstTableDef)
+    dstAdapter.createTable(schema = dstSchema, table = dstTableDefAfterAddingTimestamp)
   }
 
   return CopyTableResult(
     srcTable = srcTableDef,
-    dstTable = dstTableDef,
+    dstTable = dstTableDefAfterAddingTimestamp,
   )
 }

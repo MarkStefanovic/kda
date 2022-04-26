@@ -9,11 +9,13 @@ import kda.domain.DataType
 import kda.domain.DbDialect
 import kda.domain.DeltaResult
 import kda.domain.Field
+import kda.domain.Index
 import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -46,6 +48,8 @@ fun delta(
   showSQL: Boolean = false,
   queryTimeout: Duration = 30.minutes,
 ): DeltaResult {
+  val batchTs = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
+
   val tables: CopyTableResult =
     copyTable(
       cache = cache,
@@ -84,17 +88,15 @@ fun delta(
     queryTimeout = queryTimeout,
   )
 
-  println("$rowDiff")
-
   val deltaTableDef = Table(
     name = deltaTable,
     fields =
     tables.dstTable.fields +
       setOf(
-        Field(name = "batch_ts", DataType.localDateTime),
-        Field(name = "op", DataType.text(1)),
+        Field(name = "kda_ts", DataType.timestampUTC(0)),
+        Field(name = "kda_op", DataType.text(1)),
       ),
-    primaryKeyFieldNames = tables.dstTable.primaryKeyFieldNames + "batch_ts",
+    primaryKeyFieldNames = tables.dstTable.primaryKeyFieldNames + "kda_ts",
   )
 
   val deltaAdapter = selectAdapter(
@@ -116,9 +118,12 @@ fun delta(
       schema = dstSchema,
       table = deltaTableDef,
     )
+    deltaAdapter.createIndex(
+      schema = deltaSchema,
+      table = deltaTable,
+      index = Index(tableName = deltaTable, fields = listOf("kda_op" to true, "kda_ts" to false))
+    )
   }
-
-  val batchTs = LocalDateTime.now()
 
   val srcAdapter = selectAdapter(
     dialect = srcDialect,
@@ -190,7 +195,7 @@ private fun addRowsFromSource(
   keys: Set<Row>,
   op: String,
   chunkSize: Int,
-  batchTimestamp: LocalDateTime,
+  batchTimestamp: OffsetDateTime,
 ): Int =
   if (keys.isEmpty()) {
     0
@@ -205,7 +210,7 @@ private fun addRowsFromSource(
     ).toSet()
 
     val extendedRows = fullRows.map {
-      it.add("batch_ts" to batchTimestamp, "op" to op)
+      it.add("kda_ts" to batchTimestamp, "kda_op" to op)
     }
     extendedRows.chunked(chunkSize) { batch ->
       deltaAdapter.addRows(
@@ -227,7 +232,7 @@ private fun addDeletedRows(
   dstTable: Table,
   keys: Set<Row>,
   chunkSize: Int,
-  batchTimestamp: LocalDateTime,
+  batchTimestamp: OffsetDateTime,
 ): Int =
   if (keys.isEmpty()) {
     0
@@ -242,7 +247,7 @@ private fun addDeletedRows(
     ).toSet()
 
     val extendedRows = fullRows.map {
-      it.add("batch_ts" to batchTimestamp, "op" to "D")
+      it.add("kda_ts" to batchTimestamp, "kda_op" to "D")
     }
     extendedRows.chunked(chunkSize) { batch ->
       deltaAdapter.addRows(

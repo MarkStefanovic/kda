@@ -108,10 +108,10 @@ class PgCustomerRepo(
     }
   }
 
-  fun recreateTable() {
+  fun recreateCustomerTable() {
     con.createStatement().use { stmt ->
       // language=PostgreSQL
-      stmt.execute("DROP TABLE IF EXISTS sales.$tableName")
+      stmt.execute("DROP TABLE IF EXISTS sales.customer")
       stmt.execute(
         // language=PostgreSQL
         """
@@ -122,6 +122,27 @@ class PgCustomerRepo(
           ,   middle_initial TEXT NULL
           ,   date_added TIMESTAMP NOT NULL DEFAULT now()
           ,   date_updated TIMESTAMP NULL
+          )
+          """
+      )
+    }
+  }
+
+  fun recreateCustomer2Table() {
+    con.createStatement().use { stmt ->
+      // language=PostgreSQL
+      stmt.execute("DROP TABLE IF EXISTS sales.customer2")
+      stmt.execute(
+        // language=PostgreSQL
+        """
+          CREATE TABLE sales.customer2 (
+              customer_id INT NOT NULL
+          ,   first_name TEXT NOT NULL
+          ,   last_name TEXT NOT NULL
+          ,   middle_initial TEXT NULL
+          ,   date_added TIMESTAMP NOT NULL DEFAULT now()
+          ,   date_updated TIMESTAMP NULL
+          ,   kda_ts TIMESTAMPTZ(0) NULL
           )
           """
       )

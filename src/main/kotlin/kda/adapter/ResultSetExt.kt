@@ -6,6 +6,7 @@ import kda.domain.Row
 import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Timestamp
+import java.time.OffsetDateTime
 
 fun ResultSet.toRows(fields: Set<Field<*>>): Sequence<Row> = sequence {
   while (next()) {
@@ -35,6 +36,7 @@ internal fun <T : Any?> ResultSet.getValue(fieldName: String, dataType: DataType
     is DataType.nullableText -> getObject(fieldName)
     DataType.nullableLocalDate -> (getObject(fieldName) as Date?)?.toLocalDate()
     DataType.nullableLocalDateTime -> (getObject(fieldName) as Timestamp?)?.toLocalDateTime()
+    is DataType.nullableTimestampUTC -> getObject(fieldName) as OffsetDateTime?
     DataType.bigInt -> getLong(fieldName)
     DataType.bool -> getBoolean(fieldName)
     is DataType.decimal -> getBigDecimal(fieldName)
@@ -43,4 +45,5 @@ internal fun <T : Any?> ResultSet.getValue(fieldName: String, dataType: DataType
     DataType.localDate -> getDate(fieldName).toLocalDate()
     DataType.localDateTime -> getTimestamp(fieldName).toLocalDateTime()
     is DataType.text -> getString(fieldName)
+    is DataType.timestampUTC -> getObject(fieldName) as OffsetDateTime
   } as T

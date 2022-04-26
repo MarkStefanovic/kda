@@ -18,7 +18,7 @@ class RowCountTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateTable()
+      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
     }
   }
 

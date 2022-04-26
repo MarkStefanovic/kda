@@ -9,6 +9,12 @@ interface Adapter {
     fields: Set<Field<*>>,
   ): Int
 
+  fun createIndex(
+    schema: String?,
+    table: String,
+    index: Index,
+  )
+
   fun createTable(
     schema: String?,
     table: Table,
