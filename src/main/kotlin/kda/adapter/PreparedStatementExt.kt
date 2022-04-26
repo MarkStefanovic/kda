@@ -66,7 +66,7 @@ internal fun PreparedStatement.applyBoundParameters(parameters: Collection<Bound
         |  index: ${index + 1}
         |  parameters: ${boundParameter.value}
         |  preparedStatement: $this
-      """.trimMargin()
+        """.trimMargin()
       )
       throw e
     }

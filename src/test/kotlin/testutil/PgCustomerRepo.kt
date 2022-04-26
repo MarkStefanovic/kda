@@ -25,12 +25,12 @@ class PgCustomerRepo(
     |  SELECT customer_id, first_name, last_name, middle_initial, date_added, date_updated
     |  FROM sales.$tableName 
     |  ORDER BY customer_id
-  """.trimMargin()
+    """.trimMargin()
     println(
       """
     |SyncTest.fetchCustomers SQL:
     |$sql
-  """.trimMargin()
+      """.trimMargin()
     )
 
     val customers = mutableListOf<Customer>()
@@ -65,7 +65,7 @@ class PgCustomerRepo(
       val sql = """
       |    INSERT INTO sales.$tableName (customer_id, first_name, last_name, middle_initial, date_added, date_updated)
       |    VALUES (?, ?, ?, ?, ?, ?)
-    """.trimMargin()
+      """.trimMargin()
       println(
         """
       |SyncTest.addCustomers:
@@ -73,7 +73,7 @@ class PgCustomerRepo(
       |$sql
       |  Parameters:
       |    ${customers.joinToString("\n    ")}
-    """.trimMargin()
+        """.trimMargin()
       )
 
       con.prepareStatement(sql).use { stmt ->

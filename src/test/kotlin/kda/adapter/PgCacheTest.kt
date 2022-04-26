@@ -19,7 +19,7 @@ class PgCacheTest {
           """
           |-- noinspection SqlResolve @ any/"ketl"
           |DROP TABLE IF EXISTS ketl.table_def
-        """.trimMargin()
+          """.trimMargin()
         )
       }
 

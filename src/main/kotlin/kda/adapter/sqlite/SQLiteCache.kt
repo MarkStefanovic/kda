@@ -41,14 +41,14 @@ class SQLiteCache(
         |,  date_added DATETIME NOT NULL DEFAULT current_timestamp
         |,  PRIMARY KEY (table_name, schema_name, field_name)
         |)
-      """.trimMargin()
+        """.trimMargin()
 
         if (showSQL) {
           println(
             """
           |SQLiteCache.init - create table_def table:
           |  ${tableDefSQL.split("\n").joinToString("\n  ")}
-        """.trimMargin()
+            """.trimMargin()
           )
         }
 
@@ -68,14 +68,14 @@ class SQLiteCache(
         |,  date_added DATETIME NOT NULL DEFAULT current_timestamp
         |,  PRIMARY KEY (table_name, schema_name, field_name)
         |)
-      """.trimMargin()
+        """.trimMargin()
 
         if (showSQL) {
           println(
             """
           |SQLiteCache.init - create pk table:
           |  ${pkSQL.split("\n").joinToString("\n  ")}
-        """.trimMargin()
+            """.trimMargin()
           )
         }
 
@@ -124,7 +124,7 @@ class SQLiteCache(
         |$insertFieldSQL
         |PARAMS:
         |  $params
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -178,7 +178,7 @@ class SQLiteCache(
       |,  ?
       |,  ?
       |)
-    """.trimMargin()
+      """.trimMargin()
 
       if (showSQL) {
         val params = table.primaryKeyFieldNames.mapIndexed { ix, fieldName ->
@@ -192,7 +192,7 @@ class SQLiteCache(
         |    ${insertPKsql.split("\n").joinToString("\n    ")}
         |  Parameters:  
         |    $params
-      """.trimMargin()
+          """.trimMargin()
         )
       }
 
@@ -242,7 +242,7 @@ class SQLiteCache(
         |PARAMS:
         |  schema_name: $schema
         |  table_name: $table
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -300,7 +300,7 @@ class SQLiteCache(
         |   AND pk.table_name = ?
         |ORDER BY 
         |   pk.ix
-      """.trimMargin()
+        """.trimMargin()
 
         if (showSQL) {
           println(
@@ -310,7 +310,7 @@ class SQLiteCache(
           |PARAMS:
           |  schema_name: $schema
           |  table_name: $table
-        """.trimMargin()
+            """.trimMargin()
           )
         }
 

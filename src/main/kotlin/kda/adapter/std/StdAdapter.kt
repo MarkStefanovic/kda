@@ -109,7 +109,7 @@ class StdAdapter(
         """
           |StdAdapter.createTable(schema = $schema, table = $table):
           |  ${sql.split("\n").joinToString("\n  ")}
-          """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -141,7 +141,7 @@ class StdAdapter(
         """
           |StdAdapter.createIndex(schema = $schema, table = $table, index = $index):
           |  ${sql.split("\n").joinToString("\n  ")}
-          """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -240,7 +240,7 @@ class StdAdapter(
         |  SQL: $sql
         |  Parameters: 
         |    $whereClauseParameters
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -328,7 +328,7 @@ class StdAdapter(
           |    ${sql.split("\n").joinToString("\n    ")}
           |  Parameters: 
           |    ${criteria.boundParameters.joinToString("\n    ")}
-        """.trimMargin()
+          """.trimMargin()
         )
       }
 
@@ -431,7 +431,7 @@ class StdAdapter(
         """
         |StdAdapter.selectGreatest(schema = $schema, table = $table, fields = $fields):
         |  ${sql.split("\n").joinToString("\n  ")}
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -523,7 +523,7 @@ class StdAdapter(
                 |    ${sql.split("\n").joinToString("\n    ")}
                 |  Parameters:
                 |    ${rows.take(5)}...
-              """.trimMargin()
+                """.trimMargin()
               )
             }
 
@@ -594,7 +594,7 @@ class StdAdapter(
                 |    ${sql.split("\n").joinToString("\n    ")}
                 |  Parameters:
                 |    $paramsStr
-              """.trimMargin()
+                """.trimMargin()
               )
             }
 
@@ -690,7 +690,7 @@ class StdAdapter(
           |    ${sql.split("\n").joinToString("\n    ")}
           |  Parameters:
           |    ${parameters.joinToString("\n    ") { it.toString() }}
-        """.trimMargin()
+          """.trimMargin()
         )
       }
 

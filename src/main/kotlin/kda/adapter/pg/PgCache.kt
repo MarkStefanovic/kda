@@ -38,14 +38,14 @@ class PgCache(
         |,  date_updated TIMESTAMPTZ NULL
         |,  PRIMARY KEY (table_name, schema_name, field_name)
         |)
-      """.trimMargin()
+        """.trimMargin()
 
         if (showSQL) {
           println(
             """
           |${javaClass.simpleName}.init - create table_def table:
           |  ${sql.split("\n").joinToString("\n  ")}
-        """.trimMargin()
+            """.trimMargin()
           )
         }
 
@@ -127,7 +127,7 @@ class PgCache(
         |$sql
         |PARAMS:
         |  $params
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
@@ -215,7 +215,7 @@ class PgCache(
         |PARAMS:
         |  schema_name: $schema
         |  table_name: $table
-      """.trimMargin()
+        """.trimMargin()
       )
     }
 
