@@ -88,12 +88,12 @@ fun inspectTable(
         } else {
           Field(name = columnName, dataType = DataType.localDate)
         }
-        Types.TIMESTAMP, Types.TIME -> if (nullable) {
+        Types.TIMESTAMP -> if (nullable) {
           Field(name = columnName, dataType = DataType.nullableLocalDateTime)
         } else {
           Field(name = columnName, dataType = DataType.localDateTime)
         }
-        Types.TIMESTAMP_WITH_TIMEZONE, Types.TIME_WITH_TIMEZONE -> if (nullable) {
+        Types.TIMESTAMP_WITH_TIMEZONE -> if (nullable) {
           Field(name = columnName, dataType = DataType.nullableTimestampUTC(precision = columnSize))
         } else {
           Field(name = columnName, dataType = DataType.timestampUTC(precision = columnSize))
