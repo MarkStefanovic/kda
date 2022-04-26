@@ -33,7 +33,7 @@ class SyncTest {
       val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
       dstRepo.addUniqueConstraint()
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use {
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -165,7 +165,7 @@ class SyncTest {
       val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
       dstRepo.addUniqueConstraint()
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use {
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,
@@ -306,7 +306,7 @@ class SyncTest {
       val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
       dstRepo.addUniqueConstraint()
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use {
         // TEST ADD
         val customer1 = Customer(
           customerId = 1,

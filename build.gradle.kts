@@ -1,8 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.21"
     id("org.jmailen.kotlinter") version "3.10.0"
     id( "org.jetbrains.kotlin.plugin.serialization") version "1.6.21"
-    id("org.jetbrains.kotlinx.kover") version "0.5.0-RC2"
     id("com.github.ben-manes.versions") version "0.42.0"
 }
 

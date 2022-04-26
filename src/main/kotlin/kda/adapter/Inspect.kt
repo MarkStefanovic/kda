@@ -88,10 +88,15 @@ fun inspectTable(
         } else {
           Field(name = columnName, dataType = DataType.localDate)
         }
-        Types.TIME, Types.TIMESTAMP, Types.TIME_WITH_TIMEZONE, Types.TIMESTAMP_WITH_TIMEZONE -> if (nullable) {
+        Types.TIMESTAMP, Types.TIME -> if (nullable) {
           Field(name = columnName, dataType = DataType.nullableLocalDateTime)
         } else {
           Field(name = columnName, dataType = DataType.localDateTime)
+        }
+        Types.TIMESTAMP_WITH_TIMEZONE, Types.TIME_WITH_TIMEZONE -> if (nullable) {
+          Field(name = columnName, dataType = DataType.nullableTimestampUTC(precision = columnSize))
+        } else {
+          Field(name = columnName, dataType = DataType.timestampUTC(precision = columnSize))
         }
         else -> throw KDAError.UnrecognizeDataType("$typeName: $dataType")
       }

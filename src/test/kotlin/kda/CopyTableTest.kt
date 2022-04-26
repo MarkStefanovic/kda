@@ -20,7 +20,7 @@ class CopyTableTest {
   @Test
   fun given_dest_does_not_exist_then_it_should_be_created() {
     testPgConnection().use { con: Connection ->
-      testSQLiteConnection().use { cacheCon: Connection ->
+      testSQLiteConnection().use {
         con.createStatement().use { stmt ->
           stmt.execute(
             // language=PostgreSQL

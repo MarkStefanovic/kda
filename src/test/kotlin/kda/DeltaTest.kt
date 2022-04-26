@@ -138,7 +138,7 @@ class DeltaTest {
         dateUpdated = LocalDateTime.of(2011, 3, 4, 5, 6, 7),
       )
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use {
         srcRepo.addCustomers(customer2)
         dstRepo.addCustomers(customer1, customer2)
 
@@ -202,7 +202,7 @@ class DeltaTest {
         dateUpdated = LocalDateTime.of(2011, 3, 4, 5, 6, 7),
       )
 
-      testSQLiteConnection().use { cacheCon ->
+      testSQLiteConnection().use {
         srcRepo.addCustomers(customer1, customer2)
         dstRepo.addCustomers(customer1, customer2)
         srcRepo.updateCustomer(customer2.copy(middleInitial = "Z"))
