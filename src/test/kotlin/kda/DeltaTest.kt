@@ -6,6 +6,7 @@ import kda.domain.DbDialect
 import kda.domain.DeltaResult
 import org.junit.jupiter.api.BeforeEach
 import testutil.Customer
+import testutil.PgCustomer2Repo
 import testutil.PgCustomerRepo
 import testutil.sqliteCache
 import testutil.testPgConnection
@@ -40,8 +41,8 @@ class DeltaTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
-      PgCustomerRepo(con = con, tableName = "customer2").recreateCustomer2Table()
+      PgCustomerRepo(con = con).recreateTable()
+      PgCustomer2Repo(con = con).recreateTable()
       con.createStatement().use { statement ->
         // language=PostgreSQL
         statement.execute("DROP TABLE IF EXISTS sales.customer2_delta")
@@ -52,9 +53,9 @@ class DeltaTest {
   @Test
   fun add_rows() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       val customer1 = Customer(
@@ -115,9 +116,9 @@ class DeltaTest {
   @Test
   fun delete_rows() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       val customer1 = Customer(
@@ -179,9 +180,9 @@ class DeltaTest {
   @Test
   fun update_rows() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       val customer1 = Customer(

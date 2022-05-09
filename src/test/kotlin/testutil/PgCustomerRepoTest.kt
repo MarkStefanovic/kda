@@ -18,7 +18,7 @@ class PgCustomerRepoTest {
       }
       assertFalse(pgTableExists(con, schema = "sales", table = "customer"))
 
-      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
+      PgCustomerRepo(con = con).recreateTable()
       assertTrue(pgTableExists(con, schema = "sales", table = "customer"))
     }
   }

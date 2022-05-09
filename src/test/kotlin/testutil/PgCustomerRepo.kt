@@ -6,10 +6,23 @@ import java.sql.Connection
 import java.sql.Timestamp
 import java.sql.Types
 
-class PgCustomerRepo(
+class PgCustomerRepo(con: Connection): PgCustomerRepoParent(con = con, tableName = "customer")
+
+class PgCustomer2Repo(con: Connection): PgCustomerRepoParent(con = con, tableName = "customer2")
+
+open class PgCustomerRepoParent(
   private val con: Connection,
   private val tableName: String,
 ) {
+  fun addTimestampField() {
+    con.createStatement().use { statement ->
+      statement.execute(
+        // language=PostgreSQL
+        "ALTER TABLE sales.$tableName ADD COLUMN kda_ts TIMESTAMPTZ(0) NOT NULL DEFAULT NOW()"
+      )
+    }
+  }
+
   fun addUniqueConstraint() {
     con.createStatement().use { statement ->
       statement.execute(
@@ -108,10 +121,10 @@ class PgCustomerRepo(
     }
   }
 
-  fun recreateCustomerTable() {
+  fun recreateTable() {
     con.createStatement().use { stmt ->
       // language=PostgreSQL
-      stmt.execute("DROP TABLE IF EXISTS sales.customer")
+      stmt.execute("DROP TABLE IF EXISTS sales.$tableName")
       stmt.execute(
         // language=PostgreSQL
         """
@@ -122,27 +135,6 @@ class PgCustomerRepo(
           ,   middle_initial TEXT NULL
           ,   date_added TIMESTAMP NOT NULL DEFAULT now()
           ,   date_updated TIMESTAMP NULL
-          )
-          """
-      )
-    }
-  }
-
-  fun recreateCustomer2Table() {
-    con.createStatement().use { stmt ->
-      // language=PostgreSQL
-      stmt.execute("DROP TABLE IF EXISTS sales.customer2")
-      stmt.execute(
-        // language=PostgreSQL
-        """
-          CREATE TABLE sales.customer2 (
-              customer_id INT NOT NULL
-          ,   first_name TEXT NOT NULL
-          ,   last_name TEXT NOT NULL
-          ,   middle_initial TEXT NULL
-          ,   date_added TIMESTAMP NOT NULL DEFAULT now()
-          ,   date_updated TIMESTAMP NULL
-          ,   kda_ts TIMESTAMPTZ(0) NULL
           )
           """
       )

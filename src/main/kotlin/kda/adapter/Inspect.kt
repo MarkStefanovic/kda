@@ -124,6 +124,7 @@ fun inspectTable(
             DataType.nullableLocalDate -> DataType.localDate
             DataType.nullableLocalDateTime -> DataType.localDateTime
             is DataType.nullableText -> DataType.text(maxLength = field.dataType.maxLength)
+            is DataType.nullableTimestampUTC -> DataType.nullableTimestampUTC(precision = field.dataType.precision)
             else -> field.dataType
           }
         )

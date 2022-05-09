@@ -6,6 +6,7 @@ import kda.domain.DbDialect
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import testutil.Customer
+import testutil.PgCustomer2Repo
 import testutil.PgCustomerRepo
 import testutil.sqliteCache
 import testutil.testPgConnection
@@ -20,17 +21,17 @@ class SyncTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
-      PgCustomerRepo(con = con, tableName = "customer2").recreateCustomer2Table()
+      PgCustomerRepo(con = con).recreateTable()
+      PgCustomer2Repo(con = con).recreateTable()
     }
   }
 
   @Test
   fun given_no_timestamps_used() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       testSQLiteConnection().use {
@@ -160,9 +161,9 @@ class SyncTest {
   @Test
   fun given_timestamps_used_and_empty_inital_cache() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       testSQLiteConnection().use {
@@ -301,9 +302,9 @@ class SyncTest {
   @Test
   fun given_duplicate_source_keys_sync_just_first_one_of_them() {
     testPgConnection().use { con ->
-      val srcRepo = PgCustomerRepo(con = con, tableName = "customer")
+      val srcRepo = PgCustomerRepo(con = con)
 
-      val dstRepo = PgCustomerRepo(con = con, tableName = "customer2")
+      val dstRepo = PgCustomer2Repo(con = con)
       dstRepo.addUniqueConstraint()
 
       testSQLiteConnection().use {

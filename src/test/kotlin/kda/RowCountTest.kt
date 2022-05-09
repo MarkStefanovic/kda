@@ -18,14 +18,14 @@ class RowCountTest {
   @BeforeEach
   fun setup() {
     testPgConnection().use { con ->
-      PgCustomerRepo(con = con, tableName = "customer").recreateCustomerTable()
+      PgCustomerRepo(con = con).recreateTable()
     }
   }
 
   @Test
   fun happy_path() {
     testPgConnection().use { con ->
-      val repo = PgCustomerRepo(con = con, tableName = "customer")
+      val repo = PgCustomerRepo(con = con)
 
       repo.addCustomers(
         Customer(
