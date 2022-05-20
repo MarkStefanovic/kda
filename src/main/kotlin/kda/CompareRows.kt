@@ -172,12 +172,12 @@ private fun getFullCriteria(
         }
         .toSet()
 
-    val latestTimestamp: LocalDateTime? =
+    val latestTimestamp =
       dstAdapter.selectGreatest(
         schema = dstSchema,
         table = dstTable.name,
         fields = tsFields,
-      ) as LocalDateTime?
+      )
 
     val tsCriteria: Criteria? = if (latestTimestamp == null) {
       null
