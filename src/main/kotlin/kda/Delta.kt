@@ -66,6 +66,7 @@ fun delta(
       dstTable = dstTable,
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
+      timestampResolution = timestampResolution,
     )
 
   val rowDiff: RowDiff = compareRows(
@@ -88,6 +89,7 @@ fun delta(
     batchSize = batchSize,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val deltaTableDef = Table(
@@ -146,7 +148,7 @@ fun delta(
     keys = rowDiff.added,
     op = "I",
     chunkSize = batchSize,
-    batchTimestamp = batchTs
+    batchTimestamp = batchTs,
   )
 
   val rowsUpdated: Int = addRowsFromSource(
@@ -179,7 +181,7 @@ fun delta(
     dstTable = tables.dstTable,
     keys = rowDiff.deleted,
     chunkSize = batchSize,
-    batchTimestamp = batchTs
+    batchTimestamp = batchTs,
   )
 
   return DeltaResult(
