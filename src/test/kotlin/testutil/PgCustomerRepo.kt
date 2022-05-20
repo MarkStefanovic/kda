@@ -6,9 +6,9 @@ import java.sql.Connection
 import java.sql.Timestamp
 import java.sql.Types
 
-class PgCustomerRepo(con: Connection): PgCustomerRepoParent(con = con, tableName = "customer")
+class PgCustomerRepo(con: Connection) : PgCustomerRepoParent(con = con, tableName = "customer")
 
-class PgCustomer2Repo(con: Connection): PgCustomerRepoParent(con = con, tableName = "customer2")
+class PgCustomer2Repo(con: Connection) : PgCustomerRepoParent(con = con, tableName = "customer2")
 
 open class PgCustomerRepoParent(
   private val con: Connection,
@@ -28,6 +28,15 @@ open class PgCustomerRepoParent(
       statement.execute(
         // language=PostgreSQL
         "CREATE UNIQUE INDEX IF NOT EXISTS uq_customer_customer_id ON sales.$tableName (customer_id)"
+      )
+    }
+  }
+
+  fun dropTableIfExists() {
+    con.createStatement().use { statement ->
+      statement.execute(
+        //language=PostgreSQL
+        "DROP TABLE IF EXISTS sales.$tableName"
       )
     }
   }

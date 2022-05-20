@@ -30,8 +30,12 @@ class SyncTest {
   fun given_no_timestamps_used() {
     testPgConnection().use { con ->
       val srcRepo = PgCustomerRepo(con = con)
+      srcRepo.recreateTable()
 
       val dstRepo = PgCustomer2Repo(con = con)
+      dstRepo.recreateTable()
+      dstRepo.addTimestampField()
+
       dstRepo.addUniqueConstraint()
 
       testSQLiteConnection().use {

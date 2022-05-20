@@ -33,12 +33,14 @@ sealed class DataType<out T : Any?>(
   object localDate : DataType<LocalDate>(description = "localDate", jdbcType = JDBCType.DATE, nullable = false, name = "localDate")
   object nullableLocalDate : DataType<LocalDate?>(description = "nullableLocalDate", jdbcType = JDBCType.DATE, nullable = true, name = "nullableLocalDate")
 
-  object localDateTime : DataType<LocalDateTime>(description = "localDateTime", jdbcType = JDBCType.TIMESTAMP, nullable = false, name = "localDateTime")
-  object nullableLocalDateTime : DataType<LocalDateTime?>(description = "nullableLocalDateTime", jdbcType = JDBCType.TIMESTAMP, nullable = true, name = "nullableLocalDateTime")
-
   data class text(val maxLength: Int? = null) : DataType<String>(description = "text [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = false, name = "text")
   data class nullableText(val maxLength: Int? = null) : DataType<String?>(description = "nullableText [ maxLength: $maxLength ]", jdbcType = JDBCType.VARCHAR, nullable = true, name = "nullableText")
 
-  data class timestampUTC(val precision: Int) : DataType<OffsetDateTime>(description = "timestampUTC", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = false, name = "timestampUTC")
-  data class nullableTimestampUTC(val precision: Int) : DataType<OffsetDateTime?>(description = "nullableTimestampUTC", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = true, name = "nullableTimestampUTC")
+  data class timestamp(val precision: Int) : DataType<LocalDateTime>(description = "timestamp [ precision: $precision ]", jdbcType = JDBCType.TIMESTAMP, nullable = false, name = "timestamp")
+  data class nullableTimestamp(val precision: Int) : DataType<LocalDateTime?>(description = "nullableTimestamp [ precision: $precision ]", jdbcType = JDBCType.TIMESTAMP, nullable = true, name = "nullableTimestamp")
+
+  data class timestampUTC(val precision: Int) : DataType<OffsetDateTime>(description = "timestampUTC [ precision: $precision ]", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = false, name = "timestampUTC")
+  data class nullableTimestampUTC(val precision: Int) : DataType<OffsetDateTime?>(description = "nullableTimestampUTC [ precision: $precision ]", jdbcType = JDBCType.TIMESTAMP_WITH_TIMEZONE, nullable = true, name = "nullableTimestampUTC")
+
+  override fun toString(): String = description
 }

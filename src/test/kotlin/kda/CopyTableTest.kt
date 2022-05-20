@@ -26,10 +26,14 @@ class CopyTableTest {
             // language=PostgreSQL
             "DROP TABLE IF EXISTS sales.customer"
           )
+          assert(!pgTableExists(con, "sales", "customer"))
+
           stmt.execute(
             // language=PostgreSQL
             "DROP TABLE IF EXISTS sales.customer2"
           )
+          assert(!pgTableExists(con, "sales", "customer2"))
+
           stmt.execute(
             // language=PostgreSQL
             """
@@ -41,7 +45,6 @@ class CopyTableTest {
             """
           )
         }
-        assert(!pgTableExists(con, "sales", "customer2"))
 
         val cache = sqliteCache()
 

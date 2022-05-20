@@ -89,15 +89,23 @@ fun inspectTable(
           Field(name = columnName, dataType = DataType.localDate)
         }
         Types.TIMESTAMP -> if (nullable) {
-          Field(name = columnName, dataType = DataType.nullableLocalDateTime)
+          if (typeName == "timestamptz") {
+            Field(name = columnName, dataType = DataType.nullableTimestampUTC(precision = scale))
+          } else {
+            Field(name = columnName, dataType = DataType.nullableTimestamp(precision = scale))
+          }
         } else {
-          Field(name = columnName, dataType = DataType.localDateTime)
+          if (typeName == "timestamptz") {
+            Field(name = columnName, dataType = DataType.timestampUTC(precision = scale))
+          } else {
+            Field(name = columnName, dataType = DataType.timestamp(precision = scale))
+          }
         }
-        Types.TIMESTAMP_WITH_TIMEZONE -> if (nullable) {
-          Field(name = columnName, dataType = DataType.nullableTimestampUTC(precision = columnSize))
-        } else {
-          Field(name = columnName, dataType = DataType.timestampUTC(precision = columnSize))
-        }
+//        Types.TIMESTAMP_WITH_TIMEZONE -> if (nullable) {
+//          Field(name = columnName, dataType = DataType.nullableTimestampUTC(precision = scale))
+//        } else {
+//          Field(name = columnName, dataType = DataType.timestampUTC(precision = scale))
+//        }
         else -> throw KDAError.UnrecognizeDataType("$typeName: $dataType")
       }
       fields.add(field)
@@ -122,7 +130,7 @@ fun inspectTable(
             DataType.nullableFloat -> DataType.float
             DataType.nullableInt -> DataType.int
             DataType.nullableLocalDate -> DataType.localDate
-            DataType.nullableLocalDateTime -> DataType.localDateTime
+            is DataType.nullableTimestamp -> DataType.timestamp(precision = field.dataType.precision)
             is DataType.nullableText -> DataType.text(maxLength = field.dataType.maxLength)
             is DataType.nullableTimestampUTC -> DataType.nullableTimestampUTC(precision = field.dataType.precision)
             else -> field.dataType

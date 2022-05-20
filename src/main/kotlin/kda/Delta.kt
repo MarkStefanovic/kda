@@ -16,6 +16,7 @@ import kda.domain.Table
 import java.sql.Connection
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -47,6 +48,7 @@ fun delta(
   batchSize: Int = 1_000,
   showSQL: Boolean = false,
   queryTimeout: Duration = 30.minutes,
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
 ): DeltaResult {
   val batchTs = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
 
@@ -104,6 +106,7 @@ fun delta(
     con = deltaCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   if (
@@ -130,6 +133,7 @@ fun delta(
     con = srcCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val rowsAdded: Int = addRowsFromSource(
@@ -163,6 +167,7 @@ fun delta(
     con = dstCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val rowsDeleted: Int = addDeletedRows(

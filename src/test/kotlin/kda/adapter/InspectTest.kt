@@ -59,7 +59,10 @@ class InspectTest {
           , supervisor_id BIGINT NULL
           , latitude FLOAT NOT NULL
           , longitude FLOAT NULL
-          , date_added TIMESTAMP NOT NULL
+          , first_login TIMESTAMP(0) NOT NULL
+          , last_login TIMESTAMP(0) NULL
+          , date_added TIMESTAMPTZ(0) NOT NULL
+          , date_updated TIMESTAMPTZ(0) NULL
           )
         """
         )
@@ -89,7 +92,10 @@ class InspectTest {
               Field(name = "supervisor_id", dataType = DataType.nullableBigInt),
               Field(name = "latitude", dataType = DataType.float),
               Field(name = "longitude", dataType = DataType.nullableFloat),
-              Field(name = "date_added", dataType = DataType.localDateTime),
+              Field(name = "first_login", dataType = DataType.timestamp(0)),
+              Field(name = "last_login", dataType = DataType.nullableTimestamp(0)),
+              Field(name = "date_added", dataType = DataType.timestampUTC(0)),
+              Field(name = "date_updated", dataType = DataType.nullableTimestampUTC(0)),
             ),
             primaryKeyFieldNames = listOf("id"),
           ),

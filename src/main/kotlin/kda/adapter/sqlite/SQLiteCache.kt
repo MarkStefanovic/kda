@@ -273,8 +273,10 @@ class SQLiteCache(
               "nullableInt" -> DataType.nullableInt
               "localDate" -> DataType.localDate
               "nullableLocalDate" -> DataType.nullableLocalDate
-              "localDateTime" -> DataType.localDateTime
-              "nullableLocalDateTime" -> DataType.nullableLocalDateTime
+              "timestamp" -> DataType.timestamp(precision = precision)
+              "nullableTimestamp" -> DataType.nullableTimestamp(precision = precision)
+              "timestampUTC" -> DataType.timestampUTC(precision = precision)
+              "nullableTimestampUTC" -> DataType.nullableTimestampUTC(precision = precision)
               "text" -> DataType.text(maxLength = maxLength)
               "nullableText" -> DataType.nullableText(maxLength = maxLength)
               else -> throw KDAError.UnrecognizeDataType(dataTypeName)

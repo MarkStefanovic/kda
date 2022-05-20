@@ -17,7 +17,10 @@ class InspectTableTest {
   fun sqlite_inspectTable_happy_path() {
     testPgConnection().use { con ->
       con.createStatement().use { statement ->
-        statement.execute("DROP TABLE IF EXISTS sales.customer")
+        statement.execute(
+          //language=PostgreSQL
+          "DROP TABLE IF EXISTS sales.customer"
+        )
         statement.execute(
           // language=PostgreSQL
           """
@@ -26,7 +29,9 @@ class InspectTableTest {
           ,   first_name TEXT NOT NULL
           ,   last_name TEXT NOT NULL
           ,   middle_initial TEXT NULL
-          ,   date_added TIMESTAMP NOT NULL DEFAULT now()
+          ,   first_login TIMESTAMP(0) NOT NULL
+          ,   last_login TIMESTAMP(0) NULL
+          ,   date_added TIMESTAMPTZ(0) NOT NULL DEFAULT now()
           ,   date_updated TIMESTAMPTZ(0) NULL
           )
           """
@@ -53,8 +58,10 @@ class InspectTableTest {
             Field(name = "first_name", dataType = DataType.text(null)),
             Field(name = "last_name", dataType = DataType.text(null)),
             Field(name = "middle_initial", dataType = DataType.nullableText(null)),
-            Field(name = "date_added", dataType = DataType.localDateTime),
-            Field(name = "date_updated", dataType = DataType.nullableLocalDateTime),
+            Field(name = "first_login", dataType = DataType.timestamp(0)),
+            Field(name = "last_login", dataType = DataType.nullableTimestamp(0)),
+            Field(name = "date_added", dataType = DataType.timestampUTC(0)),
+            Field(name = "date_updated", dataType = DataType.nullableTimestampUTC(0)),
           ),
           primaryKeyFieldNames = listOf("customer_id"),
         )

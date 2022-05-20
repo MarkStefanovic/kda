@@ -147,6 +147,18 @@ class PgCache(
             is DataType.nullableDecimal -> {
               field.dataType.precision to field.dataType.scale
             }
+            is DataType.timestamp -> {
+              field.dataType.precision to null
+            }
+            is DataType.nullableTimestamp -> {
+              field.dataType.precision to null
+            }
+            is DataType.timestampUTC -> {
+              field.dataType.precision to null
+            }
+            is DataType.nullableTimestampUTC -> {
+              field.dataType.precision to null
+            }
             else -> {
               null to null
             }
@@ -239,6 +251,11 @@ class PgCache(
               pkCols.addAll(rs.getArray("pk_cols").array as Array<out String>)
             }
 
+            if (dataTypeName == "localDateTime") {
+              println("TEST!!!!")
+              println("dataTypeName = $dataTypeName, maxLength = $maxLength, precision = $precision, scale = $scale")
+            }
+
             val dataType = when (dataTypeName) {
               "bool" -> DataType.bool
               "nullableBool" -> DataType.nullableBool
@@ -252,8 +269,10 @@ class PgCache(
               "nullableInt" -> DataType.nullableInt
               "localDate" -> DataType.localDate
               "nullableLocalDate" -> DataType.nullableLocalDate
-              "localDateTime" -> DataType.localDateTime
-              "nullableLocalDateTime" -> DataType.nullableLocalDateTime
+              "timestamp" -> DataType.timestamp(precision = precision)
+              "nullableTimestamp" -> DataType.nullableTimestamp(precision = precision)
+              "timestampUTC" -> DataType.timestampUTC(precision = precision)
+              "nullableTimestampUTC" -> DataType.nullableTimestampUTC(precision = precision)
               "text" -> DataType.text(maxLength = maxLength)
               "nullableText" -> DataType.nullableText(maxLength = maxLength)
               else -> throw KDAError.UnrecognizeDataType(dataTypeName)

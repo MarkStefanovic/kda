@@ -14,6 +14,7 @@ import kda.domain.Table
 import java.sql.Connection
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -41,6 +42,7 @@ fun sync(
   showSQL: Boolean = false,
   queryTimeout: Duration = 30.minutes,
   addTimestamp: Boolean = false,
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS, // TODO pass through to adapte
 ): SyncResult {
   val batchTimestamp = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
 
@@ -94,6 +96,7 @@ fun sync(
     con = srcCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val dstAdapter = selectAdapter(
@@ -101,6 +104,7 @@ fun sync(
     con = dstCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val rowsDeleted: Int = deleteRows(

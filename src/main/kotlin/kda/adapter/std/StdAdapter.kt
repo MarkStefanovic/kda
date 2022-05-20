@@ -29,6 +29,8 @@ import java.sql.Date
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -39,6 +41,7 @@ class StdAdapter(
   private val showSQL: Boolean,
   private val details: DbAdapterDetails,
   private val queryTimeout: Duration,
+  private val timestampResolution: ChronoUnit,
 ) : Adapter {
   override fun addRows(
     schema: String?,
@@ -421,6 +424,8 @@ class StdAdapter(
         .sortedBy { it.name }
         .joinToString(", ") { details.wrapName(it.name) }
 
+    val dataType = fields.first().dataType
+
     val sql = """
       |SELECT GREATEST($fieldNameCSV) AS greatest_val
       |FROM $fullTableName
@@ -441,6 +446,13 @@ class StdAdapter(
       statement.executeQuery(sql).use { rs ->
         return if (rs.next()) {
           rs.getObject("greatest_val")
+          when (dataType) {
+            is DataType.nullableTimestamp -> (rs.getObject("greatest_val") as Timestamp?)?.toLocalDateTime()?.truncatedTo(timestampResolution)
+            is DataType.nullableTimestampUTC -> (rs.getObject("greatest_val") as OffsetDateTime?)?.truncatedTo(timestampResolution)
+            is DataType.timestamp -> rs.getTimestamp("greatest_val").toLocalDateTime().truncatedTo(timestampResolution)
+            is DataType.timestampUTC -> (rs.getObject("greatest_val") as OffsetDateTime).truncatedTo(timestampResolution)
+            else -> rs.getObject("greatest_val")
+          }
         } else {
           null
         }
@@ -538,7 +550,8 @@ class StdAdapter(
                   DataType.float -> statement.setFloat(index + 1, row.value[fieldName] as Float)
                   DataType.int -> statement.setInt(index + 1, (row.value[fieldName] as Number).toInt())
                   DataType.localDate -> statement.setDate(index + 1, Date.valueOf(row.value[fieldName] as LocalDate))
-                  DataType.localDateTime -> statement.setTimestamp(index + 1, Timestamp.valueOf(row.value[fieldName] as LocalDateTime))
+                  is DataType.timestamp -> statement.setTimestamp(index + 1, Timestamp.valueOf(row.value[fieldName] as LocalDateTime))
+                  is DataType.timestampUTC -> statement.setObject(index + 1, row.value[fieldName])
                   is DataType.text -> statement.setString(index + 1, row.value[fieldName] as String)
                   else -> error("Key field cannot be nullable, but $fieldName is of type ${field.dataType}.")
                 }

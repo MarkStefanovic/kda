@@ -8,6 +8,7 @@ import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.KDAError
 import java.sql.Connection
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -30,6 +31,7 @@ fun copyTable(
   includeFields: Set<String>? = null,
   queryTimeout: Duration = 30.minutes,
   addTimestamp: Boolean = false,
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
 ): CopyTableResult {
   val srcTableDef = inspectTable(
     con = srcCon,
@@ -79,6 +81,7 @@ fun copyTable(
     con = dstCon,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   if (

@@ -7,6 +7,7 @@ import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 
 fun ResultSet.toRows(fields: Set<Field<*>>): Sequence<Row> = sequence {
   while (next()) {
@@ -26,7 +27,11 @@ internal fun ResultSet.toMap(fields: Set<Field<*>>): Row = Row(
 )
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T : Any?> ResultSet.getValue(fieldName: String, dataType: DataType<T>): T =
+internal fun <T : Any?> ResultSet.getValue(
+  fieldName: String,
+  dataType: DataType<T>,
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
+): T =
   when (dataType) {
     DataType.nullableBigInt -> getObject(fieldName)
     DataType.nullableBool -> getObject(fieldName)
@@ -35,15 +40,15 @@ internal fun <T : Any?> ResultSet.getValue(fieldName: String, dataType: DataType
     DataType.nullableInt -> getObject(fieldName)
     is DataType.nullableText -> getObject(fieldName)
     DataType.nullableLocalDate -> (getObject(fieldName) as Date?)?.toLocalDate()
-    DataType.nullableLocalDateTime -> (getObject(fieldName) as Timestamp?)?.toLocalDateTime()
-    is DataType.nullableTimestampUTC -> getObject(fieldName) as OffsetDateTime?
+    is DataType.nullableTimestamp -> (getObject(fieldName) as Timestamp?)?.toLocalDateTime()?.truncatedTo(timestampResolution)
+    is DataType.nullableTimestampUTC -> (getObject(fieldName) as OffsetDateTime?)?.truncatedTo(timestampResolution)
     DataType.bigInt -> getLong(fieldName)
     DataType.bool -> getBoolean(fieldName)
     is DataType.decimal -> getBigDecimal(fieldName)
     DataType.float -> getFloat(fieldName)
     DataType.int -> getInt(fieldName)
     DataType.localDate -> getDate(fieldName).toLocalDate()
-    DataType.localDateTime -> getTimestamp(fieldName).toLocalDateTime()
+    is DataType.timestamp -> getTimestamp(fieldName).toLocalDateTime().truncatedTo(timestampResolution)
     is DataType.text -> getString(fieldName)
-    is DataType.timestampUTC -> getObject(fieldName) as OffsetDateTime
+    is DataType.timestampUTC -> (getObject(fieldName) as OffsetDateTime).truncatedTo(timestampResolution)
   } as T

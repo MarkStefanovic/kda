@@ -7,7 +7,6 @@ import kda.domain.BinaryPredicate
 import kda.domain.Cache
 import kda.domain.CopyTableResult
 import kda.domain.Criteria
-import kda.domain.DataType
 import kda.domain.DbDialect
 import kda.domain.Field
 import kda.domain.KDAError
@@ -16,8 +15,8 @@ import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
-import java.sql.Timestamp
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -44,6 +43,7 @@ fun compareRows(
   showSQL: Boolean = false,
   batchSize: Int = 1_000,
   queryTimeout: Duration = 30.minutes,
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
 ): RowDiff {
   if (compareFields.isEmpty()) {
     throw KDAError.InvalidArgument(
@@ -59,6 +59,7 @@ fun compareRows(
       con = srcCon,
       showSQL = showSQL,
       queryTimeout = queryTimeout,
+      timestampResolution = timestampResolution,
     )
 
   val dstAdapter: Adapter =
@@ -67,6 +68,7 @@ fun compareRows(
       con = dstCon,
       showSQL = showSQL,
       queryTimeout = queryTimeout,
+      timestampResolution = timestampResolution,
     )
 
   val tables: CopyTableResult =
@@ -170,13 +172,12 @@ private fun getFullCriteria(
         }
         .toSet()
 
-    val latestTimestamp: LocalDateTime? = (
+    val latestTimestamp: LocalDateTime? =
       dstAdapter.selectGreatest(
         schema = dstSchema,
         table = dstTable.name,
         fields = tsFields,
-      ) as Timestamp?
-      )?.toLocalDateTime()
+      ) as LocalDateTime?
 
     val tsCriteria: Criteria? = if (latestTimestamp == null) {
       null
@@ -186,7 +187,7 @@ private fun getFullCriteria(
         c = c.or(
           BinaryPredicate(
             parameterName = field.name,
-            dataType = DataType.localDateTime,
+            dataType = field.dataType,
             operator = Operator.GreaterThan,
             value = latestTimestamp,
           )

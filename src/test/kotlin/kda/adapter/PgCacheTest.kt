@@ -29,26 +29,28 @@ class PgCacheTest {
         showSQL = false,
       )
 
-      val expected = Table(
+      val table = Table(
         name = "customer",
         fields = setOf(
           Field(name = "customer_id", dataType = DataType.int),
           Field(name = "name", dataType = DataType.nullableText(null)),
+          Field(name = "date_added", dataType = DataType.timestamp(6)),
+          Field(name = "date_updated", dataType = DataType.nullableTimestamp(6)),
         ),
         primaryKeyFieldNames = listOf("customer_id"),
       )
 
-      cache.addTable(dbName = "db", schema = null, table = expected)
+      cache.addTable(dbName = "db", schema = null, table = table)
 
       val actual = cache.getTable(dbName = "db", schema = null, table = "customer")
 
       assertNotNull(actual)
 
-      assertEquals(expected = expected.name, actual = actual.name)
+      assertEquals(expected = table.name, actual = actual.name)
 
-      assertEquals(expected = expected.primaryKeyFieldNames, actual = actual.primaryKeyFieldNames)
+      assertEquals(expected = table.primaryKeyFieldNames, actual = actual.primaryKeyFieldNames)
 
-      assertEquals(expected = expected.fields, actual = actual.fields)
+      assertEquals(expected = table.fields, actual = actual.fields)
     }
   }
 }
