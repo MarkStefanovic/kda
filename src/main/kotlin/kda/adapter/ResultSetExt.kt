@@ -9,16 +9,16 @@ import java.sql.Timestamp
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
-fun ResultSet.toRows(fields: Set<Field<*>>): Sequence<Row> = sequence {
+fun ResultSet.toRows(fields: Set<Field<*>>, timestampResolution: ChronoUnit): Sequence<Row> = sequence {
   while (next()) {
-    yield(toMap(fields))
+    yield(toMap(fields, timestampResolution = timestampResolution))
   }
 }
 
-internal fun ResultSet.toMap(fields: Set<Field<*>>): Row = Row(
+internal fun ResultSet.toMap(fields: Set<Field<*>>, timestampResolution: ChronoUnit): Row = Row(
   fields.associate { fld ->
     try {
-      fld.name to getValue(fieldName = fld.name, dataType = fld.dataType)
+      fld.name to getValue(fieldName = fld.name, dataType = fld.dataType, timestampResolution = timestampResolution)
     } catch (e: Throwable) {
       println("toMap() fld: $fld, sqlType: ${fld.dataType.description}")
       throw e
@@ -30,7 +30,7 @@ internal fun ResultSet.toMap(fields: Set<Field<*>>): Row = Row(
 internal fun <T : Any?> ResultSet.getValue(
   fieldName: String,
   dataType: DataType<T>,
-  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
+  timestampResolution: ChronoUnit,
 ): T =
   when (dataType) {
     DataType.nullableBigInt -> getObject(fieldName)

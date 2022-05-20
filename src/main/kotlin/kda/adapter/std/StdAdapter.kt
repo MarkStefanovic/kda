@@ -344,7 +344,7 @@ class StdAdapter(
             preparedStatement.executeQuery().use { rs ->
               while (rs.next()) {
                 try {
-                  yield(rs.toMap(fields))
+                  yield(rs.toMap(fields, timestampResolution))
                 } catch (e: Throwable) {
                   println("StdAdapter.select(...) - yield(rs.toMap($fields)):")
                   println("  criteria.boundParameters: ${criteria.boundParameters}")
@@ -405,7 +405,7 @@ class StdAdapter(
 
         statement.executeQuery(baseSQL).use { rs ->
           while (rs.next()) {
-            yield(rs.toMap(fields))
+            yield(rs.toMap(fields, timestampResolution))
           }
         }
       }
@@ -505,7 +505,7 @@ class StdAdapter(
 
           statement.executeQuery(sql).use { rs ->
             while (rs.next()) {
-              yield(rs.toMap(fields))
+              yield(rs.toMap(fields, timestampResolution))
             }
           }
         }
@@ -558,7 +558,7 @@ class StdAdapter(
               }
 
               statement.executeQuery().use { rs ->
-                yieldAll(rs.toRows(fields))
+                yieldAll(rs.toRows(fields, timestampResolution))
               }
             }
           }
@@ -617,7 +617,7 @@ class StdAdapter(
               statement.applyBoundParameters(parameters = parameters.flatten())
 
               statement.executeQuery().use { rs ->
-                yieldAll(rs.toRows(fields))
+                yieldAll(rs.toRows(fields, timestampResolution))
               }
             }
           }

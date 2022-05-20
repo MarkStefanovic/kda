@@ -15,7 +15,6 @@ import kda.domain.Row
 import kda.domain.RowDiff
 import kda.domain.Table
 import java.sql.Connection
-import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
