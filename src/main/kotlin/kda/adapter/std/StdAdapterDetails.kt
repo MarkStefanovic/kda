@@ -37,12 +37,12 @@ object StdAdapterDetails : DbAdapterDetails {
     DataType.float, DataType.nullableFloat -> "CAST(? AS FLOAT)"
     DataType.int, DataType.nullableInt -> "CAST(? AS INT)"
     DataType.localDate, DataType.nullableLocalDate -> "CAST(? AS DATE)"
-    is DataType.timestamp -> "CAST(? AS TIMESTAMP(${dataType.precision}))"
-    is DataType.nullableTimestamp -> "CAST(? AS TIMESTAMP(${dataType.precision}))"
+    is DataType.timestamp -> "CAST(? AS TIMESTAMP)"
+    is DataType.nullableTimestamp -> "CAST(? AS TIMESTAMP)"
     is DataType.nullableText -> if (dataType.maxLength == null) "CAST(? AS TEXT)" else "CAST(? AS VARCHAR(${dataType.maxLength})"
     is DataType.text -> if (dataType.maxLength == null) "CAST(? AS TEXT)" else "CAST(? AS VARCHAR(${dataType.maxLength})"
-    is DataType.timestampUTC -> "CAST(? AS TIMESTAMPTZ(${dataType.precision}))"
-    is DataType.nullableTimestampUTC -> "CAST(? AS TIMESTAMPTZ(${dataType.precision}))"
+    is DataType.timestampUTC -> "CAST(? AS TIMESTAMPTZ)"
+    is DataType.nullableTimestampUTC -> "CAST(? AS TIMESTAMPTZ)"
   }
 
   override fun <T> whereFieldIsEqualTo(field: Field<T>): Set<Parameter> {
