@@ -42,7 +42,7 @@ fun sync(
   showSQL: Boolean = false,
   queryTimeout: Duration = 30.minutes,
   addTimestamp: Boolean = false,
-  timestampResolution: ChronoUnit = ChronoUnit.MILLIS, // TODO pass through to adapte
+  timestampResolution: ChronoUnit = ChronoUnit.MILLIS,
 ): SyncResult {
   val batchTimestamp = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
 
@@ -61,6 +61,7 @@ fun sync(
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
       addTimestamp = addTimestamp,
+      timestampResolution = timestampResolution,
     )
 
   val rowDiff: RowDiff = compareRows(
@@ -83,6 +84,7 @@ fun sync(
     batchSize = batchSize,
     showSQL = showSQL,
     queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
   )
 
   val deleteKeys: Set<Row> =
