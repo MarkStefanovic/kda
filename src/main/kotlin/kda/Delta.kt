@@ -41,7 +41,8 @@ fun delta(
   deltaTable: String = dstTable + "_delta",
   primaryKeyFieldNames: List<String>,
   cache: Cache,
-  criteria: Criteria? = null,
+  srcCriteria: Criteria? = null,
+  dstCriteria: Criteria? = null,
   compareFields: Set<String>? = null,
   includeFields: Set<String>? = null,
   timestampFieldNames: Set<String> = setOf(),
@@ -52,22 +53,21 @@ fun delta(
 ): DeltaResult {
   val batchTs = OffsetDateTime.now(ZoneId.of("Etc/UTC"))
 
-  val tables: CopyTableResult =
-    copyTable(
-      cache = cache,
-      srcCon = srcCon,
-      dstCon = dstCon,
-      dstDialect = dstDialect,
-      srcDbName = srcDbName,
-      srcSchema = srcSchema,
-      srcTable = srcTable,
-      dstDbName = dstDbName,
-      dstSchema = dstSchema,
-      dstTable = dstTable,
-      includeFields = includeFields,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      timestampResolution = timestampResolution,
-    )
+  val tables: CopyTableResult = copyTable(
+    cache = cache,
+    srcCon = srcCon,
+    dstCon = dstCon,
+    dstDialect = dstDialect,
+    srcDbName = srcDbName,
+    srcSchema = srcSchema,
+    srcTable = srcTable,
+    dstDbName = dstDbName,
+    dstSchema = dstSchema,
+    dstTable = dstTable,
+    includeFields = includeFields,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    timestampResolution = timestampResolution,
+  )
 
   val rowDiff: RowDiff = compareRows(
     srcCon = srcCon,
@@ -82,7 +82,8 @@ fun delta(
     dstTable = dstTable,
     primaryKeyFieldNames = primaryKeyFieldNames,
     cache = cache,
-    criteria = criteria,
+    srcCriteria = srcCriteria,
+    dstCriteria = dstCriteria,
     compareFields = compareFields ?: emptySet(),
     includeFields = includeFields,
     timestampFieldNames = timestampFieldNames,

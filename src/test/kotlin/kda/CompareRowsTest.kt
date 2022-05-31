@@ -88,7 +88,7 @@ class CompareRowsTest {
         compareFields = setOf("first_name", "mi", "last_name"),
         primaryKeyFieldNames = listOf("id"),
         showSQL = true,
-        criteria = null,
+        srcCriteria = null,
       )
 
       assertEquals(expected = 0, actual = result.added.count())

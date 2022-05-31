@@ -36,7 +36,8 @@ fun compareRows(
   compareFields: Set<String>,
   primaryKeyFieldNames: List<String>,
   cache: Cache,
-  criteria: Criteria? = null,
+  srcCriteria: Criteria? = null,
+  dstCriteria: Criteria? = null,
   includeFields: Set<String>? = null,
   timestampFieldNames: Set<String> = setOf(),
   showSQL: Boolean = false,
@@ -52,80 +53,84 @@ fun compareRows(
     )
   }
 
-  val srcAdapter: Adapter =
-    selectAdapter(
-      dialect = srcDialect,
-      con = srcCon,
-      showSQL = showSQL,
-      queryTimeout = queryTimeout,
-      timestampResolution = timestampResolution,
-    )
+  val srcAdapter: Adapter = selectAdapter(
+    dialect = srcDialect,
+    con = srcCon,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
+  )
 
-  val dstAdapter: Adapter =
-    selectAdapter(
-      dialect = dstDialect,
-      con = dstCon,
-      showSQL = showSQL,
-      queryTimeout = queryTimeout,
-      timestampResolution = timestampResolution,
-    )
+  val dstAdapter: Adapter = selectAdapter(
+    dialect = dstDialect,
+    con = dstCon,
+    showSQL = showSQL,
+    queryTimeout = queryTimeout,
+    timestampResolution = timestampResolution,
+  )
 
-  val tables: CopyTableResult =
-    copyTable(
-      srcCon = srcCon,
-      dstCon = dstCon,
-      cache = cache,
-      dstDialect = dstDialect,
-      srcDbName = srcDbName,
-      srcSchema = srcSchema,
-      srcTable = srcTable,
-      dstDbName = dstDbName,
-      dstSchema = dstSchema,
-      dstTable = dstTable,
-      includeFields = includeFields,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      showSQL = showSQL,
+  val tables: CopyTableResult = copyTable(
+    srcCon = srcCon,
+    dstCon = dstCon,
+    cache = cache,
+    dstDialect = dstDialect,
+    srcDbName = srcDbName,
+    srcSchema = srcSchema,
+    srcTable = srcTable,
+    dstDbName = dstDbName,
+    dstSchema = dstSchema,
+    dstTable = dstTable,
+    includeFields = includeFields,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    showSQL = showSQL,
+  )
+
+  val dstTs = if (timestampFieldNames.isEmpty()) {
+    null
+  } else {
+    getLatestTs(
+      adapter = dstAdapter,
+      schema = dstSchema,
+      table = tables.dstTable,
+      tsFieldNames = timestampFieldNames,
     )
+  }
 
   val srcFullCriteria = getFullCriteria(
-    adapter = srcAdapter,
     dialect = srcDialect,
-    schema = srcSchema,
     table = tables.srcTable,
     tsFieldNames = timestampFieldNames,
-    criteria = criteria,
+    criteria = srcCriteria,
+    ts = dstTs,
   )
 
   val dstFullCriteria = getFullCriteria(
-    adapter = dstAdapter,
     dialect = dstDialect,
-    schema = dstSchema,
     table = tables.dstTable,
     tsFieldNames = timestampFieldNames,
-    criteria = criteria,
+    criteria = dstCriteria,
+    ts = dstTs,
   )
 
-  val srcRows: Set<Row> =
-    fetchLookupTable(
-      adapter = srcAdapter,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      compareFields = compareFields,
-      criteria = srcFullCriteria,
-      schema = srcSchema,
-      table = tables.srcTable,
-      batchSize = batchSize,
-    )
+  val srcRows: Set<Row> = fetchLookupTable(
+    adapter = srcAdapter,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    compareFields = compareFields,
+    criteria = srcFullCriteria,
+    schema = srcSchema,
+    table = tables.srcTable,
+    batchSize = batchSize,
+  )
 
-  val dstRows: Set<Row> =
-    fetchLookupTable(
-      adapter = dstAdapter,
-      primaryKeyFieldNames = primaryKeyFieldNames,
-      compareFields = compareFields,
-      criteria = dstFullCriteria,
-      schema = dstSchema,
-      table = tables.dstTable,
-      batchSize = batchSize,
-    )
+  val dstRows: Set<Row> = fetchLookupTable(
+    adapter = dstAdapter,
+    primaryKeyFieldNames = primaryKeyFieldNames,
+    compareFields = compareFields,
+    criteria = dstFullCriteria,
+    schema = dstSchema,
+    table = tables.dstTable,
+    batchSize = batchSize,
+  )
 
   return kda.domain.compareRows(
     dstRows = dstRows,
@@ -162,13 +167,33 @@ private fun fetchLookupTable(
 }
 
 @ExperimentalStdlibApi
-private fun getFullCriteria(
+private fun getLatestTs(
   adapter: Adapter,
-  dialect: DbDialect,
   schema: String?,
   table: Table,
   tsFieldNames: Set<String>,
+): Any? {
+  val tsFields: Set<Field<*>> =
+    tsFieldNames
+      .map { fieldName ->
+        table.field(fieldName)
+      }
+      .toSet()
+
+  return adapter.selectGreatest(
+    schema = schema,
+    table = table.name,
+    fields = tsFields,
+  )
+}
+
+@ExperimentalStdlibApi
+private fun getFullCriteria(
+  dialect: DbDialect,
+  table: Table,
+  tsFieldNames: Set<String>,
   criteria: Criteria?,
+  ts: Any?,
 ): Criteria? =
   if (tsFieldNames.isEmpty()) {
     criteria
@@ -180,14 +205,7 @@ private fun getFullCriteria(
         }
         .toSet()
 
-    val latestTimestamp =
-      adapter.selectGreatest(
-        schema = schema,
-        table = table.name,
-        fields = tsFields,
-      )
-
-    val tsCriteria: Criteria? = if (latestTimestamp == null) {
+    val tsCriteria: Criteria? = if (ts == null) {
       null
     } else {
       var c = where(dialect)
@@ -197,7 +215,7 @@ private fun getFullCriteria(
             parameterName = field.name,
             dataType = field.dataType,
             operator = Operator.GreaterThan,
-            value = latestTimestamp,
+            value = ts,
           )
         )
       }

@@ -87,7 +87,7 @@ class SyncTest {
           includeFields = null,
           batchSize = 2,
           showSQL = true,
-          criteria = null,
+          srcCriteria = null,
           addTimestamp = true,
         )
 
@@ -349,6 +349,8 @@ class SyncTest {
         srcRepo.addCustomers(customer1, customer2, customer3, customer2dupe)
 
         val cache = sqliteCache()
+
+        assertEquals(expected = setOf(), actual = dstRepo.fetchCustomers())
 
         sync(
           srcCon = con,

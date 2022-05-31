@@ -99,7 +99,7 @@ class DeltaTest {
           includeFields = null,
           batchSize = 2,
           showSQL = true,
-          criteria = null,
+          srcCriteria = null,
         )
 
         val expectedResult = DeltaResult(added = 2, deleted = 0, updated = 0)
@@ -163,7 +163,7 @@ class DeltaTest {
           includeFields = null,
           batchSize = 2,
           showSQL = true,
-          criteria = null,
+          srcCriteria = null,
         )
 
         val expectedResult = DeltaResult(added = 0, deleted = 1, updated = 0)
@@ -228,7 +228,7 @@ class DeltaTest {
           includeFields = null,
           batchSize = 2,
           showSQL = true,
-          criteria = null,
+          srcCriteria = null,
         )
 
         val expectedResult = DeltaResult(added = 0, deleted = 0, updated = 1)
