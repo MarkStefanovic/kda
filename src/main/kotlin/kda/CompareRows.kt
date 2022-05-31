@@ -84,24 +84,33 @@ fun compareRows(
       dstTable = dstTable,
       includeFields = includeFields,
       primaryKeyFieldNames = primaryKeyFieldNames,
+      showSQL = showSQL,
     )
 
-  val fullCriteria: Criteria? =
-    getFullCriteria(
-      dstAdapter = dstAdapter,
-      dstDialect = dstDialect,
-      dstSchema = dstSchema,
-      dstTable = tables.dstTable,
-      tsFieldNames = timestampFieldNames,
-      criteria = criteria,
-    )
+  val srcFullCriteria = getFullCriteria(
+    adapter = srcAdapter,
+    dialect = srcDialect,
+    schema = srcSchema,
+    table = tables.srcTable,
+    tsFieldNames = timestampFieldNames,
+    criteria = criteria,
+  )
+
+  val dstFullCriteria = getFullCriteria(
+    adapter = dstAdapter,
+    dialect = dstDialect,
+    schema = dstSchema,
+    table = tables.dstTable,
+    tsFieldNames = timestampFieldNames,
+    criteria = criteria,
+  )
 
   val srcRows: Set<Row> =
     fetchLookupTable(
       adapter = srcAdapter,
       primaryKeyFieldNames = primaryKeyFieldNames,
       compareFields = compareFields,
-      criteria = fullCriteria,
+      criteria = srcFullCriteria,
       schema = srcSchema,
       table = tables.srcTable,
       batchSize = batchSize,
@@ -112,7 +121,7 @@ fun compareRows(
       adapter = dstAdapter,
       primaryKeyFieldNames = primaryKeyFieldNames,
       compareFields = compareFields,
-      criteria = fullCriteria,
+      criteria = dstFullCriteria,
       schema = dstSchema,
       table = tables.dstTable,
       batchSize = batchSize,
@@ -154,10 +163,10 @@ private fun fetchLookupTable(
 
 @ExperimentalStdlibApi
 private fun getFullCriteria(
-  dstAdapter: Adapter,
-  dstDialect: DbDialect,
-  dstSchema: String?,
-  dstTable: Table,
+  adapter: Adapter,
+  dialect: DbDialect,
+  schema: String?,
+  table: Table,
   tsFieldNames: Set<String>,
   criteria: Criteria?,
 ): Criteria? =
@@ -167,21 +176,21 @@ private fun getFullCriteria(
     val tsFields: Set<Field<*>> =
       tsFieldNames
         .map { fieldName ->
-          dstTable.field(fieldName)
+          table.field(fieldName)
         }
         .toSet()
 
     val latestTimestamp =
-      dstAdapter.selectGreatest(
-        schema = dstSchema,
-        table = dstTable.name,
+      adapter.selectGreatest(
+        schema = schema,
+        table = table.name,
         fields = tsFields,
       )
 
     val tsCriteria: Criteria? = if (latestTimestamp == null) {
       null
     } else {
-      var c = where(dstDialect)
+      var c = where(dialect)
       tsFields.forEach { field ->
         c = c.or(
           BinaryPredicate(

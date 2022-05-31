@@ -62,6 +62,7 @@ fun sync(
       primaryKeyFieldNames = primaryKeyFieldNames,
       addTimestamp = addTimestamp,
       timestampResolution = timestampResolution,
+      showSQL = showSQL,
     )
 
   val rowDiff: RowDiff = compareRows(

@@ -251,11 +251,6 @@ class PgCache(
               pkCols.addAll(rs.getArray("pk_cols").array as Array<out String>)
             }
 
-            if (dataTypeName == "localDateTime") {
-              println("TEST!!!!")
-              println("dataTypeName = $dataTypeName, maxLength = $maxLength, precision = $precision, scale = $scale")
-            }
-
             val dataType = when (dataTypeName) {
               "bool" -> DataType.bool
               "nullableBool" -> DataType.nullableBool

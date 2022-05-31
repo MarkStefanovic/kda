@@ -426,10 +426,17 @@ class StdAdapter(
 
     val dataType = fields.first().dataType
 
-    val sql = """
+    val sql = if (fields.count() > 1) {
+      """
       |SELECT GREATEST($fieldNameCSV) AS greatest_val
       |FROM $fullTableName
-    """.trimMargin()
+      """.trimMargin()
+    } else {
+      """
+      |SELECT MAX($fieldNameCSV) AS greatest_val
+      |FROM $fullTableName
+      """.trimMargin()
+    }
 
     if (showSQL) {
       println(
@@ -530,7 +537,7 @@ class StdAdapter(
             if (showSQL) {
               println(
                 """
-                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
+                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = ${keys.take(3)}..., batchSize = $batchSize, orderBy = $orderBy):
                 |  SQL:
                 |    ${sql.split("\n").joinToString("\n    ")}
                 |  Parameters:
@@ -602,7 +609,7 @@ class StdAdapter(
                   .joinToString("\n    ")
               println(
                 """
-                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = $keys, batchSize = $batchSize, orderBy = $orderBy):
+                |StdAdapter.selectRows(schema = $schema, table = $table, fields = $fields, keys = ${keys.take(3)}..., batchSize = $batchSize, orderBy = $orderBy):
                 |  SQL:
                 |    ${sql.split("\n").joinToString("\n    ")}
                 |  Parameters:
@@ -698,7 +705,7 @@ class StdAdapter(
       if (showSQL) {
         println(
           """
-          |StdAdapter.upsertRows(schema = $schema, table = $table, rows = $rows, keyFields = $keyFields, valueFields = $valueFields):
+          |StdAdapter.upsertRows(schema = $schema, table = $table, rows = ${rows.take(3)}..., keyFields = $keyFields, valueFields = $valueFields):
           |  SQL:
           |    ${sql.split("\n").joinToString("\n    ")}
           |  Parameters:

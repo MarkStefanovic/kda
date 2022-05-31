@@ -6,7 +6,7 @@ import kda.domain.Field
 import kda.domain.Parameter
 
 @ExperimentalStdlibApi
-object StdAdapterDetails : DbAdapterDetails {
+abstract class StdAdapterDetails : DbAdapterDetails {
   override fun fieldDef(field: Field<*>): String {
     val wrappedName = wrapName(field.name)
 
@@ -119,7 +119,7 @@ object StdAdapterDetails : DbAdapterDetails {
         Parameter(
           name = field.name,
           dataType = field.dataType,
-          sql = "$wrappedFieldName <= ? OR ${castParameter(dataType = field.dataType)} IS NULL"
+          sql = "($wrappedFieldName <= ? OR ${castParameter(dataType = field.dataType)} IS NULL)"
         ),
       )
     } else {
@@ -128,6 +128,4 @@ object StdAdapterDetails : DbAdapterDetails {
       )
     }
   }
-
-  override fun wrapName(name: String) = "\"$name\""
 }
