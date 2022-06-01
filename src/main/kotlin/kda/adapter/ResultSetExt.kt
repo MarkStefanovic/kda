@@ -48,7 +48,7 @@ internal fun <T : Any?> ResultSet.getValue(
     DataType.float -> getFloat(fieldName)
     DataType.int -> getInt(fieldName)
     DataType.localDate -> getDate(fieldName).toLocalDate()
-    is DataType.timestamp -> getTimestamp(fieldName).toLocalDateTime().truncatedTo(timestampResolution)
+    is DataType.timestamp -> getTimestamp(fieldName)?.toLocalDateTime()?.truncatedTo(timestampResolution)
     is DataType.text -> getString(fieldName)
-    is DataType.timestampUTC -> (getObject(fieldName) as OffsetDateTime).truncatedTo(timestampResolution)
+    is DataType.timestampUTC -> (getObject(fieldName) as OffsetDateTime?)?.truncatedTo(timestampResolution)
   } as T
