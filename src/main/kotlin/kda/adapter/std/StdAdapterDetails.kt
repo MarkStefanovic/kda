@@ -29,26 +29,6 @@ abstract class StdAdapterDetails : DbAdapterDetails {
     }
   }
 
-  override fun castField(field: Field<*>): String {
-    val wrappedName = wrapName(field.name)
-
-    return when (val dataType = field.dataType) {
-      DataType.bigInt, DataType.nullableBigInt -> "CAST($wrappedName AS BIGINT)"
-      DataType.bool, DataType.nullableBool -> "CAST($wrappedName AS BOOLEAN)"
-      is DataType.decimal -> "CAST($wrappedName AS NUMERIC(${dataType.precision}, ${dataType.scale})"
-      is DataType.nullableDecimal -> "CAST($wrappedName AS NUMERIC(${dataType.precision}, ${dataType.scale})"
-      DataType.float, DataType.nullableFloat -> "CAST($wrappedName AS FLOAT)"
-      DataType.int, DataType.nullableInt -> "CAST($wrappedName AS INT)"
-      DataType.localDate, DataType.nullableLocalDate -> "CAST($wrappedName AS DATE)"
-      is DataType.timestamp -> "CAST($wrappedName AS TIMESTAMP)"
-      is DataType.nullableTimestamp -> "CAST($wrappedName AS TIMESTAMP)"
-      is DataType.nullableText -> if (dataType.maxLength == null) "CAST($wrappedName AS TEXT)" else "CAST($wrappedName AS VARCHAR(${dataType.maxLength})"
-      is DataType.text -> if (dataType.maxLength == null) "CAST($wrappedName AS TEXT)" else "CAST($wrappedName AS VARCHAR(${dataType.maxLength})"
-      is DataType.timestampUTC -> "CAST($wrappedName AS TIMESTAMPTZ)"
-      is DataType.nullableTimestampUTC -> "CAST($wrappedName AS TIMESTAMPTZ)"
-    }
-  }
-
   override fun castParameter(dataType: DataType<*>): String = when (dataType) {
     DataType.bigInt, DataType.nullableBigInt -> "CAST(? AS BIGINT)"
     DataType.bool, DataType.nullableBool -> "CAST(? AS BOOLEAN)"
@@ -70,12 +50,12 @@ abstract class StdAdapterDetails : DbAdapterDetails {
 
     return if (field.dataType.nullable) {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} = ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName = ?"),
         Parameter(name = field.name, dataType = field.dataType, sql = "COALESCE($wrappedFieldName, ?) IS NULL"),
       )
     } else {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} = ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName = ?"),
       )
     }
   }
@@ -85,7 +65,7 @@ abstract class StdAdapterDetails : DbAdapterDetails {
 
     return if (field.dataType.nullable) {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} > ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName > ?"),
         Parameter(
           name = field.name,
           dataType = field.dataType,
@@ -94,15 +74,17 @@ abstract class StdAdapterDetails : DbAdapterDetails {
       )
     } else {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} > ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName > ?"),
       )
     }
   }
 
-  override fun <T> whereFieldIsGreaterThanOrEqualTo(field: Field<T>): Set<Parameter> =
-    if (field.dataType.nullable) {
+  override fun <T> whereFieldIsGreaterThanOrEqualTo(field: Field<T>): Set<Parameter> {
+    val wrappedFieldName = wrapName(name = field.name)
+
+    return if (field.dataType.nullable) {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} >= ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName >= ?"),
         Parameter(
           name = field.name,
           dataType = field.dataType,
@@ -110,36 +92,40 @@ abstract class StdAdapterDetails : DbAdapterDetails {
         ),
       )
     } else {
-      setOf(Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} >= ?"))
+      setOf(Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName >= ?"))
     }
+  }
 
   override fun <T> whereFieldIsLessThan(field: Field<T>): Set<Parameter> {
     val wrappedFieldName = wrapName(name = field.name)
 
     return if (field.dataType.nullable) {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} < ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName < ?"),
         Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName IS NULL AND ${castParameter(dataType = field.dataType)} IS NOT NULL"),
       )
     } else {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} <= ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName <= ?"),
       )
     }
   }
 
-  override fun <T> whereFieldIsLessThanOrEqualTo(field: Field<T>): Set<Parameter> =
-    if (field.dataType.nullable) {
+  override fun <T> whereFieldIsLessThanOrEqualTo(field: Field<T>): Set<Parameter> {
+    val wrappedFieldName = wrapName(name = field.name)
+
+    return if (field.dataType.nullable) {
       setOf(
         Parameter(
           name = field.name,
           dataType = field.dataType,
-          sql = "(${castField(field)} <= ? OR ${castParameter(dataType = field.dataType)} IS NULL)"
+          sql = "($wrappedFieldName <= ? OR ${castParameter(dataType = field.dataType)} IS NULL)"
         ),
       )
     } else {
       setOf(
-        Parameter(name = field.name, dataType = field.dataType, sql = "${castField(field)} <= ?"),
+        Parameter(name = field.name, dataType = field.dataType, sql = "$wrappedFieldName <= ?"),
       )
     }
+  }
 }

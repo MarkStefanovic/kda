@@ -4,8 +4,6 @@ interface DbAdapterDetails {
 
   fun fieldDef(field: Field<*>): String
 
-  fun castField(field: Field<*>): String
-
   fun castParameter(dataType: DataType<*>): String
 
   fun fullTableName(schema: String?, table: String): String =
